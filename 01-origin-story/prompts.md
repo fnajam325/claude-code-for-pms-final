@@ -45,19 +45,3 @@ commit this
 ### 6.
 
 what are some best practices for claude.md in general?
-
-### 7.
-
-What's contradictory or missing, not just in the company documents, but across everything in 00-rook?
-
-### 8.
-
-I am a new Product Manager that just joined the team. Give me a walkthrough on what is  going on with Rook Dispatch? Where should I start?
-
-### 9.
-
-give me a agenda with talking points on what I should chat with Ravi about?
-
-### 10.
-
-this is great, create an agenda doc so i can recall this later
