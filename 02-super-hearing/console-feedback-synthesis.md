@@ -140,3 +140,85 @@ Also worth flagging separately: the aggregate acceptance rate's "recovery" (0.54
 **Where they disagree, and it's sharper than a magnitude mismatch.** T-002 (Corporal Ashgrove, filed 14 Aug) says his phone "hasn't gone off in six days" — putting the start of his quiet spell at roughly **8 August, four days before 4.2 even shipped**. That complaint cannot be caused by the release at all, by its own stated timeline, and Ashgrove's own data confirms it: his sent count in the release week is 10, identical to his pre-release baseline. Several of the other mismatched tickets (Nightwell's T-004, 18 Aug: "second week running") back out to similarly early or pre-release start dates, and none of their underlying numbers ever actually drop.
 
 **Read:** the confirmed problem produces complaints that lag the real numbers by about a week — what you'd expect from something people notice after it's been going on a little while. The unconfirmed complaints lead the data, or predate the cause entirely, which looks much more like anxiety/contagion spreading through the roster than an independent, real signal from each person.
+
+---
+
+## Two stories, side by side: a confirmed case vs. an unconfirmed one
+
+### Vesper (confirmed collapse)
+
+| Week starting | Pinged | Took |
+|---|---|---|
+| 2026-06-29 | 14 | 11 |
+| 2026-07-06 | 13 | 10 |
+| 2026-07-13 | 15 | 13 |
+| 2026-07-20 | 14 | 11 |
+| 2026-07-27 | 13 | 11 |
+| 2026-08-03 | 14 | 12 |
+| 2026-08-10 | 12 | 6 |
+| 2026-08-17 | 5 | 1 |
+| 2026-08-24 | 2 | 0 |
+| 2026-08-31 | 1 | 0 |
+
+Six normal weeks (13-15 pinged, saying yes almost every time), then the release week shows a first crack (still 12 pings, but only half taken), then a genuine cliff: 5, then 2, then 1. In about three weeks, one of the busiest, most reliable responders on the roster goes from working almost daily to waiting a full week for a single call — and not getting even that one by the end.
+
+### Corporal Ashgrove (originally "unconfirmed" — see the 5-agent investigation below, which found he may actually be an early-stage case of the same problem)
+
+| Week starting | Pinged | Took |
+|---|---|---|
+| 2026-06-29 | 10 | 8 |
+| 2026-07-06 | 11 | 9 |
+| 2026-07-13 | 10 | 7 |
+| 2026-07-20 | 9 | 7 |
+| 2026-07-27 | 10 | 8 |
+| 2026-08-03 | 10 | 8 |
+| 2026-08-10 | 10 | 6 |
+| 2026-08-17 | 8 | 5 |
+| 2026-08-24 | 7 | 5 |
+| 2026-08-31 | 7 | 5 |
+
+His handler's ticket (T-002, filed 14 Aug) says his phone "hasn't gone off in six days" — six days back from the 14th lands on 8 Aug, *four days before 4.2 shipped*. The data backs that timing up in the worst possible way: his release-week ping count (10) is identical to his summer average, so nothing had happened yet when the complaint was filed. Over the following month he does get a little quieter — down to 7 pings a week from a ~10 average, roughly a 30% dip — but he never goes anywhere near zero, and he gets work every single week. Real, mildly annoying, and nowhere close to what the ticket describes.
+
+Side by side, this is the clearest single illustration in the whole dataset of the difference between the confirmed problem and the unconfirmed one: one is a flatline; the other is a normal person having a slightly slower month, reported as a crisis. (Note: a later investigation, below, found Ashgrove's decline may be more than "just a slightly slower month" after all — see the gradient-check finding.)
+
+---
+
+## Five-agent investigation into root cause (28 Sept 2026)
+
+Five agents each dug into one angle of the same question — what's actually driving the four-responder collapse — working independently from `callout-history.csv` and the routing code, then were compared against each other to see where they agreed, where they corrected the working theory, and what's still missing.
+
+**Plain-language version:** They mostly agree on the big picture, but they caught a mistake in the earlier story, and found one new thing nobody had noticed yet. It's still true that the update made "how close are you" matter more and "how good is your recent record" matter less, and that once a responder starts missing jobs under the new rules there's no way built in for them to earn their way back — that part holds up. But the story that all four responders were "compensating for distance with a great track record" doesn't hold: one of them, Meteor Mite, actually had the *worst* acceptance rate on the whole team, not a great one. And two more responders — Corporal Ashgrove and Halfmoon — look like they're quietly sliding down the same path, just a few weeks behind, which nobody had flagged before this.
+
+### What each agent found
+
+1. **Score simulation** (rebuilt the routing engine's actual scoring math from real accept/decline counts): All four responders sat pinned near the maximum score for six weeks pre-4.2 — recent-acceptance was never their bottleneck. The score turns down the exact week 4.2 ships and hits or nears the floor (0.00–0.12) by 08-31 for all four, consistent with the missing score-recovery mechanism in `history.py`. **Wrinkle:** at the release week, ping volume had already started dropping while the simulated score was still 0.48–0.76 — nowhere near the floor. So the score collapse can't explain the *first* hit; something else (most likely the proximity-weight jump) does the initial damage, and the broken scoring compounds it afterward. Confidence: Medium.
+
+2. **Gradient check** (tested whether it's really a clean 4-vs-12 split): It's not. It's a 3-tier pattern — 4 in freefall (-62% to -71%), **2 more (Corporal Ashgrove -20%, Halfmoon -18%) declining steadily and monotonically, below the dramatic threshold but real**, and 10 responders growing (+17% to +40%), with a genuine gap between the decliners and growers. Also found pre-4.2 acceptance rate does **not** predict who collapses — correlation is weak and wrong-signed. Vesper (82% acceptance, one of the best) collapsed; Meteor Mite (69%, the *worst* on the roster) also collapsed; The Drift (84%, similarly high to Vesper) grew instead. Neither acceptance rate nor prior volume cleanly separates the groups — the real discriminator is most likely geography/proximity, which isn't in this dataset. Confidence: Medium.
+
+3. **Efficiency check** (system-wide "pings needed per successful placement"): Rose ~20% post-4.2 (1.30 → 1.56), and this isn't just the four collapsed responders — excluding them entirely, the other twelve still show a ~14% efficiency hit. The effect is front-loaded and slowly decaying (worst in the release week, tapering by 08-31) but hadn't fully returned to baseline by the end of the data. Confidence: Medium.
+
+4. **Popularity / "rich get richer" check** (does pre-existing busyness predict outcome?): Decisively no. Vesper was the **2nd-busiest responder on the entire roster** pre-4.2 and collapsed to near-last; meanwhile several near-bottom responders pre-4.2 (The Drift, dead last; Ironvale, #14 of 16) surged into the middle of the pack. Prior rank predicts almost nothing outside the very top few, which rules out a generic momentum effect and points back to something orthogonal to popularity — consistent with proximity plus the broken recovery mechanism. Confidence: Medium-high.
+
+5. **Consistency check** (is it always the same four at the bottom, or does it rotate?): Mostly stable, tightening toward perfectly stable. The four are the *exact* bottom four in 3 of the 4 post-4.2 weeks (missing only the release week itself, consistent with a mechanism that takes about a week to engage), with the gap to 5th place widening every week. Critically, **these four were never in the bottom four before 4.2** — they ran mid-pack to top-of-pack the entire pre-release period (Vesper was frequently 2nd or 3rd highest of all 16). A completely different, unrelated trio occupied the bottom before and after. This is a sharp reversal, not an acceleration of an existing weak spot. Confidence: High that this is structural and specific to these four, not random.
+
+### Where they agree
+
+- The collapse is real, release-triggered, and not random noise or rotation.
+- It is not explained by a simple "popular gets more popular" effect (directly refuted).
+- The routing-weight change (proximity up, recent-acceptance down) combined with the missing score-recovery mechanism is still the best-supported explanation for why it's permanent once it starts.
+- It's independently corroborated by Sofia's interviews (Kip on Meteor Mite/The Gale, Aunt Dot on Vesper) — a completely separate data source lining up with the same names.
+
+### Where they corrected the working theory
+
+- **"High acceptance history compensating for distance" doesn't hold for all four.** Meteor Mite had the lowest acceptance rate on the entire roster, not a high one — so a strong track record isn't the common thread. The real shared trait is most likely pure geographic distance, unconfirmed because no location data exists in this dataset.
+- **The four-responder scope may be six.** Corporal Ashgrove and Halfmoon show the same steady, monotonic, never-bouncing-back decline shape as the confirmed four did in their first two weeks — just earlier in the curve. Worth watching closely rather than writing off as "the nine unconfirmed" group.
+- **Two separate mechanisms, not one.** The proximity-weight increase likely causes the initial drop in offers; the broken accept/decline scoring (no recovery function) is what makes it permanent. Conflating them into a single "the algorithm is broken" story oversimplifies which lever actually needs to move first.
+
+### What's still needed to close the loop (agreed across agents)
+
+1. **Actual location/travel-time data per responder** — the single most-repeated ask. Would directly confirm or kill the proximity hypothesis instead of inferring it.
+2. **The real recent-acceptance score per responder per week**, as computed by the routing engine — not the hand-built approximation used here.
+3. **Decline vs. timeout breakdown per event** — these may need different fixes and the CSV can't currently distinguish them.
+4. **Incident volume and capability-tag mix by region over time** — to rule out "fewer nearby incidents" as a confound independent of ranking.
+5. **A few more weeks of data** — to see whether Ashgrove/Halfmoon continue toward collapse or plateau, and whether system-wide efficiency fully recovers.
+6. **Wen Li's confirmation** of how proximity and recent-acceptance actually combine into final rank — there's no written spec, and she's the only source of truth on it.
