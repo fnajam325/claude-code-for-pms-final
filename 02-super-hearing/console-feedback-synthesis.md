@@ -12,6 +12,24 @@ Based on the interviews, the trouble with 4.2 is that it quietly locked a handfu
 
 A teammate independently framed the same evidence differently: *"the trouble with 4.2 is nobody asked about callouts. Three of the four handlers brought them up anyway."* That's the credibility argument (unprompted, off-topic, and still volunteered by 3 of 4); mine is the mechanism argument (what's actually broken). Worth keeping both — they cover different pieces: the "3 of 4" framing is precise for the vanishing-callout complaint specifically (Ambrose, Dot, Halloran); it doesn't cover Kip's complaint, which is a different symptom of the same root cause (one responder starved of offers entirely, not an offer lost too fast).
 
+## Priority table (updated after cross-checking tickets against the CSV)
+
+| Problem area | Interviews | Tickets | Confirmed by data? | Severity | Action needed |
+|---|---|---|---|---|---|
+| **Confirmed responder starvation** (Farlight, Meteor Mite, The Undertow, Vesper) | 1 of 4, indirectly (Kip) | 4 of 25 | **Yes** — matches CSV collapse | Critical | **Now — fix** (routing / score-recovery change) |
+| **Unexplained "gone quiet" reports** (9 other named responders) | 0 of 4 | 17 of 25 | **No** — contradicts their own weekly data | Unknown severity, but high distress (5 tickets use self-doubting language) | **Now — investigate** (push-notification-delivery hypothesis) |
+| Timeout-driven near-misses on normal/busy responders | 3 of 4 (Ambrose, Dot, Halloran) | 8 of 25 | Yes — mechanically explained by the 90s→60s cut | Medium, expected tradeoff | **Now — decide** (keep 60s or dial back) |
+| Requisition approvals slow, no visibility | 1 of 4 (Halloran) | 0 of 25 — never escalated | N/A, but the silence itself is now a finding | High (safety gear) | **Now — fix**, and flag the ticket-detection gap |
+| Status text/badges too small | 2 of 4 | — | N/A | Medium | Next |
+| Notifications don't serve handlers | 2 of 4 | — | N/A | Medium | Next |
+| No dark mode | 1 of 4 | — | N/A | Low, loud | Next |
+| Filter persistence resets | 1 of 4 | — | N/A | Low | Next |
+| Field failure reports vanish | 1 of 4 | — | N/A | Low | Next |
+| Capability tag legend hard to find | 1 of 4 | — | N/A | Low | Later |
+| Catalog search broken | 1 of 4 | — | N/A | Low | Later |
+
+Three things changed from the first pass: the "starvation" bucket split into a confirmed fix and a separate open investigation once the ticket-to-CSV cross-check showed 17 of 21 "gone quiet" tickets don't match the data; the timeout bucket was demoted from "mystery" to "decision" since 8 of 9 of those tickets are the expected, understood cost of an intentional change; and the requisition row now carries its own flag, since zero tickets for the most severe complaint in the whole dataset means "ticket count" can't be trusted as a severity signal anywhere else in this table either.
+
 ## Grouped complaints (10 total, by how many of the 4 raised it)
 
 | Complaint | Raised by | Count |
