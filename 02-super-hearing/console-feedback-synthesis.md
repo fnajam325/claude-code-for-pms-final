@@ -222,3 +222,48 @@ Five agents each dug into one angle of the same question — what's actually dri
 4. **Incident volume and capability-tag mix by region over time** — to rule out "fewer nearby incidents" as a confound independent of ranking.
 5. **A few more weeks of data** — to see whether Ashgrove/Halfmoon continue toward collapse or plateau, and whether system-wide efficiency fully recovers.
 6. **Wen Li's confirmation** of how proximity and recent-acceptance actually combine into final rank — there's no written spec, and she's the only source of truth on it.
+
+---
+
+## How the code explains what the data showed
+
+Read through `00-rook/code/dispatch-routing/` (availability.py, routing.py, history.py, offer.py, config.py) to connect the mechanism directly to the observed patterns, instead of just inferring it from the numbers.
+
+**Why "far away" is a cliff, not a slope.** Proximity scoring gives a flat **zero** to anyone more than 45 minutes out (`PROXIMITY_HORIZON_MINUTES` in `config.py`) — no partial credit past that line. This is consistent with the collapsed responders hitting a wall rather than a gradual decline once they crossed some distance threshold, and it's the direct reason location/travel-time data (still missing) would settle the proximity question outright.
+
+**Why the break was instant and system-wide.** The proximity/recent-acceptance weights and the offer timeout are single config values (`config.py`) applied to every ranking the moment they change — there's no rollout curve. That matches the sharp, same-week break in the CSV rather than a gradual seasonal slide.
+
+**Why the collapse never reverses on its own.** The recent-acceptance score (`history.py`) only moves down on a decline *or* a timeout (identical penalty, no distinction) and has no function to drift back up over time — an unresolved 2019 TODO in the same file. Once a responder's score is knocked down and they stop being offered work, there's no way to earn it back, because earning it back requires being offered work. This is the mechanical explanation for "the decline never has a good week" in the four (now possibly six) responders' data.
+
+**Why Meteor Mite broke the "great acceptance history" theory but still collapsed just as hard.** If her recent-acceptance score was already below-neutral before 4.2 (her pre-release acceptance rate was the lowest on the roster), she wasn't relying on a strong score to offset distance the way the original theory assumed — she may simply have been another far-away responder with nothing protecting her at all. This reframes the four (or six) as probably united by distance first, with their pre-existing acceptance score only determining how fast each one hit the floor, not whether they were affected.
+
+**Why nearly everyone, not just the four, started losing offers "too fast to answer."** Every responder gets the same fixed answer window (`offer.py`, driven by `OFFER_TIMEOUT_SECONDS` in `config.py`), cut from 90s to 60s in 4.2. A shorter window mechanically produces more timeouts across the whole roster, independent of the starvation mechanism — this is the system-wide "vanished before I could respond" pattern seen in most tickets, not just the four/six.
+
+**Why the system needs more pings per successful placement now.** `offer.py` walks the ranked list one responder at a time until someone accepts; a shorter timeout raises the odds of a "no answer" at each stop, which lengthens the average cascade before a job gets filled. This is the direct mechanical cause of the ~20% efficiency drop found in the data.
+
+**Why the aggregate acceptance rate looks like it's recovering.** Nothing in the code formally excludes a responder — `routing.py`'s own comment says "everyone available is on the list" — but a responder with a zero proximity score and a floored acceptance score will almost never be reached before someone else on the list accepts first. They're never technically banned, just never practically reached. Once Rook stops effectively asking its worst-performing responders, the average "yes rate" for everyone else looks better — not because anything improved, but because the low-performing offers driving the rate down simply stopped happening.
+
+### TL;DR — what to do next
+1. Get real location/travel-time data for all 16 responders — the single biggest missing piece, would directly confirm or kill the proximity theory.
+2. Get the real recent-acceptance score from Ravi (not the hand-built approximation) plus a decline-vs-timeout breakdown per event.
+3. Get 20 minutes with Wen Li on how proximity and reliability combine, and specifically raise adding a score-recovery mechanism — the most likely real fix, not reverting the release.
+4. Watch Corporal Ashgrove and Halfmoon for a few more weeks — they may be the same problem, a few weeks behind.
+5. Take the 60-second timeout to Helen as its own decision (keep vs. dial back) — it's a tradeoff, not a mystery.
+6. Don't touch the routing weights yet — wait for the location data and Wen's read first.
+
+One concrete clue already in hand, worth raising directly with Wen or Marcus: Kip's interview states Meteor Mite and The Gale are in the **same city**, yet one collapsed and the other is thriving — a direct complication for the proximity theory as applied to her specifically, even though it likely still holds for the other three.
+
+---
+
+## Hypotheses to test, ranked by likelihood of resolving root cause
+
+| # | Hypothesis | If / Then / Because | Confirms if | Fails if | Likelihood of resolving |
+|---|---|---|---|---|---|
+| 1 | Score-recovery | **If** the recent-acceptance score has no mechanism to recover over time, **then** responders who hit the score floor will show flat-or-zero offer volume indefinitely, **because** the system penalizes every decline/timeout without ever restoring the score | Real score data sits at or near 0.0 for the full window, with no upward movement in any week | Real scores show periodic recovery — e.g., drifting back toward 0.5 after a dip | Very high |
+| 2 | Proximity | **If** distance to incidents is the primary driver of the collapse, **then** responders farther from incident clusters will show lower offer volume post-4.2, **because** proximity now counts for 60% of ranking instead of 45% | Location/travel-time data shows the affected responders are measurably farther from incident concentrations than the growing group | The affected responders aren't meaningfully farther away (consistent with the Meteor Mite/The Gale same-city finding) | High (one known exception) |
+| 3 | Timeout mechanics | **If** the shortened 60-second window is driving widespread "vanished too fast" complaints, **then** timeout-specific events will rise broadly across the whole roster post-4.2, **because** everyone gets less time to respond regardless of who they are | Timeout rates rise broadly, independent of a responder's score or location | Timeout rates don't meaningfully change, or complaints trace back to active declines instead | High |
+| 4 | Notification failure | **If** the 9 unexplained "quiet" complaints are a delivery failure rather than a real drop in offers, **then** push-notification logs for those 9 will show reduced delivery success during their complaint window, **because** the offer would be generated but never reach the device | Delivery success for these 9 is measurably lower than the rest of the roster in that window | Their delivery rates look normal — pointing to perception/contagion instead | Medium |
+| 5 | Capability mismatch (Meteor Mite) | **If** her collapse is a tag mismatch rather than distance, **then** incident volume requiring her specific tag will drop starting mid-August, **because** fewer matching incidents would reduce her offers independent of ranking | Incident volume for her tag(s) drops in step with her ping-volume collapse | Incident volume for her tag(s) stayed flat or rose | Medium |
+| 6 | Early-stage collapse (Ashgrove & Halfmoon) | **If** they're early-stage cases of the same mechanism, **then** their weekly offer volume will keep declining monotonically toward zero, **because** they'd be following the same two-stage curve already observed | Their numbers keep sliding with no bounce-back over the next 2-3 weeks | Their numbers stabilize or recover on their own | Low (needs time to pass) |
+
+**Recommendation:** prioritize #1 and #2 together — they cover the full causal chain (proximity as the likely trigger, broken score-recovery as why it never lets go), both are resolvable with a single data pull or conversation rather than weeks of waiting, and both are backed by evidence already in hand: the hand-simulated score hit the literal floor (0.00) for three of four responders by 08-31, and the same four were the exact bottom-four responders in 3 of 4 post-4.2 weeks despite never being near the bottom before the release.
