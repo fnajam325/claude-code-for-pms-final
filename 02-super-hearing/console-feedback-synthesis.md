@@ -225,6 +225,30 @@ Five agents each dug into one angle of the same question — what's actually dri
 
 ---
 
+## The exact code that takes points off and puts them back on
+
+From `00-rook/code/dispatch-routing/history.py`. Searched the whole folder for every place the score changes — there is exactly one place points come off, and exactly one place they go back on.
+
+**Points off — fires on a decline *or* a timeout, treated identically:**
+```python
+def record_declined(responder):
+    """They turned it down, or we ran out of time waiting. Score goes
+    down. Same either way — we asked and we didn't get a yes.
+    """
+    _set(responder, recent_acceptance(responder) - DECLINE_PENALTY)
+```
+Plain English: every hero has one running number tracking "how often have they said yes lately." Any time an offer doesn't end in a yes — an active no, or just running out the clock — this fires and subtracts `DECLINE_PENALTY` (0.12, set in `config.py`). Saying no and simply not answering in time are not distinguished anywhere in the code.
+
+**Points on — the only place in the entire codebase a score increases:**
+```python
+def record_accepted(responder):
+    """They took the callout. Score goes up."""
+    _set(responder, recent_acceptance(responder) + ACCEPTANCE_CREDIT)
+```
+Plain English: the only way this number ever goes up is by actually saying yes to a job, adding `ACCEPTANCE_CREDIT` (0.08). That's it — no daily reset, no slow drift back toward neutral, no forgiveness window. Confirmed by searching the whole folder, not just this file.
+
+Two things worth sitting with: the penalty (0.12) is larger than the credit (0.08), so every miss costs more than every acceptance earns back — and the only road back up runs through *being offered jobs and saying yes to them*, which is exactly the thing a low score prevents from happening. That's the trap in one sentence, and it's written into the code as a 2019 comment from the engineer who built it, asking whether the score should ease back up on its own over time — answered, in the same comment, with "leaving it as-is for now."
+
 ## How the code explains what the data showed
 
 Read through `00-rook/code/dispatch-routing/` (availability.py, routing.py, history.py, offer.py, config.py) to connect the mechanism directly to the observed patterns, instead of just inferring it from the numbers.
@@ -242,6 +266,17 @@ Read through `00-rook/code/dispatch-routing/` (availability.py, routing.py, hist
 **Why the system needs more pings per successful placement now.** `offer.py` walks the ranked list one responder at a time until someone accepts; a shorter timeout raises the odds of a "no answer" at each stop, which lengthens the average cascade before a job gets filled. This is the direct mechanical cause of the ~20% efficiency drop found in the data.
 
 **Why the aggregate acceptance rate looks like it's recovering.** Nothing in the code formally excludes a responder — `routing.py`'s own comment says "everyone available is on the list" — but a responder with a zero proximity score and a floored acceptance score will almost never be reached before someone else on the list accepts first. They're never technically banned, just never practically reached. Once Rook stops effectively asking its worst-performing responders, the average "yes rate" for everyone else looks better — not because anything improved, but because the low-performing offers driving the rate down simply stopped happening.
+
+### Marcus's open Slack question, answered (14 Aug 2026, from `00-rook/company/notes/dispatch-slack-thread.txt`)
+
+Marcus asked whether the 4.2 change to who gets asked first applied only to responders who'd already been turning jobs down, or to everyone. It was never answered on record (Wen was on PTO 14-24 Aug). The code gives a clean answer: **it applies to everyone, the same way — it does not distinguish chronic decliners from reliable responders.** The recent-acceptance score (`history.py`) is one running number per responder, built identically for all of them (up a little on a yes, down a little on a no or a missed window, no special-casing based on history length or prior behavior). 4.2 just reweighted how much that single number counts in the ranking (down) relative to proximity (up) — a blanket formula change, not something targeted at habitual decliners. This is actually the more serious version of the answer: it means previously-reliable, busy responders (not just chronic decliners) could get caught in the same mechanism, which is exactly what happened to Farlight, The Undertow, and Vesper.
+
+**Hypothesis that would independently confirm this (beyond just reading the code):**
+*If* the scoring change applies the same way to every responder regardless of prior behavior, *then* there should be **no clean split by pre-4.2 acceptance rate** between who collapsed and who grew post-4.2, *because* a uniform formula change doesn't care what your history looks like, only what you do from this point forward.
+- **Confirms if:** pre-4.2 acceptance rate doesn't predict the outcome — both high- and low-acceptance responders show up on both sides.
+- **Fails if:** there's a clean split — every collapsed responder had a notably worse pre-4.2 record than every growing one, which would mean something *is* specifically targeting prior decliners.
+
+**Already tested, not just theorized:** the gradient-check agent found pre-4.2 acceptance rate has a weak, wrong-signed correlation with outcome (+0.29). Vesper had one of the best acceptance rates on the roster and collapsed; Meteor Mite had the worst and also collapsed; The Drift had a rate close to Vesper's and grew instead. That's the "no clean split" pattern the hypothesis predicts — so the answer to Marcus is backed by data already in hand, not just a reading of the source.
 
 ### TL;DR — what to do next
 1. Get real location/travel-time data for all 16 responders — the single biggest missing piece, would directly confirm or kill the proximity theory.
