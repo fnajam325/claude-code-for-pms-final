@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hero Offer Screen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Barlow:wght@500;600;700;800&display=swap">
+<style>
+/* Plan: night-sky ground, comic red for urgency, electric yellow for the clock,
+   mint for yes, magenta for near miss. Bowlby One for shouts, Barlow for everything else.
+   Layout: one full-bleed mission card, a giant clock, and a comic check-in after a miss. */
+:root {
+  --sky: #0d0b1f;
+  --sky-2: #17133a;
+  --ink: #fff7e6;
+  --muted: #b9b3d6;
+  --red: #ff3347;
+  --yellow: #ffd23f;
+  --mint: #3ddc97;
+  --magenta: #ff3e9a;
+  --cobalt: #2f6bff;
+  --paper: #fff7e6;
+  --paper-ink: #0d0b1f;
+  --display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --sky: #fff7e6;
+    --sky-2: #ffeccc;
+    --ink: #0d0b1f;
+    --muted: #4a4670;
+    --paper: #0d0b1f;
+    --paper-ink: #fff7e6;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --sky: #fff7e6;
+  --sky-2: #ffeccc;
+  --ink: #0d0b1f;
+  --muted: #4a4670;
+  --paper: #0d0b1f;
+  --paper-ink: #fff7e6;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: radial-gradient(ellipse at top, var(--sky-2), var(--sky) 70%);
+  background-color: var(--sky);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.4;
+  padding-inline: 16px;
+  padding-block: 18px 40px;
+  overflow-x: hidden;
+}
+h1, h2 { margin: 0; font-family: var(--display); font-weight: 400; line-height: 1.05; text-wrap: balance; }
+p { margin: 0; }
+.wrap { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.brand { font-family: var(--display); font-size: 15px; color: var(--yellow); letter-spacing: 0.02em; }
+.sample {
+  font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--yellow); color: #0d0b1f; padding: 4px 10px; border-radius: 999px; transform: rotate(-2deg);
+}
+
+/* Mission card */
+.mission {
+  position: relative;
+  background: var(--red);
+  color: #fff7e6;
+  border-radius: 28px;
+  padding: 22px 20px 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 0 #7a0c1b;
+}
+.mission::after {
+  content: ""; position: absolute; inset: auto -40px -60px auto; width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(255,210,63,0.5), transparent 70%); pointer-events: none;
+}
+.kicker { font-weight: 800; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.9; }
+.incident { font-family: var(--display); font-size: 30px; line-height: 1.02; margin-top: 6px; }
+.where { margin-top: 10px; font-weight: 700; font-size: 16px; }
+.where span { display: inline-block; background: #0d0b1f; color: var(--yellow); padding: 3px 10px; border-radius: 8px; margin-right: 6px; margin-top: 6px; }
+.address {
+  margin-top: 8px; font-weight: 700; font-size: 15px; color: #fff7e6;
+}
+
+/* The clock */
+.clock-wrap { display: flex; align-items: center; justify-content: center; margin: 22px 0 10px; }
+.clock {
+  width: 190px; height: 190px; border-radius: 50%;
+  background: var(--yellow); color: #0d0b1f;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 8px #0d0b1f, 0 0 0 12px var(--yellow);
+  transition: transform 0.2s;
+}
+.clock.hurry { animation: pulse 0.9s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.04); } }
+.clock-num { font-family: var(--display); font-size: 62px; line-height: 1; font-variant-numeric: tabular-nums; }
+.clock-label { font-weight: 800; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.bar { height: 10px; background: #0d0b1f; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+.bar > i { display: block; height: 100%; width: 100%; background: var(--yellow); transition: width 0.1s linear; }
+
+/* Buttons */
+.yes {
+  width: 100%; min-height: 72px; border: 0; border-radius: 999px;
+  background: var(--mint); color: #0d0b1f; font-family: var(--display); font-size: 26px;
+  cursor: pointer; box-shadow: 0 6px 0 #1f8a5c;
+}
+.yes:active { transform: translateY(3px); box-shadow: 0 3px 0 #1f8a5c; }
+.yes:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.yes:focus-visible, .chip:focus-visible, .missed:focus-visible, .stepper button:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
+
+.missed {
+  width: 100%; min-height: 56px; border: 3px dashed var(--yellow); border-radius: 999px;
+  background: transparent; color: var(--yellow); font-weight: 800; font-size: 17px; cursor: pointer;
+}
+.missed:disabled { opacity: 0.35; cursor: not-allowed; }
+.hint { font-size: 14px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+/* Result comic */
+.result {
+  border-radius: 22px; padding: 18px 18px; color: #0d0b1f; font-weight: 700;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+}
+.result h2 { font-size: 26px; color: #0d0b1f; margin-bottom: 6px; }
+.result.near { background: var(--magenta); color: #fff7e6; }
+.result.near h2 { color: #fff7e6; }
+.result.gone { background: var(--cobalt); color: #fff7e6; }
+.result.gone h2 { color: #fff7e6; }
+.result.good { background: var(--mint); }
+
+/* Reason stickers */
+.reasons { display: flex; flex-direction: column; gap: 10px; }
+.reasons-title { font-family: var(--display); font-size: 22px; color: var(--yellow); }
+.reasons-note { font-size: 14px; color: var(--muted); }
+.chip {
+  font: inherit; font-weight: 800; font-size: 16px; text-align: left;
+  background: var(--paper); color: var(--paper-ink); border: 0; border-radius: 16px;
+  padding: 14px 16px; min-height: 52px; cursor: pointer;
+  transform: rotate(-1deg); box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+}
+.chip:nth-child(even) { transform: rotate(1deg); }
+.chip[aria-pressed="true"] { background: var(--yellow); box-shadow: 0 0 0 4px #0d0b1f, 0 0 0 7px var(--yellow); }
+
+/* Grace stepper */
+.panel {
+  background: var(--sky-2); border: 2px solid var(--cobalt); border-radius: 22px; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.panel h2 { font-size: 22px; color: var(--yellow); }
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button {
+  width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--cobalt); color: #fff7e6;
+  font-family: var(--display); font-size: 26px; cursor: pointer;
+}
+.stepper output { font-family: var(--display); font-size: 40px; color: var(--yellow); min-width: 80px; text-align: center; font-variant-numeric: tabular-nums; }
+.sentence { font-weight: 600; }
+
+/* Mission board */
+.board { display: flex; flex-direction: column; gap: 10px; }
+.board-title { font-family: var(--display); font-size: 22px; color: var(--yellow); }
+.log-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
+  background: var(--sky-2); border-radius: 16px; padding: 12px 14px; border-left: 6px solid var(--muted);
+}
+.log-row.near { border-left-color: var(--magenta); }
+.log-row.no { border-left-color: var(--cobalt); }
+.log-row.yes { border-left-color: var(--mint); }
+.log-name { font-weight: 800; }
+.log-note { font-size: 14px; color: var(--muted); }
+.badge { font-weight: 800; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: var(--paper); color: var(--paper-ink); white-space: nowrap; }
+.log-row.live { background: var(--yellow); color: #0d0b1f; }
+.log-row.live .log-note { color: #0d0b1f; }
+.log-row.live .badge { background: #0d0b1f; color: var(--yellow); }
+.filter { margin-top: 6px; font: inherit; font-weight: 700; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--cobalt); background: var(--sky-2); color: var(--ink); width: 100%; }
+
+.promise {
+  font-size: 15px; font-weight: 700; color: var(--ink); border: 2px dashed var(--mint);
+  border-radius: 18px; padding: 12px 14px; text-align: center;
+}
+.status-line { font-size: 14px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .clock.hurry { animation: none; }
+  .bar > i { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="masthead">
+    <span class="brand">ROOK DISPATCH</span>
+    <span class="sample">Proposal · sample</span>
+  </header>
+
+  <section class="mission" aria-labelledby="incident-title">
+    <p class="kicker">New callout</p>
+    <h1 class="incident" id="incident-title">Flooded basement, 2 people trapped</h1>
+    <p class="where">
+      <span>4.2 km away</span><span>About 12 min by car</span>
+    </p>
+    <p class="address" id="address" hidden>14 Harbor Lane, Riverside · full address after you say yes</p>
+    <p class="address" id="district">Riverside district · full address after you say yes</p>
+
+    <div class="clock-wrap">
+      <div class="clock" id="clock" aria-live="off">
+        <span class="clock-num" id="clock-num">60</span>
+        <span class="clock-label">seconds to say yes</span>
+      </div>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="bar-fill"></i></div>
+  </section>
+
+  <button class="yes" id="say-yes" type="button">I'M IN!</button>
+
+  <button class="missed" id="missed" type="button" disabled>I missed this one</button>
+  <p class="hint" id="hint">Miss the window and tap here to tell us what got in the way.</p>
+
+  <section class="result good" id="result" role="status" aria-live="polite" hidden>
+    <h2 id="result-title">You're in!</h2>
+    <p id="result-body">The address is yours now.</p>
+  </section>
+
+  <section class="reasons" id="reasons" aria-labelledby="reasons-title" hidden>
+    <h2 class="reasons-title" id="reasons-title">What got in the way?</h2>
+    <p class="reasons-note">Pick one. It helps us learn. It doesn't change how offers are ranked.</p>
+    <button class="chip" type="button" data-reason="didnt-see" aria-pressed="false">Didn't see it in time</button>
+    <button class="chip" type="button" data-reason="phone-away" aria-pressed="false">My phone was away from me</button>
+    <button class="chip" type="button" data-reason="too-far" aria-pressed="false">Too far to get there</button>
+    <button class="chip" type="button" data-reason="chose-not" aria-pressed="false">I chose not to take it</button>
+  </section>
+
+  <section class="panel" aria-labelledby="grace-title">
+    <h2 id="grace-title">Grace window</h2>
+    <div class="stepper" role="group" aria-label="Grace window seconds">
+      <button type="button" id="grace-down" aria-label="Less grace">−</button>
+      <output id="grace-out" for="grace-down">5 s</output>
+      <button type="button" id="grace-up" aria-label="More grace">+</button>
+    </div>
+    <p class="sentence" id="grace-sentence" aria-live="polite"></p>
+  </section>
+
+  <section class="board" aria-labelledby="board-title">
+    <h2 class="board-title" id="board-title">Mission board</h2>
+    <p class="status-line" id="week-count"></p>
+    <select class="filter" id="reason-filter" aria-label="Show reason">
+      <option value="all">All reasons</option>
+      <option value="didnt-see">Didn't see it in time</option>
+      <option value="phone-away">Phone was away</option>
+      <option value="too-far">Too far to get there</option>
+      <option value="chose-not">Chose not to take it</option>
+    </select>
+    <div id="rows"></div>
+  </section>
+
+  <p class="promise">Nothing here changes how offers are ranked. What it does to your score is still being decided.</p>
+
+</main>
+
+<script>
+(function () {
+  var OFFER = 60;
+  var REASONS = {
+    "didnt-see": "Didn't see it in time",
+    "phone-away": "Phone was away",
+    "too-far": "Too far to get there",
+    "chose-not": "Chose not to take it"
+  };
+  var SAMPLES = [
+    { name: "Juniper Vance", note: "Walked away from the phone", late: 0, reason: null },
+    { name: "Teo Marrow", note: "Phone in a coat pocket", late: 1.2, reason: "phone-away" },
+    { name: "Ines Quill", note: "Charging in another room", late: 3.4, reason: "didnt-see" },
+    { name: "Hal Brisk", note: "Took a call on the stairs", late: 4.8, reason: "didnt-see" },
+    { name: "Wren Callow", note: "Phone on silent", late: 6.9, reason: "phone-away" },
+    { name: "Ods Pellam", note: "Out of range for a while", late: 11.5, reason: "too-far" }
+  ];
+  var grace = 5, start = Date.now(), closedAt = null, result = null;
+  var fillEl = document.getElementById("bar-fill");
+
+  var el = {
+    clock: document.getElementById("clock"), num: document.getElementById("clock-num"),
+    yes: document.getElementById("say-yes"), missed: document.getElementById("missed"),
+    hint: document.getElementById("hint"), result: document.getElementById("result"),
+    resultTitle: document.getElementById("result-title"), resultBody: document.getElementById("result-body"),
+    reasons: document.getElementById("reasons"), chips: Array.prototype.slice.call(document.querySelectorAll(".chip")),
+    address: document.getElementById("address"), district: document.getElementById("district"),
+    down: document.getElementById("grace-down"), up: document.getElementById("grace-up"),
+    out: document.getElementById("grace-out"), sentence: document.getElementById("grace-sentence"),
+    rows: document.getElementById("rows"), week: document.getElementById("week-count"),
+    filter: document.getElementById("reason-filter")
+  };
+
+  function outcomeFor(late) {
+    if (late <= 0) return "yes";
+    if (late <= grace) return "near";
+    return "no";
+  }
+  var BADGE = { yes: "Yes", near: "Near miss", no: "No" };
+
+  function renderSentence() {
+    el.out.textContent = grace + " s";
+    el.sentence.textContent = grace === 0
+      ? "Grace is off. Any tap after the offer closes counts as a no."
+      : "A tap up to " + grace + (grace === 1 ? " second" : " seconds") + " after the offer closes counts as a near miss.";
+  }
+
+  function renderWeek() {
+    var all = SAMPLES.map(function (s) { return s.late; });
+    if (result) all.push(result.late);
+    var near = 0, no = 0, late = 0;
+    all.forEach(function (l) {
+      if (l > 0) late++;
+      var k = outcomeFor(l);
+      if (k === "near") near++;
+      if (k === "no") no++;
+    });
+    el.week.textContent = "Sample week: " + late + " late taps. " + near + " near misses, " + no + " no's.";
+  }
+
+  function renderRows() {
+    renderWeek();
+    var f = el.filter.value, html = "";
+    SAMPLES.forEach(function (s) {
+      if (f !== "all" && s.reason !== f) return;
+      var k = outcomeFor(s.late);
+      html += '<div class="log-row ' + k + '"><div><div class="log-name">' + s.name +
+        '</div><div class="log-note">' + s.note + " · " + (s.late <= 0 ? "on time" : s.late.toFixed(1) + " s late") +
+        '</div></div><span class="badge">' + BADGE[k] + "</span>" +
+        (s.reason ? '<div class="log-note" style="grid-column:1 / -1">' + REASONS[s.reason] + "</div>" : "") +
+        "</div>";
+    });
+    var live = result
+      ? (result.reason ? REASONS[result.reason] : "Pick a reason")
+      : "Waiting";
+    var liveBadge = result ? BADGE[result.kind] : "Waiting";
+    if (f === "all" || (result && result.reason === f)) {
+      html += '<div class="log-row live"><div><div class="log-name">Your phone</div><div class="log-note">Sample row, driven by this screen · ' +
+        live + '</div></div><span class="badge">' + liveBadge + "</span></div>";
+    }
+    el.rows.innerHTML = html;
+  }
+
+  function renderClock(now) {
+    var remaining = result ? 0 : Math.max(0, (start + OFFER * 1000 - now) / 1000);
+    if (!closedAt && !result) {
+      el.num.textContent = Math.ceil(remaining);
+      fillEl.style.width = (remaining / OFFER * 100).toFixed(1) + "%";
+      el.clock.classList.toggle("hurry", remaining <= 10);
+    } else {
+      el.num.textContent = "0";
+      fillEl.style.width = "0%";
+      el.clock.classList.remove("hurry");
+    }
+  }
+
+  function renderState(now) {
+    renderClock(now);
+    el.yes.disabled = !!closedAt || (result && result.kind === "yes");
+    el.missed.disabled = !closedAt || !!result;
+    el.address.hidden = !(result && result.kind === "yes");
+    el.district.hidden = !!(result && result.kind === "yes");
+    el.reasons.hidden = !(result && result.kind !== "yes");
+    el.chips.forEach(function (c) {
+      c.setAttribute("aria-pressed", result && result.reason === c.getAttribute("data-reason") ? "true" : "false");
+    });
+    if (!result) {
+      el.result.hidden = true;
+      el.hint.textContent = closedAt ? "Tap if you missed this one." : "Miss the window and tap here to tell us what got in the way.";
+    } else if (result.kind === "yes") {
+      el.result.hidden = false;
+      el.result.className = "result good";
+      el.resultTitle.textContent = "You're in!";
+      el.resultBody.textContent = "The full address is yours now.";
+      el.hint.textContent = "Offer accepted.";
+    } else if (result.kind === "near") {
+      el.result.hidden = false;
+      el.result.className = "result near";
+      el.resultTitle.textContent = "That one was close!";
+      el.resultBody.textContent = "We counted it as a near miss. The next responder got it.";
+      el.hint.textContent = "Missed-offer check-in used.";
+    } else {
+      el.result.hidden = false;
+      el.result.className = "result gone";
+      el.resultTitle.textContent = "Offer moved on";
+      el.resultBody.textContent = "We counted it as a no. The next responder got it.";
+      el.hint.textContent = "Missed-offer check-in used.";
+    }
+    renderRows();
+  }
+
+  el.yes.addEventListener("click", function () {
+    if (closedAt || result) return;
+    result = { kind: "yes", late: 0, reason: null };
+    renderState(Date.now());
+  });
+
+  el.missed.addEventListener("click", function () {
+    if (!closedAt || result) return;
+    var late = (Date.now() - closedAt) / 1000;
+    result = { kind: outcomeFor(late), late: late, reason: null };
+    renderState(Date.now());
+  });
+
+  el.chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      if (!result || result.kind === "yes") return;
+      result.reason = c.getAttribute("data-reason");
+      renderState(Date.now());
+    });
+  });
+
+  el.down.addEventListener("click", function () { grace = Math.max(0, grace - 1); renderSentence(); renderRows(); });
+  el.up.addEventListener("click", function () { grace = Math.min(10, grace + 1); renderSentence(); renderRows(); });
+  el.filter.addEventListener("change", renderRows);
+
+  function tick() {
+    var now = Date.now();
+    if (!closedAt && !result && now >= start + OFFER * 1000) {
+      closedAt = start + OFFER * 1000;
+      renderState(now);
+    }
+    renderClock(now);
+  }
+
+  renderSentence();
+  renderState(Date.now());
+  setInterval(tick, 100);
+})();
+</script>
+</body>
+</html>
