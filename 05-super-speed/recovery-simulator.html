@@ -1,0 +1,191 @@
+<title>Recovery Rule Simulator</title>
+<style>
+/* Layout: one column of controls, then results. Quiet ground, one warm accent for the risk, a cool accent for recovery. */
+:root{
+  --bg:#f6f3ec; --surface:#fffdf8; --fg:#1f1c17; --muted:#6b6358; --line:#e3dccd;
+  --accent:#b4502a; --recover:#2f6f63; --warn:#a1700b;
+  --serif:"Newsreader", Georgia, serif; --sans:"Public Sans", system-ui, sans-serif; --mono:"JetBrains Mono", ui-monospace, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16140f; --surface:#1f1c16; --fg:#ece6d8; --muted:#a39a88; --line:#3a3429;
+    --accent:#e08a62; --recover:#7fc2b4; --warn:#e0b25a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16140f; --surface:#1f1c16; --fg:#ece6d8; --muted:#a39a88; --line:#3a3429;
+  --accent:#e08a62; --recover:#7fc2b4; --warn:#e0b25a;
+  color-scheme:dark;
+}
+body{margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 var(--sans);}
+.wrap{max-width:960px; margin:0 auto; padding-block:28px 48px; padding-inline:16px;}
+h1{font:600 clamp(1.6rem,1.2rem + 1.6vw,2.2rem)/1.15 var(--serif); margin:0 0 6px; text-wrap:balance;}
+.lede{color:var(--muted); max-width:62ch; margin:0 0 22px;}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:18px 18px; margin-bottom:18px;}
+.panel h2{font:600 1.1rem/1.2 var(--serif); margin:0 0 10px;}
+.controls{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
+label{display:block; font-size:.85rem; color:var(--muted); margin-bottom:4px;}
+.val{font:600 .95rem var(--mono); color:var(--fg);}
+input[type=range]{width:100%; accent-color:var(--accent);}
+.note{font-size:.85rem; color:var(--muted); margin:10px 0 0; max-width:70ch;}
+.table-wrap{overflow-x:auto;}
+table{border-collapse:collapse; width:100%; min-width:520px; font-size:.92rem;}
+th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+th{font-weight:600; color:var(--muted); font-size:.8rem; letter-spacing:.02em;}
+td.num{font-family:var(--mono); font-variant-numeric:tabular-nums;}
+.bar{position:relative; height:10px; background:var(--line); border-radius:3px; min-width:90px;}
+.bar > i{position:absolute; left:0; top:0; bottom:0; border-radius:3px; background:var(--recover);}
+.bar > i.low{background:var(--accent);}
+.grp td{background:transparent; color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; padding-top:14px; border-bottom:none;}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:.82rem; color:var(--muted); margin-top:10px;}
+.legend span::before{content:""; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; background:var(--recover);}
+.legend span.low::before{background:var(--accent);}
+.test{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:6px;}
+.test div{border:1px solid var(--line); border-radius:4px; padding:10px 12px;}
+.test b{display:block; font:600 .8rem/1.3 var(--sans); color:var(--muted); margin-bottom:4px;}
+.test span{font:600 1.25rem var(--mono); font-variant-numeric:tabular-nums;}
+.caveat{border-left:3px solid var(--warn); padding:10px 14px; background:var(--surface); font-size:.9rem; margin-top:4px;}
+</style>
+
+<div class="wrap">
+  <h1>Recovery Rule Simulator</h1>
+  <p class="lede">We took the real numbers for six heroes. Then we asked: what would their scores look like under different rules? Move the sliders to try new rules. This doesn't change anything in the real system.</p>
+
+  <section class="panel">
+    <h2>Set the rules</h2>
+    <div class="controls">
+      <div>
+        <label for="share">Out of 100 missed jobs, how many ran out of time?</label>
+        <input id="share" type="range" min="0" max="100" step="5" value="50">
+        <div class="val" id="shareVal"></div>
+      </div>
+      <div>
+        <label for="ratio">How much does running out of time hurt, compared to saying no?</label>
+        <input id="ratio" type="range" min="0" max="100" step="5" value="50">
+        <div class="val" id="ratioVal"></div>
+      </div>
+      <div>
+        <label for="drift">How much does a low score bounce back each week on its own?</label>
+        <input id="drift" type="range" min="0" max="30" step="1" value="10">
+        <div class="val" id="driftVal"></div>
+      </div>
+    </div>
+    <p class="note">The numbers don't say if a missed job was a "no" or ran out of time. So the first slider is a guess. The answers change a lot depending on it.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Each hero's score at the end of August</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hero</th><th>Today's rules</th><th>Only bounce back</th><th>Only softer timeouts</th><th>Both</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="legend"><span>Good (0.25 or more)</span><span class="low">Low (under 0.25)</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>The "says no to everything" test</h2>
+    <p class="note" style="margin:0 0 10px">One hero gets 10 jobs a week and says no to all of them, for 10 weeks.</p>
+    <div class="test" id="tests"></div>
+    <p class="note">Even with a bounce back, a hero who keeps saying no stays near the bottom. A softer timeout only helps when some of the misses are timeouts.</p>
+  </section>
+
+  <section class="panel">
+    <div class="caveat">The four heroes in trouble are our test case. Ashgrove and Halfmoon score high under every rule, so their score isn't what's dragging them down. Something else is.</div>
+  </section>
+</div>
+
+<script>
+// Weekly [sent, taken], oldest first, 2026-06-29 to 2026-08-31, from 00-rook/data/callout-history.csv.
+const DATA = {
+  "Farlight":[[12,9],[12,9],[11,8],[12,9],[13,10],[12,8],[10,4],[3,0],[1,0],[0,0]],
+  "Meteor Mite":[[11,7],[12,9],[10,6],[11,7],[12,9],[11,8],[10,4],[4,1],[2,0],[1,0]],
+  "The Undertow":[[12,9],[11,9],[12,9],[13,10],[12,10],[12,9],[11,4],[4,1],[1,0],[1,0]],
+  "Vesper":[[14,11],[13,10],[15,13],[14,11],[13,11],[14,12],[12,6],[5,1],[2,0],[1,0]],
+  "Corporal Ashgrove":[[10,8],[11,9],[10,7],[9,7],[10,8],[10,8],[10,6],[8,5],[7,5],[7,5]],
+  "Halfmoon":[[11,8],[10,7],[11,8],[12,8],[11,9],[11,8],[11,6],[9,5],[8,5],[8,7]]
+};
+const CONFIRMED = ["Farlight","Meteor Mite","The Undertow","Vesper"];
+const WATCH = ["Corporal Ashgrove","Halfmoon"];
+const NEUTRAL = 0.5, CREDIT = 0.08, PENALTY = 0.12;
+
+const clamp = v => Math.max(0, Math.min(1, v));
+
+function step(score, sent, taken, rule, s){
+  const misses = sent - taken;
+  let penalty = misses * PENALTY;
+  if (rule.weakTimeouts){
+    const timeouts = misses * s.share;
+    penalty = (misses - timeouts) * PENALTY + timeouts * PENALTY * s.ratio;
+  }
+  let next = clamp(score + taken * CREDIT - penalty);
+  if (rule.drift) next = clamp(next + s.drift * (NEUTRAL - next));
+  return next;
+}
+
+function run(events, rule, s){
+  let score = NEUTRAL;
+  for (const [sent, taken] of events) score = step(score, sent, taken, rule, s);
+  return score;
+}
+
+const RULES = {
+  current:{drift:false, weakTimeouts:false},
+  drift:{drift:true, weakTimeouts:false},
+  weak:{drift:false, weakTimeouts:true},
+  both:{drift:true, weakTimeouts:true}
+};
+
+function settings(){
+  return {
+    share: +document.getElementById("share").value / 100,
+    ratio: +document.getElementById("ratio").value / 100,
+    drift: +document.getElementById("drift").value / 100
+  };
+}
+
+function render(){
+  const s = settings();
+  document.getElementById("shareVal").textContent = Math.round(s.share*100) + " out of 100 ran out of time";
+  document.getElementById("ratioVal").textContent = "Running out of time hurts " + Math.round(s.ratio*100) + "% as much as a no";
+  document.getElementById("driftVal").textContent = "Bounces back " + Math.round(s.drift*100) + "% of the way each week";
+
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+  const groups = [["Clearly in trouble", CONFIRMED], ["Maybe starting to slip", WATCH]];
+  for (const [label, names] of groups){
+    const g = document.createElement("tr");
+    g.className = "grp";
+    g.innerHTML = `<td colspan="5">${label}</td>`;
+    rows.appendChild(g);
+    for (const name of names){
+      const tr = document.createElement("tr");
+      let html = `<td>${name}</td>`;
+      for (const rule of Object.values(RULES)){
+        const v = run(DATA[name], rule, s);
+        const pct = Math.round(v*100);
+        html += `<td><div class="bar"><i class="${v < 0.25 ? "low" : ""}" style="width:${pct}%"></i></div><span class="num">${v.toFixed(2)}</span></td>`;
+      }
+      tr.innerHTML = html;
+      rows.appendChild(tr);
+    }
+  }
+
+  const decliner = Array(10).fill([10,0]);
+  const tests = document.getElementById("tests");
+  tests.innerHTML = "";
+  const names = {current:"Today's rules", drift:"Only bounce back", weak:"Only softer timeouts", both:"Both"};
+  for (const [key, rule] of Object.entries(RULES)){
+    const v = run(decliner, rule, s);
+    const d = document.createElement("div");
+    d.innerHTML = `<b>${names[key]}</b><span>${v.toFixed(2)}</span>`;
+    tests.appendChild(d);
+  }
+}
+
+for (const id of ["share","ratio","drift"]) document.getElementById(id).addEventListener("input", render);
+render();
+</script>

@@ -302,3 +302,21 @@ One concrete clue already in hand, worth raising directly with Wen or Marcus: Ki
 | 6 | Early-stage collapse (Ashgrove & Halfmoon) | **If** they're early-stage cases of the same mechanism, **then** their weekly offer volume will keep declining monotonically toward zero, **because** they'd be following the same two-stage curve already observed | Their numbers keep sliding with no bounce-back over the next 2-3 weeks | Their numbers stabilize or recover on their own | Low (needs time to pass) |
 
 **Recommendation:** prioritize #1 and #2 together — they cover the full causal chain (proximity as the likely trigger, broken score-recovery as why it never lets go), both are resolvable with a single data pull or conversation rather than weeks of waiting, and both are backed by evidence already in hand: the hand-simulated score hit the literal floor (0.00) for three of four responders by 08-31, and the same four were the exact bottom-four responders in 3 of 4 post-4.2 weeks despite never being near the bottom before the release.
+
+---
+
+## Recovery rule simulation: results and confidence
+
+Built in `05-super-speed/recovery_simulation.py` and published as the [Recovery Rule Simulator](https://claude.ai/artifact/1ZbzXkgzC87vt7DP3PD9Ya). It replays the real weekly callout counts for six heroes under four rules: today's rules, a bounce back each week, a softer timeout penalty, and both together.
+
+**Findings:**
+- A bounce back alone barely helps. Under the simulated bounce-back, the four heroes end at 0.05, up from 0.00 today. The weekly penalty pushes them back down.
+- A softer timeout penalty does the most. The four heroes rise to roughly 0.3–0.4 if half of misses are timeouts, and 0.66–0.72 if all misses are timeouts.
+- At 0% timeouts, the softer penalty changes nothing. Every miss is a no, so the rule is the same as today.
+- Ashgrove and Halfmoon sit near 1.00 under every rule. Their score isn't what's pulling them down, so their decline has to come from somewhere else.
+- A hero who says no to every job stays near the floor under every rule.
+
+**Confidence: 45/100.**
+- *Lower because:* the timeout share is a guess. The weekly data can't separate a timeout from a no, and the answer swings a lot with that number. The simulation tracks scores only, not offer volume. It also treats each week's events as one batch, and the live system processes them one at a time.
+- *Higher because:* the basic result holds under every setting: today's rules never recover the four, and a bounce back alone isn't enough. The starting point comes from the real data.
+- *What would raise it to about 75:* the real timeout-versus-no split from logs, Wen confirming the scoring formula, and Ravi's actual score history to check the simulated starting points.
