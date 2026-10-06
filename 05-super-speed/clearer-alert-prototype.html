@@ -1,0 +1,557 @@
+<title>Clearer Offer Alert</title>
+<meta name="description" content="Prototype comparing the current offer alert with a clearer proposed design.">
+<style>
+  /* Layout: two phones side by side on wide screens, stacked on phones.
+     Controls and explanation sit under the phones in single-column cards. */
+
+  /* Page tokens, light first */
+  :root {
+    --bg: #f4f3ef;
+    --fg: #1e2026;
+    --panel: #ffffff;
+    --line: #d6d3ca;
+    --muted: #4f5561;
+    --accent: #245b8f;
+    --focus: #b45309;
+    --btn-bg: #ffffff;
+    --btn-on: #245b8f;
+    --btn-on-fg: #ffffff;
+
+    /* Current design (fixed, low contrast on purpose) */
+    --now-bg: #efefef;
+    --now-fg: #9a9a9a;
+    --now-btn: #d4d4d4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171c;
+      --fg: #eceef2;
+      --panel: #1f2229;
+      --line: #3a3f4a;
+      --muted: #b7bcc7;
+      --accent: #8ab4f8;
+      --focus: #fbbf24;
+      --btn-bg: #1f2229;
+      --btn-on: #8ab4f8;
+      --btn-on-fg: #10131a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171c;
+    --fg: #eceef2;
+    --panel: #1f2229;
+    --line: #3a3f4a;
+    --muted: #b7bcc7;
+    --accent: #8ab4f8;
+    --focus: #fbbf24;
+    --btn-bg: #1f2229;
+    --btn-on: #8ab4f8;
+    --btn-on-fg: #10131a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-inline: 16px;
+    padding-block: 24px 40px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; min-width: 0; }
+  h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 8px; text-wrap: balance; }
+  h2 { font-size: 1.1rem; margin: 0 0 10px; text-wrap: balance; }
+  p { margin: 0 0 8px; }
+  .lede { color: var(--muted); max-width: 62ch; }
+  .tag {
+    display: inline-block;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-bottom: 12px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--btn-bg);
+  }
+  button[aria-pressed="true"] {
+    background: var(--btn-on);
+    color: var(--btn-on-fg);
+    border-color: var(--btn-on);
+  }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .stage {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin: 28px 0;
+    justify-items: center;
+  }
+  .phone-wrap { width: 100%; max-width: 320px; min-width: 0; text-align: center; }
+  .caption { font-weight: 700; margin-bottom: 10px; }
+  .caption small { display: block; font-weight: 400; color: var(--muted); }
+
+  /* Phone frame */
+  .phone {
+    background: #111;
+    border-radius: 34px;
+    padding: 12px;
+    margin: 0;
+  }
+  .screen {
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 430px;
+    padding: 18px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+    background: var(--m-bg);
+    color: var(--m-fg);
+  }
+
+  /* Current design: small, faint, one bing for everyone */
+  .now .screen { background: var(--now-bg); color: var(--now-fg); font-size: 11px; }
+  .now .incident { font-size: 12px; font-weight: 400; margin: 0; }
+  .now .secs { font-size: 11px; margin: 0; }
+  .now .big-none { display: none; }
+  .now .btns span {
+    background: var(--now-btn);
+    color: var(--now-fg);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    flex: 1;
+    text-align: center;
+  }
+  .now .note { font-size: 10px; margin-top: auto; }
+
+  /* Proposed design: text size, contrast and theme set by variables */
+  .proposed { --ts: 1; }
+  .proposed.ts-large { --ts: 1.3; }
+  .proposed.ts-xl { --ts: 1.6; }
+  .proposed .screen {
+    --m-bg: #ffffff;
+    --m-fg: #22252b;
+    --m-muted: #4a4f5a;
+    --m-accent: #1d4f7f;
+    --m-btn: #e6ecf3;
+    --m-bar: #1d4f7f;
+    font-size: calc(15px * var(--ts));
+  }
+  .proposed.hc .screen {
+    --m-bg: #ffffff;
+    --m-fg: #000000;
+    --m-muted: #000000;
+    --m-accent: #0a3d91;
+    --m-btn: #ffffff;
+    --m-bar: #000000;
+  }
+  .proposed.is-dark .screen {
+    --m-bg: #1c1e24;
+    --m-fg: #f1f2f5;
+    --m-muted: #c9ccd3;
+    --m-accent: #9ccbff;
+    --m-btn: #2b2f38;
+    --m-bar: #9ccbff;
+  }
+  .proposed.is-dark.hc .screen {
+    --m-bg: #000000;
+    --m-fg: #ffffff;
+    --m-muted: #ffffff;
+    --m-accent: #b8dcff;
+    --m-btn: #111111;
+    --m-bar: #ffffff;
+  }
+  .proposed .kicker { color: var(--m-muted); font-size: calc(0.8em * var(--ts)); text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+  .proposed .incident { font-size: calc(1.5em * var(--ts)); font-weight: 700; line-height: 1.2; margin: 0; text-wrap: balance; color: var(--m-accent); }
+  .proposed .secs-row { display: flex; align-items: baseline; gap: 8px; }
+  .proposed .secs-num {
+    font-size: calc(4.5em * var(--ts));
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--m-fg);
+  }
+  .proposed .secs-label { font-size: calc(1em * var(--ts)); color: var(--m-muted); font-weight: 600; }
+  .proposed .bar { height: 10px; border-radius: 6px; background: var(--m-btn); overflow: hidden; }
+  .proposed .bar > i { display: block; height: 100%; background: var(--m-bar); width: 100%; }
+  .proposed .btns { display: flex; gap: 10px; margin-top: 4px; }
+  .proposed .btns span {
+    flex: 1;
+    text-align: center;
+    padding: calc(12px * var(--ts)) 6px;
+    border-radius: 12px;
+    background: var(--m-btn);
+    color: var(--m-fg);
+    font-weight: 700;
+    font-size: calc(1em * var(--ts));
+    border: 2px solid var(--m-fg);
+  }
+  .proposed .btns span.yes { background: var(--m-fg); color: var(--m-bg); }
+  .proposed .sound-label { font-size: calc(0.9em * var(--ts)); color: var(--m-muted); margin: auto 0 0; }
+  .proposed .ended { font-size: calc(1.2em * var(--ts)); font-weight: 700; color: var(--m-fg); margin: 0; }
+
+  .phone-note { font-size: 0.9rem; color: var(--muted); margin-top: 10px; }
+
+  /* Panels */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 20px;
+    min-width: 0;
+  }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .control-group { margin-bottom: 16px; }
+  .control-group > .label { font-weight: 700; display: block; margin-bottom: 8px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .play-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .play-row .who { font-weight: 700; min-width: 120px; }
+  .sound-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .preview { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .preview li {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    min-width: 0;
+  }
+  .preview .swatch { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--accent); }
+  .preview .text { min-width: 0; overflow-wrap: anywhere; }
+  .warn { color: var(--focus); font-weight: 700; margin-top: 10px; min-height: 1.5em; }
+
+  ul.plain { margin: 0; padding-left: 20px; }
+  ul.plain li { margin-bottom: 8px; }
+  .fine { font-size: 0.85rem; color: var(--muted); margin-top: 20px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <span class="tag">Proposal for design review</span>
+  <h1>Clearer Offer Alert</h1>
+  <p class="lede">An offer is a request for a responder to attend an incident. Handlers told us the current alert is hard to read, every phone makes the same sound, and the screen is too bright at night. This page shows one possible fix. Nothing here is shipped.</p>
+
+  <div class="stage" role="group" aria-label="Phone mockups">
+    <div class="phone-wrap">
+      <div class="caption">Now <small>Current design</small></div>
+      <figure class="phone now" style="margin:0" aria-label="Current offer alert">
+        <div class="screen">
+          <p class="kicker-now">New offer</p>
+          <p class="incident">Building fire, 2nd floor</p>
+          <p class="secs">Time left: <span data-secs>60</span> s</p>
+          <div class="btns" style="display:flex;gap:6px"><span>Decline</span><span>Accept</span></div>
+          <p class="note">Sound: bing (same for every responder)</p>
+        </div>
+      </figure>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="caption">Proposed <small>Clearer offer alert</small></div>
+      <figure class="phone proposed" id="proposed" style="margin:0" aria-label="Proposed offer alert">
+        <div class="screen">
+          <p class="kicker">New offer</p>
+          <p class="incident">Building fire, 2nd floor</p>
+          <div class="secs-row">
+            <span class="secs-num" data-secs>60</span>
+            <span class="secs-label">seconds left</span>
+          </div>
+          <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+          <div class="btns"><span class="yes">Accept</span><span>Decline</span></div>
+          <p class="sound-label" id="sound-label">Your sound: Chime</p>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <div class="seg" role="group" aria-label="Offer timer">
+    <button type="button" id="toggle" aria-pressed="false">Start 60-second countdown</button>
+    <button type="button" id="reset">Reset to 60</button>
+  </div>
+  <p class="phone-note" id="status" aria-live="polite">Press start to count down both phones together.</p>
+
+  <section class="panel" aria-labelledby="ctl-h">
+    <h2 id="ctl-h">Try the proposed design</h2>
+    <div class="grid-2">
+      <div>
+        <div class="control-group">
+          <span class="label" id="lbl-ts">Text size</span>
+          <div class="seg" role="group" aria-labelledby="lbl-ts">
+            <button type="button" data-set="ts" data-val="normal" aria-pressed="true">Normal</button>
+            <button type="button" data-set="ts" data-val="large" aria-pressed="false">Large</button>
+            <button type="button" data-set="ts" data-val="xl" aria-pressed="false">Extra large</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="label" id="lbl-ct">Contrast</span>
+          <div class="seg" role="group" aria-labelledby="lbl-ct">
+            <button type="button" data-set="ct" data-val="standard" aria-pressed="true">Standard</button>
+            <button type="button" data-set="ct" data-val="high" aria-pressed="false">High</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="label" id="lbl-th">Theme</span>
+          <div class="seg" role="group" aria-labelledby="lbl-th">
+            <button type="button" data-set="th" data-val="light" aria-pressed="true">Light</button>
+            <button type="button" data-set="th" data-val="dark" aria-pressed="false">Dark</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="label" id="lbl-view">Show the proposed phone as</span>
+          <div class="seg" role="group" aria-labelledby="lbl-view">
+            <button type="button" data-set="who" data-val="A" aria-pressed="true">Responder A</button>
+            <button type="button" data-set="who" data-val="B" aria-pressed="false">Responder B</button>
+            <button type="button" data-set="who" data-val="C" aria-pressed="false">Responder C</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2>Pick a sound per responder</h2>
+        <p class="fine" style="margin-top:0">Tap a sound to hear it and set it for that responder. Each responder should get a different sound.</p>
+        <div id="pickers"></div>
+        <h2 style="margin-top:14px">Preview</h2>
+        <ul class="preview" id="preview" aria-label="Sound for each responder"></ul>
+        <p class="warn" id="dup" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-2">
+    <section class="panel" aria-labelledby="why-h">
+      <h2 id="why-h">Why change the alert</h2>
+      <ul class="plain">
+        <li><strong>Hard to read.</strong> The current text is small and light grey. The proposed text is larger and darker, with the time in big numbers.</li>
+        <li><strong>Same sound for everyone.</strong> Every phone goes bing, so a responder cannot tell whose offer it is. Each responder can have a sound of their own.</li>
+        <li><strong>Too bright at night.</strong> The current screen is bright white. A dark theme gives a softer screen.</li>
+      </ul>
+    </section>
+
+    <section class="panel" aria-labelledby="todo-h">
+      <h2 id="todo-h">Still to decide</h2>
+      <ul class="plain">
+        <li><strong>Dark at night.</strong> Should the new design switch to dark by default after dark, or stay light until a handler turns dark on?</li>
+        <li><strong>How loud.</strong> How loud should each sound be, and should the sound change when a phone is set to quiet?</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="fine">Rook Industries is a fictional company. The responders and incidents on this page are examples only.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SOUNDS = {
+    chime: { name: "Chime", desc: "Two bright notes, going up" },
+    pulse: { name: "Pulse", desc: "Two short beeps" },
+    bell:  { name: "Bell",  desc: "One low ring that fades" },
+    ping:  { name: "Ping",  desc: "One quick blip, rising" }
+  };
+  var RESPONDERS = ["A", "B", "C"];
+  var choice = { A: "chime", B: "pulse", C: "bell" };
+  var state = { ts: "normal", ct: "standard", th: "light", who: "A", secs: 60, running: false };
+  var timer = null;
+  var ctx = null;
+
+  var proposed = document.getElementById("proposed");
+
+  // Audio: created only after a click. Tones are built in code, no files.
+  function audio() {
+    try {
+      if (!ctx) {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (!C) return null;
+        ctx = new C();
+      }
+      if (ctx.state === "suspended") { ctx.resume(); }
+      return ctx;
+    } catch (e) { return null; }
+  }
+  function tone(c, type, freq, start, dur, vol, freqEnd) {
+    var o = c.createOscillator();
+    var g = c.createGain();
+    var t0 = c.currentTime + start;
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) { o.frequency.exponentialRampToValueAtTime(freqEnd, t0 + dur); }
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g);
+    g.connect(c.destination);
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+  }
+  var PLAY = {
+    chime: function (c) { tone(c, "sine", 880, 0, 0.25, 0.25); tone(c, "sine", 1320, 0.22, 0.35, 0.25); },
+    pulse: function (c) { tone(c, "square", 600, 0, 0.12, 0.08); tone(c, "square", 600, 0.2, 0.12, 0.08); },
+    bell:  function (c) { tone(c, "triangle", 660, 0, 0.9, 0.3); },
+    ping:  function (c) { tone(c, "sine", 500, 0, 0.3, 0.25, 1000); }
+  };
+  function playSound(key) {
+    try {
+      var c = audio();
+      if (c && PLAY[key]) { PLAY[key](c); }
+    } catch (e) { /* sound is optional */ }
+  }
+
+  // Build sound pickers
+  var pickers = document.getElementById("pickers");
+  RESPONDERS.forEach(function (r) {
+    var row = document.createElement("div");
+    row.className = "play-row";
+    var who = document.createElement("span");
+    who.className = "who";
+    who.textContent = "Responder " + r;
+    row.appendChild(who);
+    var btns = document.createElement("div");
+    btns.className = "sound-btns";
+    Object.keys(SOUNDS).forEach(function (key) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = SOUNDS[key].name;
+      b.setAttribute("data-sound", key);
+      b.setAttribute("data-who", r);
+      b.setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-label", "Responder " + r + ": " + SOUNDS[key].name + ". Plays the sound.");
+      btns.appendChild(b);
+    });
+    row.appendChild(btns);
+    pickers.appendChild(row);
+  });
+
+  function setPressed(group, val) {
+    document.querySelectorAll('[data-set="' + group + '"]').forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-val") === val));
+    });
+  }
+
+  function renderSecs() {
+    document.querySelectorAll("[data-secs]").forEach(function (el) {
+      el.textContent = String(state.secs);
+    });
+    document.getElementById("bar").style.width = (state.secs / 60 * 100) + "%";
+    var status = document.getElementById("status");
+    if (state.secs <= 0) {
+      status.textContent = "Offer ended. Both phones show the timeout.";
+    }
+  }
+
+  function renderSound() {
+    var key = choice[state.who];
+    document.getElementById("sound-label").textContent = "Your sound: " + SOUNDS[key].name;
+    document.querySelectorAll("[data-sound]").forEach(function (b) {
+      var r = b.getAttribute("data-who");
+      b.setAttribute("aria-pressed", String(choice[r] === b.getAttribute("data-sound")));
+    });
+    var list = document.getElementById("preview");
+    list.textContent = "";
+    RESPONDERS.forEach(function (r) {
+      var li = document.createElement("li");
+      var sw = document.createElement("span");
+      sw.className = "swatch";
+      var tx = document.createElement("span");
+      tx.className = "text";
+      tx.textContent = "Responder " + r + ": " + SOUNDS[choice[r]].name + ". " + SOUNDS[choice[r]].desc + ".";
+      li.appendChild(sw);
+      li.appendChild(tx);
+      list.appendChild(li);
+    });
+    var used = {};
+    var dup = false;
+    RESPONDERS.forEach(function (r) { if (used[choice[r]]) { dup = true; } used[choice[r]] = true; });
+    document.getElementById("dup").textContent = dup ? "Two responders share a sound. Pick different sounds so a handler can tell them apart." : "";
+  }
+
+  function renderStyle() {
+    proposed.className = "phone proposed";
+    if (state.ts === "large") { proposed.classList.add("ts-large"); }
+    if (state.ts === "xl") { proposed.classList.add("ts-xl"); }
+    if (state.ct === "high") { proposed.classList.add("hc"); }
+    if (state.th === "dark") { proposed.classList.add("is-dark"); }
+    setPressed("ts", state.ts);
+    setPressed("ct", state.ct);
+    setPressed("th", state.th);
+    setPressed("who", state.who);
+  }
+
+  function tick() {
+    if (state.secs > 0) { state.secs -= 1; }
+    renderSecs();
+    if (state.secs <= 0) { stop(); }
+  }
+  function stop() {
+    state.running = false;
+    clearInterval(timer);
+    timer = null;
+    var t = document.getElementById("toggle");
+    t.textContent = "Start 60-second countdown";
+    t.setAttribute("aria-pressed", "false");
+  }
+
+  document.getElementById("toggle").addEventListener("click", function () {
+    audio();
+    if (state.running) { stop(); return; }
+    if (state.secs <= 0) { state.secs = 60; }
+    state.running = true;
+    var t = document.getElementById("toggle");
+    t.textContent = "Pause";
+    t.setAttribute("aria-pressed", "true");
+    document.getElementById("status").textContent = "Counting down. Both phones show the same time.";
+    renderSecs();
+    timer = setInterval(tick, 1000);
+  });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    stop();
+    state.secs = 60;
+    renderSecs();
+    document.getElementById("status").textContent = "Reset to 60 seconds.";
+  });
+
+  document.body.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) { return; }
+    if (b.hasAttribute("data-set")) {
+      state[b.getAttribute("data-set")] = b.getAttribute("data-val");
+      renderStyle();
+      renderSound();
+      return;
+    }
+    if (b.hasAttribute("data-sound")) {
+      var r = b.getAttribute("data-who");
+      var key = b.getAttribute("data-sound");
+      choice[r] = key;
+      playSound(key);
+      renderSound();
+    }
+  });
+
+  renderSecs();
+  renderStyle();
+  renderSound();
+})();
+</script>
