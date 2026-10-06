@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Offer Outcome Log</title>
+<style>
+/* Layout: one narrow column, a banner, a filter row, a summary card, then two plain panels. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --fg: #1d1f24;
+  --muted: #5d6270;
+  --line: #d9dbe2;
+  --accent: #2f5fa7;
+  --accent-fg: #ffffff;
+  --sample-bg: #fff1c2;
+  --sample-fg: #5c4500;
+  --timeout: #b4502a;
+  --no: #6b4fa0;
+  --yes: #2d7a4f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171c;
+    --surface: #20232b;
+    --fg: #eceef3;
+    --muted: #a6acba;
+    --line: #3a3f4b;
+    --accent: #8fb3ea;
+    --accent-fg: #10233f;
+    --sample-bg: #4a3b10;
+    --sample-fg: #ffe9a8;
+    --timeout: #f0a27e;
+    --no: #bca6e6;
+    --yes: #7fd1a0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171c;
+  --surface: #20232b;
+  --fg: #eceef3;
+  --muted: #a6acba;
+  --line: #3a3f4b;
+  --accent: #8fb3ea;
+  --accent-fg: #10233f;
+  --sample-bg: #4a3b10;
+  --sample-fg: #ffe9a8;
+  --timeout: #f0a27e;
+  --no: #bca6e6;
+  --yes: #7fd1a0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding-inline: 16px;
+  padding-block: 20px 40px;
+}
+main { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-size: 1.6rem; margin: 0; line-height: 1.2; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+
+.sample-banner {
+  background: var(--sample-bg);
+  color: var(--sample-fg);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.filters button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-width: 0; }
+.stat .num { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .label { color: var(--muted); font-size: 0.9rem; }
+.stat.share { grid-column: 1 / -1; }
+.stat.share .num { color: var(--timeout); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+tr:last-child td { border-bottom: none; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; }
+.tag.yes { color: var(--yes); }
+.tag.no { color: var(--no); }
+.tag.timeout { color: var(--timeout); }
+.empty { padding: 14px; color: var(--muted); }
+
+ul { margin: 8px 0 0; padding-left: 20px; }
+li { margin-bottom: 6px; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: 0.9em; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="sample-banner">SAMPLE DATA. These rows are made up for practice. They are not real.</div>
+
+  <header>
+    <h1>Offer Outcome Log</h1>
+    <p class="muted">Each row is one offer sent to one responder. We want to know why an offer was not taken.</p>
+  </header>
+
+  <section class="card" aria-labelledby="log-title">
+    <h2 id="log-title">Offer log</h2>
+    <div class="filters" role="group" aria-label="Filter rows by outcome">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="yes" aria-pressed="false">Yes</button>
+      <button type="button" data-filter="no" aria-pressed="false">No</button>
+      <button type="button" data-filter="timeout" aria-pressed="false">Timed out</button>
+    </div>
+    <p class="muted" id="row-count" style="margin:10px 0" aria-live="polite"></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Responder</th><th>Incident</th><th>Outcome</th><th>Seconds waited</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-title">
+    <h2 id="sum-title">Summary (all sample rows)</h2>
+    <div class="summary">
+      <div class="stat"><div class="num" id="c-yes">0</div><div class="label">Yes</div></div>
+      <div class="stat"><div class="num" id="c-no">0</div><div class="label">No (said no)</div></div>
+      <div class="stat"><div class="num" id="c-timeout">0</div><div class="label">Timed out</div></div>
+      <div class="stat"><div class="num" id="c-total">0</div><div class="label">Total offers</div></div>
+      <div class="stat share">
+        <div class="num" id="c-share">0%</div>
+        <div class="label">Timeout share: timed out, divided by all misses (no + timed out)</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="why-title">
+    <h2 id="why-title">Why this matters</h2>
+    <p>A missed offer can mean two things. The responder said no, or the timer ran out before they answered. If we count both as one "not taken," we cannot tell which problem we have. A timeout points to a timer that is too short. A no points to the offer itself, or to who got it.</p>
+  </section>
+
+  <section class="card" aria-labelledby="rec-title">
+    <h2 id="rec-title">What gets recorded</h2>
+    <p>We would add four fields to every offer:</p>
+    <ul>
+      <li><strong>Outcome type</strong>: Yes, No, or Timed out.</li>
+      <li><strong>Timestamp</strong>: the exact time the outcome was set.</li>
+      <li><strong>Seconds waited</strong>: how long the offer stayed open.</li>
+      <li><strong>Offer window length</strong>: the time limit used, either <code>60</code> or <code>90</code> seconds.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+// SAMPLE DATA ONLY. Responder names and incident ids are invented.
+// window = offer time limit in seconds (60 or 90).
+var ROWS = [
+  { t: "09:02:11", r: "Tern",      i: "INC-101", o: "yes",     s: 14, w: 60 },
+  { t: "09:04:37", r: "Harrow",    i: "INC-102", o: "timeout", s: 60, w: 60 },
+  { t: "09:06:02", r: "Quill",     i: "INC-102", o: "no",      s: 22, w: 60 },
+  { t: "09:08:45", r: "Brindle",   i: "INC-103", o: "yes",     s: 9,  w: 60 },
+  { t: "09:11:20", r: "Marlow",    i: "INC-104", o: "timeout", s: 60, w: 60 },
+  { t: "09:13:58", r: "Tern",      i: "INC-105", o: "yes",     s: 31, w: 60 },
+  { t: "09:16:03", r: "Sorrel",    i: "INC-106", o: "no",      s: 7,  w: 60 },
+  { t: "09:18:29", r: "Harrow",    i: "INC-107", o: "timeout", s: 90, w: 90 },
+  { t: "09:21:14", r: "Brindle",   i: "INC-108", o: "yes",     s: 18, w: 60 },
+  { t: "09:23:50", r: "Quill",     i: "INC-109", o: "yes",     s: 40, w: 90 },
+  { t: "09:26:07", r: "Marlow",    i: "INC-110", o: "no",      s: 12, w: 60 },
+  { t: "09:28:41", r: "Sorrel",    i: "INC-111", o: "timeout", s: 60, w: 60 },
+  { t: "09:31:16", r: "Tern",      i: "INC-112", o: "yes",     s: 5,  w: 60 },
+  { t: "09:33:52", r: "Pell",      i: "INC-113", o: "timeout", s: 90, w: 90 },
+  { t: "09:36:27", r: "Brindle",   i: "INC-114", o: "no",      s: 25, w: 60 },
+  { t: "09:39:05", r: "Harrow",    i: "INC-115", o: "yes",     s: 47, w: 90 },
+  { t: "09:41:33", r: "Quill",     i: "INC-116", o: "timeout", s: 60, w: 60 },
+  { t: "09:44:10", r: "Sorrel",    i: "INC-117", o: "yes",     s: 16, w: 60 },
+  { t: "09:46:48", r: "Marlow",    i: "INC-118", o: "no",      s: 3,  w: 60 },
+  { t: "09:49:22", r: "Pell",      i: "INC-119", o: "yes",     s: 62, w: 90 },
+  { t: "09:52:00", r: "Tern",      i: "INC-120", o: "timeout", s: 60, w: 60 },
+  { t: "09:54:36", r: "Brindle",   i: "INC-121", o: "yes",     s: 11, w: 60 },
+  { t: "09:57:14", r: "Harrow",    i: "INC-122", o: "no",      s: 30, w: 90 },
+  { t: "10:00:49", r: "Quill",     i: "INC-123", o: "yes",     s: 21, w: 60 },
+  { t: "10:03:25", r: "Sorrel",    i: "INC-124", o: "timeout", s: 90, w: 90 },
+  { t: "10:06:01", r: "Marlow",    i: "INC-125", o: "yes",     s: 8,  w: 60 },
+  { t: "10:08:37", r: "Pell",      i: "INC-126", o: "no",      s: 19, w: 60 },
+  { t: "10:11:12", r: "Tern",      i: "INC-127", o: "timeout", s: 60, w: 60 },
+  { t: "10:13:46", r: "Brindle",   i: "INC-128", o: "yes",     s: 27, w: 60 },
+  { t: "10:16:20", r: "Harrow",    i: "INC-129", o: "no",      s: 44, w: 90 },
+  { t: "10:18:55", r: "Quill",     i: "INC-130", o: "yes",     s: 13, w: 60 }
+];
+
+var LABELS = { yes: "Yes", no: "No", timeout: "Timed out" };
+var filter = "all";
+
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+
+function renderRows() {
+  var shown = ROWS.filter(function (row) { return filter === "all" || row.o === filter; });
+  var html = shown.map(function (row) {
+    return "<tr>" +
+      "<td>" + esc(row.t) + "</td>" +
+      "<td>" + esc(row.r) + "</td>" +
+      "<td>" + esc(row.i) + "</td>" +
+      "<td><span class=\"tag " + row.o + "\">" + LABELS[row.o] + "</span></td>" +
+      "<td>" + row.s + " of " + row.w + "</td>" +
+      "</tr>";
+  }).join("");
+  document.getElementById("rows").innerHTML = html || "<tr><td class=\"empty\" colspan=\"5\">No rows match this filter.</td></tr>";
+  document.getElementById("row-count").textContent = "Showing " + shown.length + " of " + ROWS.length + " sample rows.";
+}
+
+function renderSummary() {
+  var yes = 0, no = 0, timeout = 0;
+  ROWS.forEach(function (row) {
+    if (row.o === "yes") yes++;
+    else if (row.o === "no") no++;
+    else if (row.o === "timeout") timeout++;
+  });
+  var misses = no + timeout;
+  var share = misses === 0 ? 0 : Math.round((timeout / misses) * 100);
+  document.getElementById("c-yes").textContent = yes;
+  document.getElementById("c-no").textContent = no;
+  document.getElementById("c-timeout").textContent = timeout;
+  document.getElementById("c-total").textContent = ROWS.length;
+  document.getElementById("c-share").textContent = share + "%";
+}
+
+function setFilter(next) {
+  filter = next;
+  var buttons = document.querySelectorAll("[data-filter]");
+  for (var k = 0; k < buttons.length; k++) {
+    buttons[k].setAttribute("aria-pressed", buttons[k].getAttribute("data-filter") === next ? "true" : "false");
+  }
+  renderRows();
+}
+
+document.querySelector(".filters").addEventListener("click", function (e) {
+  var btn = e.target.closest("[data-filter]");
+  if (btn) setFilter(btn.getAttribute("data-filter"));
+});
+
+renderRows();
+renderSummary();
+</script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Score Bounce-Back Explorer</title>
+<style>
+/* Layout: one narrow reading column, a slider on top, the chart in the middle, the explanation below. */
+:root {
+  --bg: #f6f4ef;
+  --panel: #ffffff;
+  --fg: #1d1f24;
+  --muted: #5d6170;
+  --line: #d9d6cc;
+  --accent: #2d6a6f;
+  --middle: #8a4b2a;
+  --grid: #e4e1d8;
+  --s1: #2d6a6f;
+  --s2: #b5562f;
+  --s3: #6b4fa0;
+  --s4: #3d7a3a;
+  --s5: #c0901c;
+  --s6: #2a5d9f;
+  --partial: #c2185b;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171c;
+    --panel: #1d2028;
+    --fg: #ecebe6;
+    --muted: #a7abb8;
+    --line: #3a3e4a;
+    --accent: #7fc4c9;
+    --middle: #e0a07c;
+    --grid: #2c3039;
+    --s1: #7fc4c9;
+    --s2: #e8906a;
+    --s3: #b7a2e6;
+    --s4: #8fcf86;
+    --s5: #e6c061;
+    --s6: #8cb8ea;
+    --partial: #f07aa6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171c;
+  --panel: #1d2028;
+  --fg: #ecebe6;
+  --muted: #a7abb8;
+  --line: #3a3e4a;
+  --accent: #7fc4c9;
+  --middle: #e0a07c;
+  --grid: #2c3039;
+  --s1: #7fc4c9;
+  --s2: #e8906a;
+  --s3: #b7a2e6;
+  --s4: #8fcf86;
+  --s5: #e6c061;
+  --s6: #8cb8ea;
+  --partial: #f07aa6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 20px 40px;
+}
+main { max-width: 680px; margin: 0 auto; min-width: 0; }
+h1 {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.6rem;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.lede { color: var(--muted); margin: 0 0 20px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+label.q {
+  display: block;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.slider-row { display: flex; align-items: center; gap: 12px; }
+input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.value {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 3.2em;
+  text-align: right;
+}
+.plain { margin: 12px 0 0; }
+.chart-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+svg.chart { display: block; min-width: 480px; width: 100%; height: auto; }
+.chart text {
+  fill: var(--muted);
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.legend {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 14px;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+}
+.legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.swatch { width: 14px; height: 4px; border-radius: 2px; flex: none; }
+.result {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  border-left: 3px solid var(--partial);
+  padding: 4px 0 4px 12px;
+  margin: 0;
+}
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.note strong { color: var(--fg); }
+h2 {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+details summary { cursor: pointer; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; font-weight: 600; }
+details p { margin: 8px 0 0; }
+input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Score Bounce-Back Explorer</h1>
+  <p class="lede">Each responder has a yes-score from 0 to 1. It starts at 0.5, the middle. Move the slider to see what happens when a low score drifts back toward the middle each week.</p>
+
+  <section class="panel" aria-labelledby="q">
+    <label class="q" id="q" for="rate">How much of the way back to the middle does a low score climb each week?</label>
+    <div class="slider-row">
+      <input type="range" id="rate" min="0" max="30" step="1" value="0">
+      <span class="value" id="rateValue">0%</span>
+    </div>
+    <p class="plain" id="rateSentence"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="chartTitle">
+    <h2 id="chartTitle">Each hero's score, week by week</h2>
+    <div class="chart-wrap">
+      <svg class="chart" id="chart" viewBox="0 0 600 340" role="img" aria-label="Line chart of each hero's score from week 0 to week 10"></svg>
+    </div>
+    <ul class="legend" id="legend"></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="partialTitle">
+    <h2 id="partialTitle">The partial refuser</h2>
+    <p class="note" style="margin-bottom:10px">This hero says yes to 1 job in every 3 and misses the other 2. That is 9 offers a week, 3 taken and 6 missed, for 10 weeks.</p>
+    <p class="result" id="partialResult"></p>
+  </section>
+
+  <section class="panel">
+    <p class="note"><strong>Please read:</strong> this model assumes a score climbs back toward the middle even in a week with no yes at all. The real routing rule does not work this way today. Whether the score should climb back, and how fast, is a design choice, not a fact about the system.</p>
+    <details style="margin-top:12px">
+      <summary>How the math works</summary>
+      <p class="note">Each week is treated as one batch. A yes adds 0.08. A missed offer takes away 0.12. The score stays between 0 and 1. Then, with the bounce-back rate, the score moves that fraction of the way back toward 0.5. Real weeks are not split into single offers, so this is an approximation.</p>
+    </details>
+  </section>
+</main>
+
+<script>
+(function () {
+  var HEROES = [
+    { name: "Farlight", color: "var(--s1)", rows: [[12,9],[12,9],[11,8],[12,9],[13,10],[12,8],[10,4],[3,0],[1,0],[0,0]] },
+    { name: "Meteor Mite", color: "var(--s2)", rows: [[11,7],[12,9],[10,6],[11,7],[12,9],[11,8],[10,4],[4,1],[2,0],[1,0]] },
+    { name: "The Undertow", color: "var(--s3)", rows: [[12,9],[11,9],[12,9],[13,10],[12,10],[12,9],[11,4],[4,1],[1,0],[1,0]] },
+    { name: "Vesper", color: "var(--s4)", rows: [[14,11],[13,10],[15,13],[14,11],[13,11],[14,12],[12,6],[5,1],[2,0],[1,0]] },
+    { name: "Corporal Ashgrove", color: "var(--s5)", rows: [[10,8],[11,9],[10,7],[9,7],[10,8],[10,8],[10,6],[8,5],[7,5],[7,5]] },
+    { name: "Halfmoon", color: "var(--s6)", rows: [[11,8],[10,7],[11,8],[12,8],[11,9],[11,8],[11,6],[9,5],[8,5],[8,7]] }
+  ];
+  var PARTIAL = { name: "Partial refuser", color: "var(--partial)", rows: [] };
+  for (var i = 0; i < 10; i++) PARTIAL.rows.push([9, 3]);
+
+  var W = 600, H = 340, PL = 44, PR = 84, PT = 16, PB = 40;
+  var NS = "http://www.w3.org/2000/svg";
+
+  function clamp(v) { return Math.min(1, Math.max(0, v)); }
+
+  // Returns scores for week 0 (start) through week 10.
+  function simulate(rows, rate) {
+    var s = 0.5, out = [s];
+    rows.forEach(function (r) {
+      var taken = r[1], misses = r[0] - r[1];
+      s = clamp(s + taken * 0.08 - misses * 0.12);
+      s = s + rate * (0.5 - s);
+      out.push(s);
+    });
+    return out;
+  }
+
+  function x(week) { return PL + week * ((W - PL - PR) / 10); }
+  function y(score) { return PT + (1 - score) * (H - PT - PB); }
+
+  function el(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function drawChart(rate) {
+    var svg = document.getElementById("chart");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    [0, 0.5, 1].forEach(function (v) {
+      svg.appendChild(el("line", { x1: PL, x2: W - PR, y1: y(v), y2: y(v), stroke: "var(--grid)", "stroke-width": 1 }));
+      svg.appendChild(el("text", { x: PL - 8, y: y(v) + 4, "text-anchor": "end" }, v.toFixed(1)));
+    });
+    for (var w = 0; w <= 10; w++) {
+      svg.appendChild(el("text", { x: x(w), y: H - PB + 18, "text-anchor": "middle" }, String(w)));
+    }
+    svg.appendChild(el("text", { x: (PL + W - PR) / 2, y: H - 4, "text-anchor": "middle" }, "Week"));
+
+    // Dashed middle line
+    svg.appendChild(el("line", { x1: PL, x2: W - PR, y1: y(0.5), y2: y(0.5), stroke: "var(--middle)", "stroke-width": 2, "stroke-dasharray": "6 5" }));
+    svg.appendChild(el("text", { x: W - PR + 6, y: y(0.5) + 4, fill: "var(--middle)", style: "fill:var(--middle)" }, "the middle"));
+
+    HEROES.concat([PARTIAL]).forEach(function (h) {
+      var pts = simulate(h.rows, rate);
+      var d = pts.map(function (s, i) { return (i ? "L" : "M") + x(i).toFixed(1) + " " + y(s).toFixed(1); }).join(" ");
+      var isPartial = h === PARTIAL;
+      svg.appendChild(el("path", {
+        d: d, fill: "none", stroke: h.color,
+        "stroke-width": isPartial ? 3.5 : 2.2,
+        "stroke-dasharray": isPartial ? "2 4" : "none",
+        "stroke-linecap": "round", "stroke-linejoin": "round"
+      }));
+      var last = pts[pts.length - 1];
+      svg.appendChild(el("circle", { cx: x(10), cy: y(last), r: 3.5, fill: h.color }));
+    });
+  }
+
+  function buildLegend() {
+    var ul = document.getElementById("legend");
+    HEROES.concat([PARTIAL]).forEach(function (h) {
+      var li = document.createElement("li");
+      var sw = document.createElement("span");
+      sw.className = "swatch";
+      sw.style.background = h.color;
+      li.appendChild(sw);
+      li.appendChild(document.createTextNode(h.name));
+      ul.appendChild(li);
+    });
+  }
+
+  function update() {
+    var pct = Number(document.getElementById("rate").value);
+    var rate = pct / 100;
+    document.getElementById("rateValue").textContent = pct + "%";
+
+    var sentence;
+    if (pct === 0) {
+      sentence = "At 0%, a low score does not climb back at all. Scores stay where the misses leave them.";
+    } else {
+      sentence = "At " + pct + "%, a low score climbs back " + pct + " out of every 100 steps toward the middle each week.";
+    }
+    document.getElementById("rateSentence").textContent = sentence;
+
+    var pp = simulate(PARTIAL.rows, rate);
+    var end = pp[pp.length - 1];
+    var msg;
+    if (end < 0.25) {
+      msg = "Bounce-back does not rescue this partial refuser. Their score ends at " + end.toFixed(2) + ", still far below the middle of 0.50.";
+    } else {
+      msg = "Bounce-back rescues this partial refuser. Their score ends at " + end.toFixed(2) + ", close enough to the middle to get offers again.";
+    }
+    document.getElementById("partialResult").textContent = msg;
+
+    drawChart(rate);
+  }
+
+  buildLegend();
+  document.getElementById("rate").addEventListener("input", update);
+  update();
+})();
+</script>
+</body>
+</html>

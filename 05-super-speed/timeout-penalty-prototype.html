@@ -1,0 +1,332 @@
+<title>Timeout Penalty Explorer</title>
+<style>
+:root {
+  /* Layout: one centered column. Controls, chart, result, caveat stack top to bottom. */
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --card: #ffffff;
+  --fg: #1d1f24;
+  --muted: #5b616e;
+  --line: #d9d6cc;
+  --grid: #e6e3da;
+  --accent: #2f5d8a;
+  --result-bg: #eef4fa;
+  --result-fg: #1d1f24;
+  --caveat-bg: #fbf1dc;
+  --caveat-fg: #5a3c00;
+  --caveat-line: #d9b36a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16181d;
+    --card: #1f2229;
+    --fg: #eceef2;
+    --muted: #a4aab6;
+    --line: #353a46;
+    --grid: #2c3038;
+    --accent: #8fb6e0;
+    --result-bg: #1c2633;
+    --result-fg: #e3ecf7;
+    --caveat-bg: #2d2616;
+    --caveat-fg: #f0d28a;
+    --caveat-line: #7a6128;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16181d;
+  --card: #1f2229;
+  --fg: #eceef2;
+  --muted: #a4aab6;
+  --line: #353a46;
+  --grid: #2c3038;
+  --accent: #8fb6e0;
+  --result-bg: #1c2633;
+  --result-fg: #e3ecf7;
+  --caveat-bg: #2d2616;
+  --caveat-fg: #f0d28a;
+  --caveat-line: #7a6128;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-block: 24px;
+  padding-inline: 16px;
+}
+h1 {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.intro {
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+.slider-block + .slider-block {
+  margin-top: 18px;
+}
+.slider-block label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 0;
+}
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.said {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.chart-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+svg.chart {
+  display: block;
+  width: 100%;
+  min-width: 540px;
+  height: auto;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  flex: none;
+}
+.result {
+  background: var(--result-bg);
+  color: var(--result-fg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.result ul {
+  margin: 8px 0 10px;
+  padding-left: 20px;
+}
+.result p {
+  margin: 0 0 6px;
+}
+.caveat {
+  background: var(--caveat-bg);
+  color: var(--caveat-fg);
+  border: 1px solid var(--caveat-line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.caveat p {
+  margin: 0 0 6px;
+}
+.method {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+</style>
+
+<div class="wrap">
+  <h1>Timeout Penalty Explorer</h1>
+  <p class="intro">Each responder has a score from 0 to 1. It starts at 0.50. Taking a job raises it. Missing a job lowers it. Move the sliders to see what happens if running out of time hurts less than saying no.</p>
+
+  <section class="card" aria-label="Controls">
+    <div class="slider-block">
+      <label for="share">Out of 100 missed jobs, how many ran out of time?</label>
+      <input type="range" id="share" min="0" max="100" step="1" value="50">
+      <p class="said" id="share-said"></p>
+    </div>
+    <div class="slider-block">
+      <label for="ratio">How much does running out of time hurt, compared to saying no?</label>
+      <input type="range" id="ratio" min="0" max="100" step="1" value="100">
+      <p class="said" id="ratio-said"></p>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Chart">
+    <h2>Score by week for six responders</h2>
+    <div class="chart-scroll">
+      <svg class="chart" id="chart" viewBox="0 0 640 320" role="img" aria-label="Line chart of six responder scores over ten weeks"></svg>
+    </div>
+    <ul class="legend" id="legend"></ul>
+  </section>
+
+  <section class="result" aria-live="polite">
+    <h2>What happens to the four struggling responders</h2>
+    <div id="result"></div>
+  </section>
+
+  <section class="caveat">
+    <h2>Read this first</h2>
+    <p>The timeout share is a guess. The data counts missed jobs, but it cannot tell a timeout from a plain no. Move the first slider to see how much that guess matters.</p>
+  </section>
+
+  <p class="method">Method: each week is treated as one batch. This is a simple approximation. The data covers ten weeks, so the update week (Aug 10) has three weeks after it, not four.</p>
+</div>
+
+<script>
+var WEEKS = ["Jun 29", "Jul 6", "Jul 13", "Jul 20", "Jul 27", "Aug 3", "Aug 10", "Aug 17", "Aug 24", "Aug 31"];
+var UPDATE_INDEX = 6;
+var SERIES = [
+  { name: "Farlight", color: "#d1495b", d: [[12,9],[12,9],[11,8],[12,9],[13,10],[12,8],[10,4],[3,0],[1,0],[0,0]] },
+  { name: "Meteor Mite", color: "#e07a1f", d: [[11,7],[12,9],[10,6],[11,7],[12,9],[11,8],[10,4],[4,1],[2,0],[1,0]] },
+  { name: "The Undertow", color: "#3b6fb6", d: [[12,9],[11,9],[12,9],[13,10],[12,10],[12,9],[11,4],[4,1],[1,0],[1,0]] },
+  { name: "Vesper", color: "#8e4fb0", d: [[14,11],[13,10],[15,13],[14,11],[13,11],[14,12],[12,6],[5,1],[2,0],[1,0]] },
+  { name: "Corporal Ashgrove", color: "#7a8b99", d: [[10,8],[11,9],[10,7],[9,7],[10,8],[10,8],[10,6],[8,5],[7,5],[7,5]] },
+  { name: "Halfmoon", color: "#2a9d8f", d: [[11,8],[10,7],[11,8],[12,8],[11,9],[11,8],[11,6],[9,5],[8,5],[8,7]] }
+];
+
+// Score path: start at 0.5, then one value per week (10 values after the start).
+function simulate(d, share, ratio) {
+  var s = 0.5;
+  var out = [];
+  for (var i = 0; i < d.length; i++) {
+    var sent = d[i][0], taken = d[i][1];
+    var misses = sent - taken;
+    var timeouts = misses * share;
+    var declines = misses - timeouts;
+    var penalty = declines * 0.12 + timeouts * 0.12 * ratio;
+    s = s + taken * 0.08 - penalty;
+    if (s < 0) s = 0;
+    if (s > 1) s = 1;
+    out.push(s);
+  }
+  return out;
+}
+
+var X0 = 52, X1 = 620, Y0 = 24, Y1 = 272;
+function xOf(i) { return X0 + i * (X1 - X0) / (WEEKS.length - 1); }
+function yOf(s) { return Y1 - s * (Y1 - Y0); }
+
+function buildChart(paths) {
+  var svg = [];
+  // Grid and y-axis labels.
+  [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+    var y = yOf(v);
+    svg.push('<line x1="' + X0 + '" x2="' + X1 + '" y1="' + y + '" y2="' + y + '" stroke="var(--grid)" stroke-width="1"/>');
+    svg.push('<text x="' + (X0 - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="12" fill="var(--muted)">' + v.toFixed(2) + '</text>');
+  });
+  // Update marker.
+  var ux = xOf(UPDATE_INDEX);
+  svg.push('<line x1="' + ux + '" x2="' + ux + '" y1="' + Y0 + '" y2="' + Y1 + '" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>');
+  svg.push('<text x="' + (ux + 6) + '" y="' + (Y0 + 12) + '" font-size="12" font-weight="600" fill="var(--accent)">4.2 ships (Aug 12)</text>');
+  // X labels.
+  WEEKS.forEach(function (w, i) {
+    svg.push('<text x="' + xOf(i) + '" y="' + (Y1 + 18) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + w + '</text>');
+  });
+  svg.push('<text x="' + ((X0 + X1) / 2) + '" y="' + (Y1 + 38) + '" text-anchor="middle" font-size="12" fill="var(--muted)">Week starting</text>');
+  // Lines.
+  paths.forEach(function (p) {
+    var pts = p.values.map(function (v, i) { return xOf(i).toFixed(1) + ',' + yOf(v).toFixed(1); }).join(' ');
+    svg.push('<polyline points="' + pts + '" fill="none" stroke="' + p.color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>');
+    var last = p.values.length - 1;
+    svg.push('<circle cx="' + xOf(last).toFixed(1) + '" cy="' + yOf(p.values[last]).toFixed(1) + '" r="3.5" fill="' + p.color + '"/>');
+  });
+  document.getElementById('chart').innerHTML = svg.join('');
+}
+
+function buildLegend() {
+  document.getElementById('legend').innerHTML = SERIES.map(function (s) {
+    return '<li><span class="swatch" style="background:' + s.color + '"></span>' + s.name + '</li>';
+  }).join('');
+}
+
+function render() {
+  var sharePct = +document.getElementById('share').value;
+  var ratioPct = +document.getElementById('ratio').value;
+  var share = sharePct / 100;
+  var ratio = ratioPct / 100;
+
+  document.getElementById('share-said').textContent =
+    'About ' + sharePct + ' out of every 100 missed jobs ran out of time. The other ' + (100 - sharePct) + ' were a plain no.';
+  document.getElementById('ratio-said').textContent = ratioPct === 100
+    ? 'Right now, running out of time hurts the same as a plain no (100%).'
+    : 'Running out of time hurts ' + ratioPct + '% as much as a plain no.';
+
+  var paths = SERIES.map(function (s) {
+    return { name: s.name, color: s.color, values: simulate(s.d, share, ratio) };
+  });
+  buildChart(paths);
+
+  // Four struggling responders: first four in SERIES.
+  var lines = [];
+  var gainTotal = 0;
+  var belowStart = 0;
+  for (var i = 0; i < 4; i++) {
+    var end = paths[i].values[paths[i].values.length - 1];
+    var today = simulate(SERIES[i].d, share, 1);
+    var todayEnd = today[today.length - 1];
+    gainTotal += end - todayEnd;
+    if (end < 0.5) belowStart++;
+    lines.push('<li>' + SERIES[i].name + ' ends August at ' + end.toFixed(2) + '. Today\'s rule gives ' + todayEnd.toFixed(2) + '.</li>');
+  }
+  var avgGain = gainTotal / 4;
+
+  var summary;
+  if (ratioPct === 100) {
+    summary = 'This setting matches today\'s rule, so nothing changes.';
+  } else if (avgGain < 0.005) {
+    summary = 'This setting barely changes where they end up.';
+  } else {
+    summary = 'With this setting, the four end August about ' + avgGain.toFixed(2) + ' higher on average than under today\'s rule.';
+  }
+  var startNote;
+  if (belowStart === 4) startNote = 'All four still end below the starting score of 0.50.';
+  else if (belowStart === 0) startNote = 'All four end above the starting score of 0.50.';
+  else startNote = belowStart + ' of the four still end below the starting score of 0.50.';
+
+  document.getElementById('result').innerHTML =
+    '<p>At the end of August, the scores look like this:</p>' +
+    '<ul>' + lines.join('') + '</ul>' +
+    '<p>' + summary + '</p>' +
+    '<p>' + startNote + '</p>';
+}
+
+buildLegend();
+document.getElementById('share').addEventListener('input', render);
+document.getElementById('ratio').addEventListener('input', render);
+render();
+</script>
