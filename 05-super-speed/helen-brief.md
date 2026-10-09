@@ -1,5 +1,7 @@
 # Brief for Helen: reducing friction for responders and handlers
 
+**Owner:** Faran (Dispatch PM) — driving this plan and reporting back as each item lands.
+
 **Helen,**
 
 Responders and handlers are running into friction in the app right now. Some of it is the same problem that has four responders going quiet. We can start reducing the friction this week with app changes that don't depend on the open questions. We'll measure the rest as we go.
@@ -25,5 +27,10 @@ Responders and handlers are running into friction in the app right now. Some of 
 **Held for now:** a "why am I quiet?" card for responders, and an offer path to rebuild a responder's record. Until we know whether distance is the trigger, a card would be guessing at the reason, and rebuilding a record would send calls to responders who are already struggling.
 
 **A decision for you:** whether to keep the 60-second timeout while we measure. It's a tradeoff only you can make, and it doesn't need to wait on anything else.
+
+**How we'll know it worked:**
+- Timeout-vs-no logging is live within one week, with a real split we can report instead of a guess.
+- "Vanished too fast" tickets drop by half within four weeks of the near-miss grace window and clearer alert shipping.
+- The four confirmed responders stop declining further within two weeks of the data pull — even before a fix ships, the slide should stop once we understand it.
 
 The prototypes are being built now, so you can see the experience before we commit to it. Each one is private until we share it.
