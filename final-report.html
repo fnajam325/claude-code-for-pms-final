@@ -112,6 +112,27 @@ a{color:var(--blue);}
 .panel p{font-size:20px;}
 .panel p + p{margin-top:10px;}
 
+/* Charts */
+.evidence{display:grid; grid-template-columns:1fr; gap:22px;}
+.chart-card{padding:16px 18px 10px;}
+.chart-card:nth-child(1){transform:rotate(0.3deg);}
+.chart-card:nth-child(2){transform:rotate(-0.3deg);}
+.chart-card:nth-child(3){transform:rotate(0.3deg);}
+.chart-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+.chart-head h3{font-size:clamp(17px,2.6vw,21px); color:var(--ink);}
+.chart-note{font-size:14px; color:var(--muted); font-style:italic;}
+.chart-svg{width:100%; height:auto; display:block; font-family:var(--body);}
+.chart-svg .grid{stroke:var(--muted); stroke-opacity:0.25; stroke-width:1;}
+.chart-svg .axis-label{fill:var(--muted); font-size:12px; font-weight:700;}
+.chart-svg .mark{fill:var(--ink); font-size:12px; font-weight:700;}
+.chart-svg .big-label{fill:var(--ink); font-size:14px; font-weight:700;}
+.legend{display:flex; flex-wrap:wrap; gap:14px; margin:8px 0 2px; font-size:15px;}
+.legend-item{display:flex; align-items:center; gap:6px;}
+.legend-dot{width:13px; height:13px; border-radius:50%; border:2px solid var(--ink); flex:0 0 auto;}
+.src{font-size:13px; color:var(--muted); margin-top:4px;}
+.dot-hover{cursor:default;}
+.dot-hover:hover{r:7;}
+
 /* Footer */
 .credits{margin-top:44px; text-align:center; color:var(--muted); font-size:16px;}
 .credits .ender{font-family:var(--display); font-size:26px; color:var(--purple); -webkit-text-stroke:1px var(--ink); margin-bottom:10px;}
@@ -145,6 +166,140 @@ a{color:var(--blue);}
     <span class="kicker">THE SETUP</span>
     <p>Release 4.2 quietly locked a handful of responders out of the job rotation almost entirely, while making everyone else's offers vanish faster than they could react — one routing change, two symptoms.</p>
     <p>Four responders went from ~12 offers a week to 0&ndash;1 and never recovered, because the scoring code has no way for a low score to climb back up on its own. Nobody shipped a bug. They shipped a trap with no exit.</p>
+  </div>
+
+  <div class="stage"><h2>The Evidence Locker</h2><div class="rule"></div></div>
+
+  <div class="evidence">
+
+    <div class="chart-card panel-border">
+      <div class="chart-head">
+        <h3>The cliff, week by week</h3>
+        <span class="chart-note">Dispatch-wide acceptance rate, 10 weeks</span>
+      </div>
+      <svg class="chart-svg" viewBox="0 0 680 300" role="img" aria-label="Line chart of weekly acceptance rate from 76.7% in late June down to a low of 54.2% the week of August 10, recovering only to 72.7% by August 31">
+        <line class="grid" x1="40" y1="260" x2="660" y2="260"/>
+        <line class="grid" x1="40" y1="212" x2="660" y2="212"/>
+        <line class="grid" x1="40" y1="164" x2="660" y2="164"/>
+        <line class="grid" x1="40" y1="116" x2="660" y2="116"/>
+        <line class="grid" x1="40" y1="68" x2="660" y2="68"/>
+        <line class="grid" x1="40" y1="20" x2="660" y2="20"/>
+        <text class="axis-label" x="32" y="264" text-anchor="end">40%</text>
+        <text class="axis-label" x="32" y="216" text-anchor="end">50%</text>
+        <text class="axis-label" x="32" y="168" text-anchor="end">60%</text>
+        <text class="axis-label" x="32" y="120" text-anchor="end">70%</text>
+        <text class="axis-label" x="32" y="72" text-anchor="end">80%</text>
+        <text class="axis-label" x="32" y="24" text-anchor="end">90%</text>
+
+        <line x1="453.3" y1="20" x2="453.3" y2="260" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5,5"/>
+        <text class="mark" x="459" y="34" fill="var(--red)">4.2 SHIPS</text>
+
+        <path d="M40,83.8 L108.9,81.9 L177.8,85.3 L246.7,92.0 L315.6,79.5 L384.4,78.1 L453.3,191.8 L522.2,136.2 L591.1,131.8 L660,103.0"
+              fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M40,83.8 L108.9,81.9 L177.8,85.3 L246.7,92.0 L315.6,79.5 L384.4,78.1 L453.3,191.8 L522.2,136.2 L591.1,131.8 L660,103.0"
+              fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <g fill="var(--red)" stroke="var(--ink)" stroke-width="2">
+          <circle class="dot-hover" cx="40" cy="83.8" r="5"><title>Week of Jun 29: 76.7%</title></circle>
+          <circle class="dot-hover" cx="108.9" cy="81.9" r="5"><title>Week of Jul 6: 77.1%</title></circle>
+          <circle class="dot-hover" cx="177.8" cy="85.3" r="5"><title>Week of Jul 13: 76.4%</title></circle>
+          <circle class="dot-hover" cx="246.7" cy="92.0" r="5"><title>Week of Jul 20: 75.0%</title></circle>
+          <circle class="dot-hover" cx="315.6" cy="79.5" r="5"><title>Week of Jul 27: 77.6%</title></circle>
+          <circle class="dot-hover" cx="384.4" cy="78.1" r="5"><title>Week of Aug 3: 77.9%</title></circle>
+          <circle class="dot-hover" cx="453.3" cy="191.8" r="6"><title>Week of Aug 10 — 4.2 ships: 54.2%</title></circle>
+          <circle class="dot-hover" cx="522.2" cy="136.2" r="5"><title>Week of Aug 17: 65.8%</title></circle>
+          <circle class="dot-hover" cx="591.1" cy="131.8" r="5"><title>Week of Aug 24: 66.7%</title></circle>
+          <circle class="dot-hover" cx="660" cy="103.0" r="5"><title>Week of Aug 31: 72.7%</title></circle>
+        </g>
+        <text class="big-label" x="403" y="206" text-anchor="end">54.2%</text>
+      </svg>
+      <p class="src">Source: 00-rook/data/callout-history.csv, summed across all 16 responders per week. Hover any point for the exact number.</p>
+    </div>
+
+    <div class="chart-card panel-border">
+      <div class="chart-head">
+        <h3>Four heroes, one trap with no exit</h3>
+        <span class="chart-note">Offers sent per week, same 10 weeks</span>
+      </div>
+      <svg class="chart-svg" viewBox="0 0 680 300" role="img" aria-label="Line chart of weekly offers sent to four responders, each falling from roughly 11 to 15 offers per week before August 10 to 0 or 1 offer per week by August 31">
+        <line class="grid" x1="40" y1="260" x2="580" y2="260"/>
+        <line class="grid" x1="40" y1="200" x2="580" y2="200"/>
+        <line class="grid" x1="40" y1="140" x2="580" y2="140"/>
+        <line class="grid" x1="40" y1="80" x2="580" y2="80"/>
+        <line class="grid" x1="40" y1="20" x2="580" y2="20"/>
+        <text class="axis-label" x="32" y="264" text-anchor="end">0</text>
+        <text class="axis-label" x="32" y="204" text-anchor="end">4</text>
+        <text class="axis-label" x="32" y="144" text-anchor="end">8</text>
+        <text class="axis-label" x="32" y="84" text-anchor="end">12</text>
+        <text class="axis-label" x="32" y="24" text-anchor="end">16</text>
+        <line x1="400" y1="20" x2="400" y2="260" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5,5"/>
+        <text class="mark" x="406" y="34" fill="var(--red)">4.2 SHIPS</text>
+
+        <path d="M40,80 L100,80 L160,95 L220,80 L280,65 L340,80 L400,110 L460,215 L520,245 L580,260" fill="none" stroke="var(--ink)" stroke-width="5"/>
+        <path d="M40,95 L100,80 L160,110 L220,95 L280,80 L340,95 L400,110 L460,200 L520,230 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
+        <path d="M40,80 L100,95 L160,80 L220,65 L280,80 L340,80 L400,95 L460,200 L520,245 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
+        <path d="M40,50 L100,65 L160,35 L220,50 L280,65 L340,50 L400,80 L460,185 L520,230 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
+
+        <path d="M40,80 L100,80 L160,95 L220,80 L280,65 L340,80 L400,110 L460,215 L520,245 L580,260" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40,95 L100,80 L160,110 L220,95 L280,80 L340,95 L400,110 L460,200 L520,230 L580,245" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40,80 L100,95 L160,80 L220,65 L280,80 L340,80 L400,95 L460,200 L520,245 L580,245" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40,50 L100,65 L160,35 L220,50 L280,65 L340,50 L400,80 L460,185 L520,230 L580,245" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linecap="round"/>
+
+        <g stroke="var(--ink)" stroke-width="1.5">
+          <circle class="dot-hover" fill="var(--red)" cx="460" cy="215" r="5"><title>Farlight, week of Aug 17: 3 offers</title></circle>
+          <circle class="dot-hover" fill="var(--red)" cx="580" cy="260" r="5"><title>Farlight, week of Aug 31: 0 offers</title></circle>
+          <circle class="dot-hover" fill="var(--blue)" cx="460" cy="200" r="5"><title>Meteor Mite, week of Aug 17: 4 offers</title></circle>
+          <circle class="dot-hover" fill="var(--blue)" cx="580" cy="245" r="5"><title>Meteor Mite, week of Aug 31: 1 offer</title></circle>
+          <circle class="dot-hover" fill="var(--green)" cx="460" cy="200" r="5"><title>The Undertow, week of Aug 17: 4 offers</title></circle>
+          <circle class="dot-hover" fill="var(--green)" cx="580" cy="245" r="5"><title>The Undertow, week of Aug 31: 1 offer</title></circle>
+          <circle class="dot-hover" fill="var(--purple)" cx="460" cy="185" r="5"><title>Vesper, week of Aug 17: 5 offers</title></circle>
+          <circle class="dot-hover" fill="var(--purple)" cx="580" cy="245" r="5"><title>Vesper, week of Aug 31: 1 offer</title></circle>
+        </g>
+      </svg>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Farlight</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Meteor Mite</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>The Undertow</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Vesper</span>
+      </div>
+      <p class="src">Source: same file, filtered to the four confirmed responders. Hover the end points for exact counts.</p>
+    </div>
+
+    <div class="chart-card panel-border">
+      <div class="chart-head">
+        <h3>25 tickets, two different stories</h3>
+        <span class="chart-note">How each complaint actually read</span>
+      </div>
+      <svg class="chart-svg" viewBox="0 0 400 290" role="img" aria-label="Bar chart: 16 of 25 tickets reported going quiet with no offers, 4 reported an offer vanishing too fast, and 5 reported both happening back to back">
+        <line class="grid" x1="30" y1="240" x2="380" y2="240"/>
+        <line class="grid" x1="30" y1="142" x2="380" y2="142"/>
+        <line class="grid" x1="30" y1="44" x2="380" y2="44"/>
+        <text class="axis-label" x="24" y="244" text-anchor="end">0</text>
+        <text class="axis-label" x="24" y="146" text-anchor="end">8</text>
+        <text class="axis-label" x="24" y="48" text-anchor="end">16</text>
+
+        <rect x="62" y="44.4" width="70" height="195.6" rx="4" fill="var(--red)" stroke="var(--ink)" stroke-width="2.5"><title>Gone quiet: 16 tickets</title></rect>
+        <rect x="175" y="191.1" width="70" height="48.9" rx="4" fill="var(--blue)" stroke="var(--ink)" stroke-width="2.5"><title>Vanished too fast: 4 tickets</title></rect>
+        <rect x="288" y="178.9" width="70" height="61.1" rx="4" fill="var(--green)" stroke="var(--ink)" stroke-width="2.5"><title>Both, back to back: 5 tickets</title></rect>
+
+        <text class="big-label" x="97" y="38" text-anchor="middle">16</text>
+        <text class="big-label" x="210" y="185" text-anchor="middle">4</text>
+        <text class="big-label" x="323" y="173" text-anchor="middle">5</text>
+
+        <text class="axis-label" x="97" y="258" text-anchor="middle">Gone quiet</text>
+        <text class="axis-label" x="210" y="258" text-anchor="middle">Vanished</text>
+        <text class="axis-label" x="210" y="272" text-anchor="middle">too fast</text>
+        <text class="axis-label" x="323" y="258" text-anchor="middle">Both</text>
+      </svg>
+      <p class="src">Of the 16 "gone quiet" tickets, only 4 matched a confirmed collapse — the other 12 are still an open mystery.</p>
+      <svg class="chart-svg" viewBox="0 0 400 54" role="img" aria-label="Stacked bar: of 21 gone-quiet-flavored tickets, 4 match confirmed data and 17 do not" style="margin-top:4px;">
+        <rect x="0" y="14" width="68" height="26" rx="3" fill="var(--red)" stroke="var(--ink)" stroke-width="2"><title>Matches confirmed collapse: 4 tickets</title></rect>
+        <rect x="72" y="14" width="328" height="26" rx="3" fill="var(--muted)" stroke="var(--ink)" stroke-width="2"><title>Contradicts the responder's own data: 17 tickets</title></rect>
+        <text x="34" y="31" text-anchor="middle" font-size="13" font-weight="700" fill="#fff8e6">4</text>
+        <text x="236" y="31" text-anchor="middle" font-size="13" font-weight="700" fill="#fff8e6">17 still unexplained</text>
+      </svg>
+    </div>
+
   </div>
 
   <div class="stage"><h2>The Story, Issue By Issue</h2><div class="rule"></div></div>
