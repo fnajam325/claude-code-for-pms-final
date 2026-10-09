@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requisition Queue Prototype</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --ink:#1c1b19; --muted:#6b675f;
+    --line:#e4e1da; --accent:#8a3324; --accent-soft:#f3ddd6;
+    --safe:#3c6e47; --safe-soft:#dcebe0; --warn:#b3771b; --warn-soft:#f6e6c9;
+    --chip:#efece5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#171614; --panel:#211f1c; --ink:#ece9e3; --muted:#a39d91;
+      --line:#38352f; --accent:#e08a74; --accent-soft:#3a2520;
+      --safe:#7fbf8f; --safe-soft:#1f3326; --warn:#e0b25a; --warn-soft:#3a2f14;
+      --chip:#2b2823;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#171614; --panel:#211f1c; --ink:#ece9e3; --muted:#a39d91;
+    --line:#38352f; --accent:#e08a74; --accent-soft:#3a2520;
+    --safe:#7fbf8f; --safe-soft:#1f3326; --warn:#e0b25a; --warn-soft:#3a2f14;
+    --chip:#2b2823;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:980px; margin:0 auto;}
+  header{margin-bottom:22px;}
+  .eyebrow{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700;}
+  h1{font-size:26px; margin:6px 0 6px; letter-spacing:-0.01em;}
+  .sub{color:var(--muted); font-size:14.5px; line-height:1.5; max-width:70ch;}
+  .flag{
+    margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+    background:var(--warn-soft); color:var(--ink); font-size:13px; line-height:1.55;
+  }
+  .flag b{color:var(--warn);}
+  .tabs{display:flex; gap:8px; margin:26px 0 16px;}
+  .tab{
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line); background:var(--panel);
+    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--muted);
+  }
+  .tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px;
+  }
+  .panel h2{font-size:15px; margin:0 0 4px;}
+  .panel .desc{color:var(--muted); font-size:13px; margin-bottom:14px; line-height:1.5;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line);}
+  td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .item-row.highlight td{background:var(--accent-soft);}
+  .pos{font-variant-numeric:tabular-nums; color:var(--muted); width:28px;}
+  .name{font-weight:600;}
+  .tag{
+    display:inline-block; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px;
+    background:var(--chip); color:var(--muted); margin-left:8px;
+  }
+  .tag.crit{background:var(--accent-soft); color:var(--accent);}
+  .wait{font-variant-numeric:tabular-nums;}
+  .wait.bad{color:var(--accent); font-weight:700;}
+  .wait.good{color:var(--safe); font-weight:700;}
+  .sla{font-size:11px; padding:2px 7px; border-radius:6px; font-weight:700;}
+  .sla.none{background:var(--chip); color:var(--muted);}
+  .sla.met{background:var(--safe-soft); color:var(--safe);}
+  .hidden{display:none;}
+  .note{margin-top:14px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .sim{margin-top:28px;}
+  .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){ .sim-grid{grid-template-columns:1fr;} }
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}
+  .field label{font-size:12.5px; color:var(--muted); font-weight:600;}
+  .field input[type=range]{width:100%;}
+  .field .val{font-size:13px; font-weight:700;}
+  .result{
+    border:1px dashed var(--line); border-radius:10px; padding:14px; margin-top:6px;
+  }
+  .result .row{display:flex; justify-content:space-between; padding:6px 0; font-size:13.5px; border-bottom:1px solid var(--line);}
+  .result .row:last-child{border-bottom:none;}
+  .result .row b{font-variant-numeric:tabular-nums;}
+  .synthetic-badge{
+    display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.04em;
+    background:var(--warn-soft); color:var(--warn); padding:3px 8px; border-radius:6px; margin-bottom:10px;
+  }
+  footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Rook Supply — prototype</div>
+    <h1>Requisition queue: one lane vs. two</h1>
+    <p class="sub">Sketch of a fix for the complaint that a cracked vest plate requisition sat 11 days waiting on a quartermaster signature behind routine orders like boot laces. Toggle between the current design and a proposed safety-tiered queue below.</p>
+    <div class="flag">
+      <b>Evidence note:</b> this is built from a single interview aside (Halloran, 5 Sept 2026) plus the Supply process one-pager — there is no ticket queue or timing data for requisitions in this project, unlike the rich multi-source dispatch data. Treat this as a hypothesis to react to, not a validated fix. See report.md for the full gap list.
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="current">Current: single queue</div>
+    <div class="tab" data-tab="proposed">Proposed: safety-tiered queue</div>
+  </div>
+
+  <div class="panel" id="panel-current">
+    <h2>Quartermaster queue — today</h2>
+    <p class="desc">One FIFO queue. A priority field exists on the requisition form, but nothing in the documented flow sorts or routes on it — it's informational only. Everything waits its turn in submission order.</p>
+    <table>
+      <thead><tr><th class="pos">#</th><th>Item</th><th>Submitted</th><th>Waiting</th><th>SLA</th></tr></thead>
+      <tbody>
+        <tr class="item-row"><td class="pos">1</td><td class="name">Boot laces (spare set)</td><td>Day 0</td><td class="wait">2 days</td><td><span class="sla none">none</span></td></tr>
+        <tr class="item-row"><td class="pos">2</td><td class="name">Flashlight battery pack</td><td>Day 0</td><td class="wait">2 days</td><td><span class="sla none">none</span></td></tr>
+        <tr class="item-row"><td class="pos">3</td><td class="name">Radio holster</td><td>Day 1</td><td class="wait">4 days</td><td><span class="sla none">none</span></td></tr>
+        <tr class="item-row"><td class="pos">4</td><td class="name">Glove liners (x2)</td><td>Day 2</td><td class="wait">5 days</td><td><span class="sla none">none</span></td></tr>
+        <tr class="item-row"><td class="pos">5</td><td class="name">Field notebook refill</td><td>Day 3</td><td class="wait">6 days</td><td><span class="sla none">none</span></td></tr>
+        <tr class="item-row highlight"><td class="pos">6</td><td class="name">Vest plate replacement <span class="tag crit">cracked — Halloran</span></td><td>Day 3</td><td class="wait bad">11 days</td><td><span class="sla none">no SLA</span></td></tr>
+        <tr class="item-row"><td class="pos">7</td><td class="name">Coat hanger clips</td><td>Day 4</td><td class="wait">8 days</td><td><span class="sla none">none</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">The "priority" field Halloran set on his requisition doesn't appear anywhere in this ordering — matching his account that it "doesn't seem to change anything about how fast it actually moves."</p>
+  </div>
+
+  <div class="panel hidden" id="panel-proposed">
+    <h2>Quartermaster queue — with a safety-critical lane</h2>
+    <p class="desc">Requisitions tagged against a short list of safety-critical equipment categories (armor/plate, harness/fall-protection, breathing apparatus) jump to a dedicated lane with a target SLA. Everything else keeps the existing FIFO queue untouched — no change to the bulk of low-stakes requests.</p>
+    <table>
+      <thead><tr><th class="pos">#</th><th>Item</th><th>Submitted</th><th>Waiting</th><th>SLA</th></tr></thead>
+      <tbody>
+        <tr class="item-row highlight"><td class="pos">1</td><td class="name">Vest plate replacement <span class="tag crit">cracked — Halloran</span></td><td>Day 3</td><td class="wait good">&lt; 2 days</td><td><span class="sla met">met · 48h target</span></td></tr>
+        <tr class="item-row"><td class="pos">2</td><td class="name">Boot laces (spare set)</td><td>Day 0</td><td class="wait">2 days</td><td><span class="sla none">standard lane</span></td></tr>
+        <tr class="item-row"><td class="pos">3</td><td class="name">Flashlight battery pack</td><td>Day 0</td><td class="wait">2 days</td><td><span class="sla none">standard lane</span></td></tr>
+        <tr class="item-row"><td class="pos">4</td><td class="name">Radio holster</td><td>Day 1</td><td class="wait">4 days</td><td><span class="sla none">standard lane</span></td></tr>
+        <tr class="item-row"><td class="pos">5</td><td class="name">Glove liners (x2)</td><td>Day 2</td><td class="wait">5 days</td><td><span class="sla none">standard lane</span></td></tr>
+        <tr class="item-row"><td class="pos">6</td><td class="name">Field notebook refill</td><td>Day 3</td><td class="wait">6 days</td><td><span class="sla none">standard lane</span></td></tr>
+        <tr class="item-row"><td class="pos">7</td><td class="name">Coat hanger clips</td><td>Day 4</td><td class="wait">8 days</td><td><span class="sla none">standard lane</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">The vest plate is pulled into a dedicated safety-critical lane with its own 48-hour target, visible to the quartermaster as a badge rather than a silent form field. Standard-lane wait times are unchanged — this doesn't ask the quartermaster to work faster overall, only to see urgency instead of inferring it.</p>
+  </div>
+
+  <div class="panel sim">
+    <span class="synthetic-badge">SYNTHETIC — illustrative only, not measured data</span>
+    <h2>Rough sensitivity check</h2>
+    <p class="desc">There's no real throughput or queue-depth data for Supply requisitions, so this slider illustrates the mechanism rather than predicting an actual wait time. Confidence: <b>35/100</b> — it shows that a FIFO queue plausibly produces an 11-day wait at modest volumes, nothing more. Real confirmation needs quartermaster throughput and a requisition timestamp export.</p>
+    <div class="sim-grid">
+      <div>
+        <div class="field">
+          <label>Items ahead in queue when vest plate was submitted <span class="val" id="aheadVal">5</span></label>
+          <input type="range" id="ahead" min="0" max="20" value="5">
+        </div>
+        <div class="field">
+          <label>Quartermaster throughput (items approved / day) <span class="val" id="throughputVal">1.0</span></label>
+          <input type="range" id="throughput" min="2" max="20" value="10">
+        </div>
+      </div>
+      <div class="result">
+        <div class="row"><span>Estimated wait — current single FIFO queue</span><b id="outCurrent">—</b></div>
+        <div class="row"><span>Estimated wait — safety-critical lane (jumps queue)</span><b id="outProposed">—</b></div>
+        <div class="row"><span>Halloran's actual reported wait</span><b>11 days</b></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Prototype built from one interview aside and the Rook Supply process one-pager. Not published live — saved as a local file for this test run. Open questions this doesn't resolve: whether the priority field is cosmetic by design or a bug, how many approval hops a requisition actually has (the one-pager describes one step; the Q3 roadmap item is named "approval <i>chains</i>," plural), and quartermaster staffing/capacity. See report.md.
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      var which = tab.getAttribute('data-tab');
+      document.getElementById('panel-current').classList.toggle('hidden', which !== 'current');
+      document.getElementById('panel-proposed').classList.toggle('hidden', which !== 'proposed');
+    });
+  });
+
+  var ahead = document.getElementById('ahead');
+  var throughput = document.getElementById('throughput');
+  var aheadVal = document.getElementById('aheadVal');
+  var throughputVal = document.getElementById('throughputVal');
+  var outCurrent = document.getElementById('outCurrent');
+  var outProposed = document.getElementById('outProposed');
+
+  function fmtDays(d){
+    if (d < 1) return Math.round(d*24) + ' hrs';
+    return d.toFixed(1) + ' days';
+  }
+
+  function recompute(){
+    var a = parseInt(ahead.value, 10);
+    var t = parseInt(throughput.value, 10) / 10; // slider 2-20 -> 0.2-2.0 items/day
+    aheadVal.textContent = a;
+    throughputVal.textContent = t.toFixed(1);
+    var currentWait = a / t;
+    var proposedWait = Math.min(2, 1 / t); // jumps lane, bounded by 48h target
+    outCurrent.textContent = fmtDays(currentWait);
+    outProposed.textContent = fmtDays(proposedWait);
+    outCurrent.style.color = currentWait > 5 ? 'var(--accent)' : 'inherit';
+    outProposed.style.color = 'var(--safe)';
+  }
+  ahead.addEventListener('input', recompute);
+  throughput.addEventListener('input', recompute);
+  recompute();
+</script>
+</body>
+</html>

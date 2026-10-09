@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Offer Activity panel (Dispatch Console)</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#1b1f27; --muted:#6b7280;
+    --border:#e3e6ea; --accent:#2f5bd7; --danger:#c0392b; --danger-bg:#fdecea;
+    --ok:#1f8a4c; --ok-bg:#eaf7ef; --track:#eef0f3;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161a; --panel:#1d2026; --ink:#e8eaee; --muted:#9aa2ad;
+      --border:#2a2e36; --accent:#6f93ef; --danger:#ff6b60; --danger-bg:#3a1f1f;
+      --ok:#4fd080; --ok-bg:#163826; --track:#2a2e36;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161a; --panel:#1d2026; --ink:#e8eaee; --muted:#9aa2ad;
+    --border:#2a2e36; --accent:#6f93ef; --danger:#ff6b60; --danger-bg:#3a1f1f;
+    --ok:#4fd080; --ok-bg:#163826; --track:#2a2e36;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:16px;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  .note{
+    font-size:12.5px; color:var(--muted); margin:0 0 14px;
+    padding:10px 12px; border:1px dashed var(--border); border-radius:8px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:18px 18px 16px; margin-bottom:16px;
+  }
+  .card h2{font-size:15px; margin:0 0 2px;}
+  .card .sub{font-size:12.5px; color:var(--muted); margin:0 0 14px;}
+  .flag{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--danger-bg); border:1px solid var(--danger);
+    border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:13px;
+  }
+  .flag.ok{background:var(--ok-bg); border-color:var(--ok);}
+  .flag b{color:var(--danger);}
+  .flag.ok b{color:var(--ok);}
+  .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);margin-top:4px;flex:none;}
+  .flag.ok .dot{background:var(--ok);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:6px 8px; border-bottom:1px solid var(--border);}
+  th{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;}
+  td.num{text-align:right; font-variant-numeric:tabular-nums;}
+  .bars{display:flex; align-items:flex-end; gap:4px; height:46px; margin:4px 0 2px;}
+  .bars .bar{flex:1; background:var(--track); border-radius:3px 3px 0 0; position:relative;}
+  .bars .bar > i{
+    display:block; width:100%; border-radius:3px 3px 0 0;
+    background:var(--accent); position:absolute; bottom:0;
+  }
+  .bars .bar.low > i{background:var(--danger);}
+  .legend{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .footer-link{font-size:12.5px; color:var(--accent); text-decoration:none;}
+  .footer-link:hover{text-decoration:underline;}
+  .meta{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--muted); flex-wrap:wrap;}
+  .meta b{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="note">
+    Mockup only — static, no live data. Shows a proposed "Offer Activity" panel added to the
+    responder detail view in the Dispatch Console, next to the existing capability tags and
+    availability fields. It does not change routing behavior; it gives handlers the self-serve
+    history that tickets T-004, T-008, T-010, T-018 and T-022 asked for.
+  </p>
+
+  <div class="card">
+    <h2>Farlight</h2>
+    <p class="sub">Handler: Linda Pruitt &nbsp;·&nbsp; Capability tags: crowd-management, flight</p>
+
+    <div class="flag">
+      <span class="dot"></span>
+      <div>
+        <b>Offer volume dropped sharply starting the week of Aug 17.</b>
+        Down from a ~12/week average to 0–3/week over the last three weeks. This lines up with
+        the Aug&nbsp;12 routing-weight change (4.2), not with anything in Farlight's availability
+        or capability settings, which are unchanged.
+      </div>
+    </div>
+
+    <div class="bars" aria-hidden="true">
+      <div class="bar"><i style="height:68%"></i></div>
+      <div class="bar"><i style="height:68%"></i></div>
+      <div class="bar"><i style="height:63%"></i></div>
+      <div class="bar"><i style="height:68%"></i></div>
+      <div class="bar"><i style="height:74%"></i></div>
+      <div class="bar"><i style="height:68%"></i></div>
+      <div class="bar"><i style="height:57%"></i></div>
+      <div class="bar low"><i style="height:17%"></i></div>
+      <div class="bar low"><i style="height:6%"></i></div>
+      <div class="bar low"><i style="height:2%"></i></div>
+    </div>
+    <div class="legend"><span>Jun 29</span><span>offers per week</span><span>Aug 31</span></div>
+
+    <table>
+      <thead><tr><th>Week of</th><th class="num">Offers sent</th><th class="num">Accepted</th></tr></thead>
+      <tbody>
+        <tr><td>Aug 10</td><td class="num">10</td><td class="num">4</td></tr>
+        <tr><td>Aug 17</td><td class="num">3</td><td class="num">0</td></tr>
+        <tr><td>Aug 24</td><td class="num">1</td><td class="num">0</td></tr>
+        <tr><td>Aug 31</td><td class="num">0</td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+
+    <div class="meta">
+      <span><b>Last offer:</b> 13 days ago</span>
+      <span><b>4-week trend:</b> ▼ 91%</span>
+      <span><a class="footer-link" href="#">View full 90-day history →</a></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Captain Vantage</h2>
+    <p class="sub">Handler: Mr. Ambrose &nbsp;·&nbsp; Capability tags: structural-entry, flight</p>
+
+    <div class="flag ok">
+      <span class="dot"></span>
+      <div>
+        <b>Offer volume is up, not down</b> — from ~12/week to ~17/week since Aug 17. Worth
+        noting alongside the near-miss on Aug 13 (T-001): this responder is now being asked
+        more often, which is the other side of the same routing change.
+      </div>
+    </div>
+
+    <div class="bars" aria-hidden="true">
+      <div class="bar"><i style="height:57%"></i></div>
+      <div class="bar"><i style="height:62%"></i></div>
+      <div class="bar"><i style="height:57%"></i></div>
+      <div class="bar"><i style="height:52%"></i></div>
+      <div class="bar"><i style="height:57%"></i></div>
+      <div class="bar"><i style="height:57%"></i></div>
+      <div class="bar"><i style="height:62%"></i></div>
+      <div class="bar"><i style="height:71%"></i></div>
+      <div class="bar"><i style="height:81%"></i></div>
+      <div class="bar"><i style="height:86%"></i></div>
+    </div>
+    <div class="legend"><span>Jun 29</span><span>offers per week</span><span>Aug 31</span></div>
+
+    <table>
+      <thead><tr><th>Week of</th><th class="num">Offers sent</th><th class="num">Accepted</th></tr></thead>
+      <tbody>
+        <tr><td>Aug 10</td><td class="num">13</td><td class="num">8</td></tr>
+        <tr><td>Aug 17</td><td class="num">15</td><td class="num">11</td></tr>
+        <tr><td>Aug 24</td><td class="num">17</td><td class="num">13</td></tr>
+        <tr><td>Aug 31</td><td class="num">18</td><td class="num">13</td></tr>
+      </tbody>
+    </table>
+
+    <div class="meta">
+      <span><b>Last offer:</b> 2 days ago</span>
+      <span><b>4-week trend:</b> ▲ 38%</span>
+      <span><a class="footer-link" href="#">View full 90-day history →</a></span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

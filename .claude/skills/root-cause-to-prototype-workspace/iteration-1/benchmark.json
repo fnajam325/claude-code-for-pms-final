@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "skill_name": "root-cause-to-prototype",
+    "skill_path": "/Users/faran/cc4pm_rook_industries/.claude/skills/root-cause-to-prototype",
+    "timestamp": "2026-10-08T00:00:00Z",
+    "evals_run": [1, 2, 3],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "eval-1-requisition-prototype",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 346.336, "tokens": 120771, "tool_calls": 26, "errors": 0},
+      "notes": ["Caught that the corpus is almost entirely about a different product (Dispatch, not Supply) before drawing any conclusion.", "Flagged an internal contradiction (roadmap 'chains' vs. one-pager single-step) baseline missed entirely.", "Refused to fabricate simulated stakeholder feedback given n=1 evidence."]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "eval-1-requisition-prototype",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 0.286, "passed": 2, "failed": 5, "total": 7, "time_seconds": 220.761, "tokens": 94920, "tool_calls": 20, "errors": 0},
+      "notes": ["Independently found the same root cause and corpus-mismatch issue — strong on substance.", "Stated the root cause with more certainty than a single source warrants; no confidence gate, no falsifiable hypothesis structure, no pre-build simulation."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "eval-2-acceptance-gutcheck",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 93.962, "tokens": 78588, "tool_calls": 12, "errors": 0},
+      "notes": ["Correctly scoped down to a lightweight check instead of a full investigation.", "Split confidence into two numbers (80 that something's wrong, 40 that 4.2 is the cause) and caught that 4 responders had cratered to near-zero — a sharper, more alarming read than the aggregate trend suggests."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "eval-2-acceptance-gutcheck",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 0.833, "passed": 5, "failed": 1, "total": 6, "time_seconds": 54.57, "tokens": 65661, "tool_calls": 7, "errors": 0},
+      "notes": ["Also showed good restraint — read the same two files, didn't over-invest.", "Relied only on the aggregate weekly trend, missed the per-responder collapse, and concluded 'self-correcting, not a crisis' — a softer and less accurate read than the with-skill run."]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "eval-3-filter-persistence",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 197.452, "tokens": 94005, "tool_calls": 16, "errors": 0},
+      "notes": ["Genuinely tested the suspected cause instead of confirming it, and explicitly rejected a second theory (seasonality) too.", "Correctly built nothing, per the task's own condition, once the suspected cause failed."]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "eval-3-filter-persistence",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 0.75, "passed": 6, "failed": 2, "total": 8, "time_seconds": 235.187, "tokens": 95890, "tool_calls": 13, "errors": 0},
+      "notes": ["Also correctly rejected the filter theory and found the same root cause.", "Re-graded after sharpening the prototype assertion into two parts: it did not build a fix for the rejected theory, and it explicitly justified the thing it did build (a visibility panel) as separate and independent, which the original single binary assertion unfairly failed.", "Remaining real gaps: never considered a competing explanation, and had no dedicated gap section."]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 212.5833, "stddev": 126.8656, "min": 93.962, "max": 346.336},
+      "tokens": {"mean": 97788, "stddev": 21344.4299, "min": 78588, "max": 120771}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.623, "stddev": 0.2948, "min": 0.286, "max": 0.833},
+      "time_seconds": {"mean": 170.1727, "stddev": 100.3743, "min": 54.57, "max": 235.187},
+      "tokens": {"mean": 85490.3333, "stddev": 17179.5538, "min": 65661, "max": 95890}
+    },
+    "delta": {"pass_rate": "+0.38", "time_seconds": "+42.4", "tokens": "+12298"}
+  },
+  "notes": [
+    "n=1 run per configuration — these deltas are directional, not statistically rigorous. Rerun with 3 runs per configuration before trusting the stddev numbers.",
+    "Eval 1 (requisition) shows the cleanest, largest gap (1.0 vs 0.286) — this is the test case that most clearly isolates what the skill adds: a confidence gate, falsifiable hypotheses, a named evidentiary gap, and simulate-before-build discipline, on top of a baseline that already finds the right answer.",
+    "Eval 3's prototype assertion was revised after review: the original single binary ('prototype built only if conclusion supports it') unfairly failed the baseline for a defensible, well-justified call — it rejected the suspected cause, built nothing resembling a 'fix' for it, and explicitly framed what it did build as a separate, independently-justified action. Split into two sharper assertions, the baseline passes both; its score moved from 0.571 to 0.75 and the real remaining gaps (no competing explanation considered, no dedicated gap section) are now what's actually being measured.",
+    "Evals 2 and 3 show a real but smaller gap than eval 1 (1.0 vs 0.833, and 1.0 vs 0.75) because the baseline model is already quite good at restraint (eval 2) and at not confirming a suspected cause by default (eval 3). The skill's marginal value there is in specific disciplines the baseline skips: splitting confidence by claim (eval 2), and considering alternatives / naming the gap as its own section (eval 3).",
+    "The skill costs roughly 25% more time and 14% more tokens on average in this sample, concentrated almost entirely in eval 1, where it did meaningfully more work (an explicit hypothesis table, a synthetic sensitivity check) that the baseline skipped."
+  ]
+}

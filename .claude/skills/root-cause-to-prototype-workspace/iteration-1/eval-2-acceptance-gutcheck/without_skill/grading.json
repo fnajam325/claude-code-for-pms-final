@@ -1,0 +1,20 @@
+{
+  "expectations": [
+    {"text": "Does not claim to read every ticket/interview exhaustively", "passed": true, "evidence": "'Deliberately did NOT open the support tickets, interviews, or other docs.'"},
+    {"text": "Does not spawn subagents", "passed": true, "evidence": "No mention of subagents anywhere; single-agent quick check."},
+    {"text": "No prototype file is built", "passed": true, "evidence": "No file output beyond the report; response offers to go deeper, doesn't build anything."},
+    {"text": "Final response to the user is concise, not a full report", "passed": true, "evidence": "Response is roughly 180 words, three short paragraphs."},
+    {"text": "Checks the existing CLAUDE.md working-context file before proceeding", "passed": true, "evidence": "'Checked the project root CLAUDE.md for prior findings... blank Module 1 placeholder.'"},
+    {"text": "States an explicit confidence score distinguishing magnitude from causal certainty", "passed": false, "evidence": "No numeric confidence anywhere. Response uses qualitative language only ('not a five-alarm fire,' 'worth a quick look') and doesn't separate how sure it is that something's wrong from how sure it is about the cause."}
+  ],
+  "summary": {"passed": 5, "failed": 1, "total": 6, "pass_rate": 0.833},
+  "execution_metrics": {"total_tool_calls": 7, "errors_encountered": 0},
+  "timing": {"total_duration_seconds": 54.57, "total_tokens": 65661},
+  "claims": [
+    {"claim": "Acceptance rate is recovering and not a crisis", "type": "quality", "verified": false, "evidence": "Only looked at the aggregate weekly rate (54%→73%), which the with-skill run's per-responder split shows is misleading — several responders are at or near zero, not 'recovering.' This claim is directionally softer than the evidence actually supports."}
+  ],
+  "eval_feedback": {
+    "suggestions": [{"assertion": "States an explicit confidence score distinguishing magnitude from causal certainty", "reason": "Both runs were restrained in scope, which is good, but only the with-skill run's extra discipline (splitting confidence by claim) caught that the aggregate recovery narrative is misleading. Worth considering whether a 'check per-entity variance, not just the aggregate' nudge belongs in the skill even for lightweight checks, since it's what produced the sharper, more correct read here."}],
+    "overall": "Passes restraint checks but the lack of explicit confidence-splitting let a softer, less accurate read through uncaught."
+  }
+}

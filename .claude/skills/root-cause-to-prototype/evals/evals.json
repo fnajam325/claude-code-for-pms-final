@@ -1,0 +1,23 @@
+{
+  "skill_name": "root-cause-to-prototype",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Investigate why requisition approvals are taking so long in Rook Supply — Halloran complained about an 11-day wait on a cracked vest plate. Use whatever tickets, interviews, and data we have, figure out the root cause, then build me a quick prototype of the fix.",
+      "expected_output": "A root-cause investigation of the requisition approval delay using every relevant source in 00-rook/ (Halloran's interview, any Supply-related tickets, code/data if relevant), with falsifiable hypotheses, ranked by resolvability, evidence traced to source, and a named gap. Because the prompt explicitly asks for a prototype, the skill should build one for the leading hypothesis (e.g., a priority-queue or approval-routing mock) rather than stopping at the written findings.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Can you give me a quick gut-check on what's going on with Rook Dispatch's acceptance rate — I don't want the full deep dive, just tell me if it's something to worry about.",
+      "expected_output": "A short, direct answer using the confidence-gate judgment in phase 0: the skill should recognize this is a status-check request, not a full investigation trigger, and should not read every ticket/interview, spawn subagents, or build a prototype. A brief summary of whether the acceptance rate is concerning, with an offer to go deeper if wanted, is the right shape.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We think the console filter persistence bug is causing complaints. Dig into it using the interviews and tickets and tell me if that's really the cause, then mock up a fix.",
+      "expected_output": "An investigation that actually tests the suspected cause against the evidence rather than confirming it by default — checking whether filter-persistence complaints appear in tickets and interviews, whether the volume/pattern matches, and whether a competing explanation fits better. Should report honestly if the suspected cause is NOT well supported, rather than building a fix for an unconfirmed theory. If a cause is confirmed or reasonably supported, build the requested mock-up; if not, say so and ask how to proceed rather than building anyway.",
+      "files": []
+    }
+  ]
+}

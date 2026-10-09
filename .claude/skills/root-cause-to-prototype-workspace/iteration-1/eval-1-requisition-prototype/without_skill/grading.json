@@ -1,0 +1,21 @@
+{
+  "expectations": [
+    {"text": "States an explicit confidence estimate before beginning investigation (phase 0)", "passed": false, "evidence": "No confidence percentage or explicit confirm-before-starting step anywhere in the report; goes straight into searching."},
+    {"text": "Quotes Halloran's interview directly with specific line evidence", "passed": true, "evidence": "Direct quote: 'it just sits in the same queue as somebody ordering a spare set of boot laces,' attributed to the 5 Sept interview."},
+    {"text": "Presents ranked hypotheses in if/then/because form with confirms-if/fails-if", "passed": false, "evidence": "Findings are presented as numbered prose statements and a single 'Root cause, in one line' — no if/then/because structure, no fails-if conditions, no ranking by resolvability."},
+    {"text": "Flags the lack of a second corroborating source as an explicit, named gap", "passed": false, "evidence": "Notes the corpus is thin ('only Halloran's interview... addresses requisitions') but states the root cause in a single declarative line rather than hedging it as an unconfirmed, n=1 hypothesis; the only named gap is missing team ownership, not evidentiary corroboration."},
+    {"text": "Identifies the 'approval chains' (plural, roadmap) vs. single-step (one-pager) contradiction", "passed": false, "evidence": "Roadmap item is cited as supporting evidence but the plural/singular wording mismatch against the one-pager is never noticed or discussed."},
+    {"text": "A prototype HTML file exists in the run's outputs folder", "passed": true, "evidence": "requisition-prototype.html confirmed saved to outputs/, with current/proposed toggle."},
+    {"text": "Includes a simulate-before-building step with an explicit numeric confidence score", "passed": false, "evidence": "No sensitivity check, simulation, or confidence score anywhere in the report; goes directly from findings to prototype."}
+  ],
+  "summary": {"passed": 2, "failed": 5, "total": 7, "pass_rate": 0.286},
+  "execution_metrics": {"total_tool_calls": 20, "errors_encountered": 0},
+  "timing": {"total_duration_seconds": 220.761, "total_tokens": 94920},
+  "claims": [
+    {"claim": "Root cause is a single flat queue with a non-functional priority flag and no SLA", "type": "factual", "verified": true, "evidence": "Matches the one-pager and Halloran's quote, but rests on the same single source as the with-skill run — stated here with more certainty than the evidence supports."}
+  ],
+  "eval_feedback": {
+    "suggestions": [{"reason": "This run is a genuinely strong baseline — it independently found the thin-corpus problem, the same root cause, and built a well-scoped prototype. The gap between it and the with-skill run isn't depth of finding, it's epistemic discipline: stating confidence, hedging a one-source claim, and simulating before building. Worth keeping an eye on whether future iterations of the skill description emphasize that discipline enough to show up this clearly."}],
+    "overall": "A strong baseline that still misses the structural rigor (confidence gate, falsifiable hypothesis format, named evidentiary gap, pre-build simulation) the skill is specifically meant to add."
+  }
+}

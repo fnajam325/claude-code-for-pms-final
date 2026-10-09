@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "root-cause-to-prototype", "runs": [{"id": "eval-1-requisition-prototype-with_skill", "prompt": "Investigate why requisition approvals are taking so long in Rook Supply \u2014 Halloran complained about an 11-day wait on a cracked vest plate. Use whatever tickets, interviews, and data we have, figure out the root cause, then build me a quick prototype of the fix.", "eval_id": 1, "outputs": [{"name": "report.md", "type": "text", "content": "# Report: requisition approval delays \u2014 root-cause-to-prototype run\n\n## What I did, and why\n\nI followed the `root-cause-to-prototype` skill end to end, but the shape of this investigation ended up very different from the dispatch-routing worked example the skill was built from, and that difference is itself the main finding.\n\n**Phase 0 \u2014 confidence gate.** The ask was clear on its face: investigate why requisition approvals are slow (Halloran's 11-day cracked-vest-plate case), find the root cause, build a prototype of the fix. I was confident (~90%+) on all four checkpoints \u2014 what's being asked, who it's for, what they want to do with it, my role as investigator-then-builder \u2014 so I did not stop to ask a clarifying question and went straight into gathering. In hindsight this was the right call: the uncertainty that showed up later wasn't about the ask, it was about data availability, which is a Phase 2/3 finding, not a Phase 0 one.\n\n**Phase 1 \u2014 orient.** Read `CLAUDE.md` (empty course template, nothing to extend), the Rook Supply one-pager, the Q3 roadmap, the team directory (`who-does-what.xlsx`), and the glossary.\n\n**Phase 2 \u2014 gather completely.** I listed every source in `00-rook/` before reading: 25 tickets, 4 interviews, 1 data CSV, 5 code files, and 6 company docs. I read or grepped all of them. This is where the key finding surfaced: **almost none of this corpus is about Rook Supply or requisitions.** All 25 tickets, the callout-history.csv, the dispatch-routing code, the Slack thread, and Priya's handoff doc are about a different, unrelated problem (Dispatch callout routing / acceptance-rate drop after release 4.2). Three of the four interviews (Ambrose, Aunt Dot, Kip) never mention requisitions either. The *entire* evidentiary base for the requisition-approval question is:\n- One aside inside an interview that was actually about console/dispatch research (Halloran, 5 Sept 2026) \u2014 he raises the requisition complaint unprompted, the interviewer redirects him twice, then gives him five minutes at the end.\n- The Supply one-pager's process description (no tickets, no timing data).\n- One line on the Q3 roadmap: \"Requisition approval chains,\" Supply 4.3, Committed, driver \"Internal.\"\n- The glossary's definitions of requisition/quartermaster (no SLA concept).\n\n**Phase 3 \u2014 cross-reference on purpose.** I checked Halloran's account against every other source I could find:\n- *Does the one-pager's process match his complaint?* Yes \u2014 it describes a single routing step (\"routes to a quartermaster for approval\") with no mention of priority tiers, which matches \"one queue, everything in it.\"\n- *Does anything corroborate the timing or the \"priority field does nothing\" claim?* No independent source does \u2014 no other handler, no quartermaster, no requisition data export exists in this project.\n- *A genuine disagreement worth flagging*: the one-pager describes approval as **one step** (handler \u2192 quartermaster), but the Q3 roadmap item is named \"Requisition approval **chains**\" (plural) \u2014 language that implies product/engineering already know there's more than one hop in the real process. That's a real contradiction between the documented model and the roadmap's own naming, and I can't resolve it with what's in this project.\n- *Timing check*: Halloran says he filed \"three weeks ago\" relative to a 5 Sept interview and that the item \"sat... for eleven days\" \u2014 internally consistent, no red flag there (unlike the worked-example pattern of a complaint's own math predating its blamed cause).\n\n**Phase 4 \u2014 show the work.** Every claim below is sourced to a specific file; see the Findings table.\n\n**Phase 5 \u2014 hypotheses.** Written and ranked below, deliberately by resolvability rather than narrative appeal.\n\n**Phase 6 \u2014 parallelize.** Skipped deliberately. The skill calls for parallel subagents when an investigation splits into genuinely independent angles with enough data behind each to pursue separately. Here there is one data point; spawning agents to \"investigate\" a single quote from three different angles would have been theater, not independent verification, so I did the (small amount of) synthesis myself instead.\n\n**Phase 7 \u2014 simulate before building.** I ran a small, clearly-labeled **SYNTHETIC** sensitivity check (in the prototype itself) showing that a plain FIFO queue plausibly produces an 11-day wait at modest, assumed queue-depth and throughput values. Confidence: **35/100** \u2014 it shows the mechanism is *plausible*, not that it's *confirmed*, because none of the inputs (queue depth, quartermaster daily throughput) are real measured data.\n\n**Phase 8 \u2014 altitude.** I checked `company/notes/` for a direct-request file (something like a director's brief) before assuming a shape for the output \u2014 none exists for Supply (only the Dispatch handoff doc and Slack thread). Since this request came directly from the user with a clear two-part ask (investigate, then build), I'm delivering one response at working altitude rather than drafting a separate exec brief nobody asked for.\n\n**Phase 9 \u2014 name the gap.** Done explicitly below, and repeated inside the prototype's footer so it travels with the artifact, not just this chat.\n\n**Phase 10 \u2014 prototype.** Triggered: the user explicitly asked for a prototype of the fix. Built a small interactive HTML page for the leading hypothesis (a safety-critical fast lane alongside the existing queue). No real users or other interviews were available to react to it, so I did not fabricate simulated stakeholder feedback \u2014 the honest move given n=1 source was to ship the prototype with the evidence gap stated on its face, not to invent a round of \"feedback\" that would read as more validation than exists.\n\n---\n\n## Findings\n\n| # | Claim | Source | Confirmed by |\n|---|---|---|---|\n| 1 | Halloran filed a requisition for a cracked vest plate; it waited 11 days on a quartermaster signature | `feedback/interviews/halloran.txt` L24 | Single source \u2014 his account only |\n| 2 | He set the requisition's priority field; it \"doesn't seem to change anything about how fast it actually moves\" | `halloran.txt` L28 | Single source; consistent with #3 |\n| 3 | The documented Supply flow has one undifferentiated queue: requisition \u2192 quartermaster approval, no priority tier described | `company/supply-one-pager.pdf`, \"Core flow\" + \"Users\" sections | Corroborates #2, but is a process doc, not usage data |\n| 4 | \"Requisition approval chains\" is already a Committed Supply 4.3 roadmap item, driver \"Internal\" (not support-escalation-driven) | `company/roadmap-q3.pdf` | Independent of Halloran \u2014 product already flagged this area before/regardless of his complaint |\n| 5 | The roadmap calls it \"chains\" (plural) while the one-pager describes a single approval step | `roadmap-q3.pdf` vs. `supply-one-pager.pdf` | Internal contradiction, unresolved \u2014 no source explains the discrepancy |\n| 6 | No dedicated Supply PM or quartermaster is listed in the team directory; Supply is owned at the director level for roadmap purposes only | `company/who-does-what.xlsx` | Context only, not a cause |\n| 7 | No tickets, requisition timestamps, or quartermaster interview exist anywhere in this project | Full-corpus grep across `00-rook/` | Confirms the evidence gap itself |\n\nRows 1 and 2 have **no confirming second source** \u2014 flagged here rather than left to blend in with the better-supported rows above them, per the skill's multi-source-table rule.\n\n---\n\n## Hypotheses (ranked by resolvability, not narrative appeal)\n\n**H1 \u2014 No prioritization in the queue**\nIf requisitions are processed in a single FIFO queue with no priority-based sorting, then a safety-critical item submitted on an ordinary day will wait exactly as long as a low-stakes item ahead of it in submission order, because nothing in the documented flow reads the priority field to reorder the queue.\n- Confirms if: the priority field has no effect on sort order/visibility to the quartermaster (matches the one-pager's single-step description and Halloran's account).\n- Fails if: a priority-based fast lane exists in the actual implementation and this was a one-off bug/misrouting for Halloran's specific item.\n- Data needed: already have it (one-pager + Halloran's account agree).\n- Resolvable how soon: **now**, at low confidence (n=1 corroboration).\n\n**H3 \u2014 Undocumented multi-step approval chain**\nIf the real approval process has more hops than the one-pager's single \"quartermaster signature\" step (the roadmap literally calls it \"chains\"), then delay is partly structural \u2014 multiple sign-offs, not just queue position \u2014 because each additional required approver adds wait time independent of urgency.\n- Confirms if: a quartermaster interview or workflow config shows 2+ required approval steps for at least some requisition types.\n- Fails if: the one-pager's single-step description is accurate and \"chains\" in the roadmap name refers to something else (e.g., a UI label, not multiple approvers).\n- Data needed: one more data pull \u2014 a quartermaster interview or the actual workflow configuration.\n- Resolvable how soon: **this week**, if someone can get 20 minutes with a quartermaster.\n\n**H2 \u2014 Quartermaster capacity/staffing bottleneck**\nIf there are too few quartermasters relative to requisition volume, then wait times would scale with overall queue depth regardless of item type or priority, because the bottleneck is throughput, not routing logic.\n- Confirms if: approval-volume/staffing data shows backlog correlates with total submitted volume, not with item category.\n- Fails if: throughput is adequate but flagged/urgent items still wait as long as routine ones (would instead support H1).\n- Data needed: a requisition timestamp export and quartermaster staffing numbers \u2014 **neither exists in this project.**\n- Resolvable how soon: **later**, needs a new data pull outside this corpus.\n\nA fourth candidate considered and NOT elevated to a ranked hypothesis: \"the priority field is simply broken (a bug) rather than unimplemented by design.\" Can't distinguish this from H1 with anything in this corpus \u2014 recorded per the skill's guidance not to silently drop a considered explanation, but it has the same resolvability profile as H3 (needs a quartermaster or engineer, not more reading).\n\n---\n\n## The gap \u2014 what's still unverified, and who should close it\n\n- **n = 1.** The entire finding rests on one interview aside from one handler, captured as a tangent during an unrelated research call. There is no ticket queue, no requisition timing data, and no second account to corroborate that this is a pattern rather than one bad case. Owner: whoever runs Supply research next should get even 3\u20134 more handler/quartermaster accounts before treating H1 as confirmed.\n- **No quartermaster perspective at all.** Every account in this corpus is from the requester's side. The quartermaster may have context (volume, staffing, a reason the priority field isn't wired up) that changes the picture entirely. Owner: Supply PM or Director (Helen Achebe) \u2014 no quartermaster is even listed in the team directory, which is itself worth flagging.\n- **The \"chains\" vs. \"one step\" contradiction is unresolved**, not explained away.\n- **The synthetic sensitivity check in the prototype is illustrative only** (confidence 35/100) \u2014 it shows an 11-day wait is plausible under a plain FIFO queue at reasonable assumed volumes, not that it's the mechanism.\n\n---\n\n## What I built, and what I'd publish instead of this local copy\n\nSaved as a local HTML file rather than a live Artifact, per the task's instruction to keep this test run lightweight:\n`outputs/requisition-queue-prototype.html`\n\nIt's a small interactive mock of the quartermaster's requisition queue with two tabs:\n- **Current:** a single FIFO queue, vest plate buried at position 6 with an 11-day wait and no SLA.\n- **Proposed:** the same queue with a safety-critical lane that pulls armor/plate/harness/breathing-apparatus items into a 48-hour-target lane, leaving the standard lane's wait times untouched for everything else.\n- A **SYNTHETIC-labeled** slider-driven sensitivity check (queue depth \u00d7 quartermaster throughput \u2192 estimated wait, current vs. proposed), with its 35/100 confidence score and what would raise it stated in the UI itself.\n- A footer repeating the evidence gap, so it travels with the file if forwarded on its own.\n\nIf this were going to a real audience, I would publish it as a Claude Artifact rather than hand over a local file, specifically so it's a live link the PM can drop into Slack or a doc for Halloran, the Supply director, or an engineer to react to directly. I did not take that step here only because the task asked me to keep this run local and lightweight.\n\nI did not run a round of simulated stakeholder feedback on the prototype. With only one real account in hand, inventing \"Halloran reacts to this mock\" feedback would read as a second confirming data point when it's actually zero \u2014 exactly the failure mode the skill warns against. If the user wants that rehearsal step next, I'd do it, but labeled simulated on every mention.\n\n---\n\n## My response to the user, exactly as I'd deliver it\n\n> I dug through everything we have \u2014 all 25 tickets, all 4 interviews, the Supply and Dispatch docs, the roadmap, the callout data, the code. Here's the honest headline: **almost none of what we have actually covers requisitions.** The tickets, the usage data, and three of the four interviews are all about a completely different problem (Dispatch callout routing). The entire evidence base for your question is one aside Halloran gave during an unrelated console interview, plus the Supply one-pager's process description.\n>\n> That's thin, so I want to be upfront about what I can and can't claim:\n>\n> **What the one data point says, and what backs it up:** Halloran's vest-plate requisition sat 11 days for a quartermaster signature. He set the priority field and says it didn't change anything. That matches the Supply one-pager, which describes exactly one undifferentiated approval step \u2014 no priority tier, no fast lane. So the leading explanation is **requisitions all sit in one FIFO queue regardless of urgency, and the priority field is currently cosmetic.**\n>\n> **One thing worth knowing**: this isn't news to Product \u2014 \"Requisition approval chains\" is already a committed Q3 roadmap item for Supply 4.3. But the roadmap calls it \"chains\" (plural), while the one-pager describes a single step. I can't tell from what we have whether that's just naming, or whether the real process has more approval hops than documented. That's an open question, not a finding.\n>\n> **What I don't have**: any second handler account, any quartermaster perspective at all (there isn't even a quartermaster in the team directory), and zero requisition timing data. So treat \"no prioritization\" as the leading hypothesis, not a confirmed root cause \u2014 getting even a short quartermaster conversation would do more to firm this up than anything else I could do with what's in this project right now.\n>\n> **The prototype**: I built a quick interactive mock of the quartermaster queue \u2014 toggle between today's single FIFO lane (vest plate buried behind boot laces, 11-day wait, no SLA) and a proposed safety-critical lane that pulls armor/harness/breathing-apparatus items to the front with a 48-hour target, without touching wait times for routine requests. There's also a small sensitivity slider showing why an 11-day wait is plausible under a plain FIFO queue \u2014 labeled clearly as illustrative, not real data.\n>\n> I saved it locally for this run: `requisition-queue-prototype.html`. In the real workflow I'd publish this as a live link so you can drop it in front of Halloran or whoever owns Supply next and get a reaction to something concrete.\n>\n> **Before you act on this**: get one conversation with a quartermaster. It's the single highest-leverage thing that would turn this from \"plausible theory built on one complaint\" into something you can actually commit engineering time against.\n"}, {"name": "requisition-queue-prototype.html", "type": "text", "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Requisition Queue Prototype</title>\n<style>\n  :root{\n    --bg:#f6f5f2; --panel:#ffffff; --ink:#1c1b19; --muted:#6b675f;\n    --line:#e4e1da; --accent:#8a3324; --accent-soft:#f3ddd6;\n    --safe:#3c6e47; --safe-soft:#dcebe0; --warn:#b3771b; --warn-soft:#f6e6c9;\n    --chip:#efece5;\n  }\n  @media (prefers-color-scheme: dark){\n    :root:not([data-theme=\"light\"]){\n      --bg:#171614; --panel:#211f1c; --ink:#ece9e3; --muted:#a39d91;\n      --line:#38352f; --accent:#e08a74; --accent-soft:#3a2520;\n      --safe:#7fbf8f; --safe-soft:#1f3326; --warn:#e0b25a; --warn-soft:#3a2f14;\n      --chip:#2b2823;\n    }\n  }\n  :root[data-theme=\"dark\"]{\n    --bg:#171614; --panel:#211f1c; --ink:#ece9e3; --muted:#a39d91;\n    --line:#38352f; --accent:#e08a74; --accent-soft:#3a2520;\n    --safe:#7fbf8f; --safe-soft:#1f3326; --warn:#e0b25a; --warn-soft:#3a2f14;\n    --chip:#2b2823;\n  }\n  *{box-sizing:border-box;}\n  body{\n    margin:0; background:var(--bg); color:var(--ink);\n    font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Helvetica,Arial,sans-serif;\n    padding:28px 16px 60px;\n  }\n  .wrap{max-width:980px; margin:0 auto;}\n  header{margin-bottom:22px;}\n  .eyebrow{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700;}\n  h1{font-size:26px; margin:6px 0 6px; letter-spacing:-0.01em;}\n  .sub{color:var(--muted); font-size:14.5px; line-height:1.5; max-width:70ch;}\n  .flag{\n    margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:10px;\n    background:var(--warn-soft); color:var(--ink); font-size:13px; line-height:1.55;\n  }\n  .flag b{color:var(--warn);}\n  .tabs{display:flex; gap:8px; margin:26px 0 16px;}\n  .tab{\n    padding:9px 16px; border-radius:999px; border:1px solid var(--line); background:var(--panel);\n    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--muted);\n  }\n  .tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}\n  .panel{\n    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px;\n  }\n  .panel h2{font-size:15px; margin:0 0 4px;}\n  .panel .desc{color:var(--muted); font-size:13px; margin-bottom:14px; line-height:1.5;}\n  table{width:100%; border-collapse:collapse; font-size:13.5px;}\n  th{text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line);}\n  td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}\n  tr:last-child td{border-bottom:none;}\n  .item-row.highlight td{background:var(--accent-soft);}\n  .pos{font-variant-numeric:tabular-nums; color:var(--muted); width:28px;}\n  .name{font-weight:600;}\n  .tag{\n    display:inline-block; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px;\n    background:var(--chip); color:var(--muted); margin-left:8px;\n  }\n  .tag.crit{background:var(--accent-soft); color:var(--accent);}\n  .wait{font-variant-numeric:tabular-nums;}\n  .wait.bad{color:var(--accent); font-weight:700;}\n  .wait.good{color:var(--safe); font-weight:700;}\n  .sla{font-size:11px; padding:2px 7px; border-radius:6px; font-weight:700;}\n  .sla.none{background:var(--chip); color:var(--muted);}\n  .sla.met{background:var(--safe-soft); color:var(--safe);}\n  .hidden{display:none;}\n  .note{margin-top:14px; font-size:12.5px; color:var(--muted); line-height:1.5;}\n  .sim{margin-top:28px;}\n  .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}\n  @media (max-width:640px){ .sim-grid{grid-template-columns:1fr;} }\n  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}\n  .field label{font-size:12.5px; color:var(--muted); font-weight:600;}\n  .field input[type=range]{width:100%;}\n  .field .val{font-size:13px; font-weight:700;}\n  .result{\n    border:1px dashed var(--line); border-radius:10px; padding:14px; margin-top:6px;\n  }\n  .result .row{display:flex; justify-content:space-between; padding:6px 0; font-size:13.5px; border-bottom:1px solid var(--line);}\n  .result .row:last-child{border-bottom:none;}\n  .result .row b{font-variant-numeric:tabular-nums;}\n  .synthetic-badge{\n    display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.04em;\n    background:var(--warn-soft); color:var(--warn); padding:3px 8px; border-radius:6px; margin-bottom:10px;\n  }\n  footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); line-height:1.6;}\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n  <header>\n    <div class=\"eyebrow\">Rook Supply \u2014 prototype</div>\n    <h1>Requisition queue: one lane vs. two</h1>\n    <p class=\"sub\">Sketch of a fix for the complaint that a cracked vest plate requisition sat 11 days waiting on a quartermaster signature behind routine orders like boot laces. Toggle between the current design and a proposed safety-tiered queue below.</p>\n    <div class=\"flag\">\n      <b>Evidence note:</b> this is built from a single interview aside (Halloran, 5 Sept 2026) plus the Supply process one-pager \u2014 there is no ticket queue or timing data for requisitions in this project, unlike the rich multi-source dispatch data. Treat this as a hypothesis to react to, not a validated fix. See report.md for the full gap list.\n    </div>\n  </header>\n\n  <div class=\"tabs\">\n    <div class=\"tab active\" data-tab=\"current\">Current: single queue</div>\n    <div class=\"tab\" data-tab=\"proposed\">Proposed: safety-tiered queue</div>\n  </div>\n\n  <div class=\"panel\" id=\"panel-current\">\n    <h2>Quartermaster queue \u2014 today</h2>\n    <p class=\"desc\">One FIFO queue. A priority field exists on the requisition form, but nothing in the documented flow sorts or routes on it \u2014 it's informational only. Everything waits its turn in submission order.</p>\n    <table>\n      <thead><tr><th class=\"pos\">#</th><th>Item</th><th>Submitted</th><th>Waiting</th><th>SLA</th></tr></thead>\n      <tbody>\n        <tr class=\"item-row\"><td class=\"pos\">1</td><td class=\"name\">Boot laces (spare set)</td><td>Day 0</td><td class=\"wait\">2 days</td><td><span class=\"sla none\">none</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">2</td><td class=\"name\">Flashlight battery pack</td><td>Day 0</td><td class=\"wait\">2 days</td><td><span class=\"sla none\">none</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">3</td><td class=\"name\">Radio holster</td><td>Day 1</td><td class=\"wait\">4 days</td><td><span class=\"sla none\">none</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">4</td><td class=\"name\">Glove liners (x2)</td><td>Day 2</td><td class=\"wait\">5 days</td><td><span class=\"sla none\">none</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">5</td><td class=\"name\">Field notebook refill</td><td>Day 3</td><td class=\"wait\">6 days</td><td><span class=\"sla none\">none</span></td></tr>\n        <tr class=\"item-row highlight\"><td class=\"pos\">6</td><td class=\"name\">Vest plate replacement <span class=\"tag crit\">cracked \u2014 Halloran</span></td><td>Day 3</td><td class=\"wait bad\">11 days</td><td><span class=\"sla none\">no SLA</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">7</td><td class=\"name\">Coat hanger clips</td><td>Day 4</td><td class=\"wait\">8 days</td><td><span class=\"sla none\">none</span></td></tr>\n      </tbody>\n    </table>\n    <p class=\"note\">The \"priority\" field Halloran set on his requisition doesn't appear anywhere in this ordering \u2014 matching his account that it \"doesn't seem to change anything about how fast it actually moves.\"</p>\n  </div>\n\n  <div class=\"panel hidden\" id=\"panel-proposed\">\n    <h2>Quartermaster queue \u2014 with a safety-critical lane</h2>\n    <p class=\"desc\">Requisitions tagged against a short list of safety-critical equipment categories (armor/plate, harness/fall-protection, breathing apparatus) jump to a dedicated lane with a target SLA. Everything else keeps the existing FIFO queue untouched \u2014 no change to the bulk of low-stakes requests.</p>\n    <table>\n      <thead><tr><th class=\"pos\">#</th><th>Item</th><th>Submitted</th><th>Waiting</th><th>SLA</th></tr></thead>\n      <tbody>\n        <tr class=\"item-row highlight\"><td class=\"pos\">1</td><td class=\"name\">Vest plate replacement <span class=\"tag crit\">cracked \u2014 Halloran</span></td><td>Day 3</td><td class=\"wait good\">&lt; 2 days</td><td><span class=\"sla met\">met \u00b7 48h target</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">2</td><td class=\"name\">Boot laces (spare set)</td><td>Day 0</td><td class=\"wait\">2 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">3</td><td class=\"name\">Flashlight battery pack</td><td>Day 0</td><td class=\"wait\">2 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">4</td><td class=\"name\">Radio holster</td><td>Day 1</td><td class=\"wait\">4 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">5</td><td class=\"name\">Glove liners (x2)</td><td>Day 2</td><td class=\"wait\">5 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">6</td><td class=\"name\">Field notebook refill</td><td>Day 3</td><td class=\"wait\">6 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n        <tr class=\"item-row\"><td class=\"pos\">7</td><td class=\"name\">Coat hanger clips</td><td>Day 4</td><td class=\"wait\">8 days</td><td><span class=\"sla none\">standard lane</span></td></tr>\n      </tbody>\n    </table>\n    <p class=\"note\">The vest plate is pulled into a dedicated safety-critical lane with its own 48-hour target, visible to the quartermaster as a badge rather than a silent form field. Standard-lane wait times are unchanged \u2014 this doesn't ask the quartermaster to work faster overall, only to see urgency instead of inferring it.</p>\n  </div>\n\n  <div class=\"panel sim\">\n    <span class=\"synthetic-badge\">SYNTHETIC \u2014 illustrative only, not measured data</span>\n    <h2>Rough sensitivity check</h2>\n    <p class=\"desc\">There's no real throughput or queue-depth data for Supply requisitions, so this slider illustrates the mechanism rather than predicting an actual wait time. Confidence: <b>35/100</b> \u2014 it shows that a FIFO queue plausibly produces an 11-day wait at modest volumes, nothing more. Real confirmation needs quartermaster throughput and a requisition timestamp export.</p>\n    <div class=\"sim-grid\">\n      <div>\n        <div class=\"field\">\n          <label>Items ahead in queue when vest plate was submitted <span class=\"val\" id=\"aheadVal\">5</span></label>\n          <input type=\"range\" id=\"ahead\" min=\"0\" max=\"20\" value=\"5\">\n        </div>\n        <div class=\"field\">\n          <label>Quartermaster throughput (items approved / day) <span class=\"val\" id=\"throughputVal\">1.0</span></label>\n          <input type=\"range\" id=\"throughput\" min=\"2\" max=\"20\" value=\"10\">\n        </div>\n      </div>\n      <div class=\"result\">\n        <div class=\"row\"><span>Estimated wait \u2014 current single FIFO queue</span><b id=\"outCurrent\">\u2014</b></div>\n        <div class=\"row\"><span>Estimated wait \u2014 safety-critical lane (jumps queue)</span><b id=\"outProposed\">\u2014</b></div>\n        <div class=\"row\"><span>Halloran's actual reported wait</span><b>11 days</b></div>\n      </div>\n    </div>\n  </div>\n\n  <footer>\n    Prototype built from one interview aside and the Rook Supply process one-pager. Not published live \u2014 saved as a local file for this test run. Open questions this doesn't resolve: whether the priority field is cosmetic by design or a bug, how many approval hops a requisition actually has (the one-pager describes one step; the Q3 roadmap item is named \"approval <i>chains</i>,\" plural), and quartermaster staffing/capacity. See report.md.\n  </footer>\n</div>\n\n<script>\n  document.querySelectorAll('.tab').forEach(function(tab){\n    tab.addEventListener('click', function(){\n      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });\n      tab.classList.add('active');\n      var which = tab.getAttribute('data-tab');\n      document.getElementById('panel-current').classList.toggle('hidden', which !== 'current');\n      document.getElementById('panel-proposed').classList.toggle('hidden', which !== 'proposed');\n    });\n  });\n\n  var ahead = document.getElementById('ahead');\n  var throughput = document.getElementById('throughput');\n  var aheadVal = document.getElementById('aheadVal');\n  var throughputVal = document.getElementById('throughputVal');\n  var outCurrent = document.getElementById('outCurrent');\n  var outProposed = document.getElementById('outProposed');\n\n  function fmtDays(d){\n    if (d < 1) return Math.round(d*24) + ' hrs';\n    return d.toFixed(1) + ' days';\n  }\n\n  function recompute(){\n    var a = parseInt(ahead.value, 10);\n    var t = parseInt(throughput.value, 10) / 10; // slider 2-20 -> 0.2-2.0 items/day\n    aheadVal.textContent = a;\n    throughputVal.textContent = t.toFixed(1);\n    var currentWait = a / t;\n    var proposedWait = Math.min(2, 1 / t); // jumps lane, bounded by 48h target\n    outCurrent.textContent = fmtDays(currentWait);\n    outProposed.textContent = fmtDays(proposedWait);\n    outCurrent.style.color = currentWait > 5 ? 'var(--accent)' : 'inherit';\n    outProposed.style.color = 'var(--safe)';\n  }\n  ahead.addEventListener('input', recompute);\n  throughput.addEventListener('input', recompute);\n  recompute();\n</script>\n</body>\n</html>\n"}], "grading": {"expectations": [{"text": "States an explicit confidence estimate before beginning investigation (phase 0)", "passed": true, "evidence": "Report's Phase 0 section: '~90%+ on all four checkpoints', with reasoning given for each."}, {"text": "Quotes Halloran's interview directly with specific line evidence", "passed": true, "evidence": "Cites halloran.txt L24 and L28 with direct quotes in the Findings table."}, {"text": "Presents ranked hypotheses in if/then/because form with confirms-if/fails-if", "passed": true, "evidence": "H1, H2, H3 each written in that exact structure with confirms-if/fails-if/data-needed/resolvable-how-soon."}, {"text": "Flags the lack of a second corroborating source as an explicit, named gap", "passed": true, "evidence": "Gap section: 'n = 1... no second account to corroborate', explicitly names it as unconfirmed."}, {"text": "Identifies the 'approval chains' (plural, roadmap) vs. single-step (one-pager) contradiction", "passed": true, "evidence": "Finding row 5 and Phase 3 section call this out explicitly as an unresolved internal contradiction."}, {"text": "A prototype HTML file exists in the run's outputs folder", "passed": true, "evidence": "requisition-queue-prototype.html confirmed saved to outputs/."}, {"text": "Includes a simulate-before-building step with an explicit numeric confidence score", "passed": true, "evidence": "Phase 7: synthetic sensitivity check in the prototype, confidence stated as 35/100, with what would raise it."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "execution_metrics": {"total_tool_calls": 26, "errors_encountered": 0}, "timing": {"total_duration_seconds": 346.336, "total_tokens": 120771}, "claims": [{"claim": "Almost none of the corpus actually covers Supply/requisitions", "type": "factual", "verified": true, "evidence": "Confirmed by full-corpus read: 25 tickets, the CSV, the routing code, and 3 of 4 interviews are all Dispatch-related, not Supply."}], "eval_feedback": {"suggestions": [], "overall": "Report fully satisfies every assertion with specific, checkable evidence. No eval changes suggested from this run."}}}, {"id": "eval-1-requisition-prototype-without_skill", "prompt": "Investigate why requisition approvals are taking so long in Rook Supply \u2014 Halloran complained about an 11-day wait on a cracked vest plate. Use whatever tickets, interviews, and data we have, figure out the root cause, then build me a quick prototype of the fix.", "eval_id": 1, "outputs": [{"name": "report.md", "type": "text", "content": "# Requisition Approval Delays \u2014 Root Cause & Prototype\n\n## What I did\n\n1. Searched everything under `00-rook/` for material related to requisitions, approvals, quartermasters, and Halloran's complaint:\n   - `00-rook/feedback/interviews/halloran.txt` (the source of the \"11-day wait on a cracked vest plate\" complaint)\n   - `00-rook/feedback/interviews/ambrose.txt`, `kip.txt`, `aunt-dot.txt`\n   - `00-rook/feedback/tickets/t-001.txt` through `t-025.txt` (25 support tickets)\n   - `00-rook/data/callout-history.csv`\n   - `00-rook/code/dispatch-routing/*` (routing, offer, availability, history code)\n   - `00-rook/company/supply-one-pager.pdf`, `dispatch-one-pager.pdf`, `roadmap-q3.pdf`, `release-history.pdf`, `about-rook.pdf`, `who-does-what.xlsx`, `glossary.docx`\n   - `00-rook/company/notes/handoff-from-priya.docx` and `dispatch-slack-thread.txt`\n2. Extracted text from the PDFs (via `pypdf`) and the `.docx` files (via the raw XML, since `python-docx` wasn't installed) since there's no `pdftotext` on this machine.\n3. Confirmed which of that material actually bears on requisition approvals versus which is about a different product surface, then built a root-cause narrative from the material that does.\n4. Built an HTML prototype (toggle between \"current state\" and \"proposed fix\" views of the quartermaster approval queue) and saved it locally instead of publishing it, per the test-run instructions.\n\n## Findings\n\n**Most of the available tickets, interviews, and data are about a different product (Rook Dispatch \u2014 callout routing), not Supply.** All 25 tickets, the `callout-history.csv` data, the `dispatch-routing` code, and three of the four interviews (Ambrose, Kip, Aunt Dot) are about callout timing, routing, dark mode, filter persistence, etc. Only Halloran's interview \u2014 and only part of it \u2014 addresses requisitions. I did not force a connection between the Dispatch material and the Supply complaint; they are genuinely separate systems per the product one-pagers (Supply reads Dispatch's availability record but Dispatch's routing/offer logic has no bearing on Supply's approval chain).\n\n**What the real evidence says about the requisition delay:**\n\n1. **One undifferentiated approval queue.** The Supply one-pager (`supply-one-pager.pdf`) describes the core flow as: handler raises a requisition \u2192 it routes to a quartermaster for approval \u2192 fulfillment is tracked to delivery. Nothing in that flow tiers requests by urgency.\n2. **The priority field is cosmetic.** Halloran, in the 5 Sept 2026 interview: *\"There's a priority field. I set it. Doesn't seem to change anything about how fast it actually moves, it just sits in the same queue as somebody ordering a spare set of boot laces.\"* This is the direct, named cause of the 11-day wait \u2014 a cracked vest plate (a safety issue) and boot laces are sorted identically.\n3. **No SLA, no escalation.** Nothing in the product surfaces when a request has sat too long, and there's no fallback approver if the assigned quartermaster is slow or unavailable. The request waits on exactly one person with no backstop.\n4. **This is already a known, committed gap** \u2014 not a surprise finding. `roadmap-q3.pdf` lists \"Requisition approval chains\" under Rook Supply, target release 4.3, status **Committed**, owner Product. The roadmap item exists; it just doesn't have a concrete scope or failure case attached yet. This investigation supplies that.\n5. No Supply-side quartermaster, engineer, or PM is named in `who-does-what.xlsx` beyond Helen Achebe (Director of Product, owns roadmap/commitments) \u2014 worth flagging as a gap in itself; there's no clear single owner to hand the 4.3 scope to.\n\n**Root cause, in one line:** Requisition approval has a single flat queue with a non-functional priority flag and no SLA/escalation, so an \"urgent\" safety item waits exactly as long as a routine one \u2014 and in this case, longer, because nothing in the system distinguishes them.\n\n## Prototype\n\nSaved locally at:\n`/Users/faran/cc4pm_rook_industries/.claude/skills/root-cause-to-prototype-workspace/iteration-1/eval-1-requisition-prototype/without_skill/outputs/requisition-prototype.html`\n\nIt's a single self-contained HTML file (no external dependencies, light/dark aware) with a toggle between two views of the quartermaster approval queue:\n\n- **Current state**: one flat list sorted only by filing date, where \"Priority: Urgent\" items (the cracked vest plate, a failing comms headset) wait the same or longer than routine ones, because the field doesn't drive ordering.\n- **Proposed fix**: the same requests re-sorted into three urgency lanes (Safety-critical / Operational / Routine), each with a visible SLA clock, a \"breached\" flag when the clock runs out, and automatic escalation to a backup approver for safety-critical items after 24 hours with no action. A root-cause summary panel with source citations is included at the bottom.\n\n**Scope decisions, deliberately kept small:** only the safety-critical lane gets auto-escalation to a backup approver; operational and routine lanes keep the existing single quartermaster signer. This limits the change to the piece that's actually causing harm (urgent safety items stuck for days) without redesigning the whole approval chain or requiring a second approver role everywhere.\n\nIf this were a live deliverable rather than a test run, I would have published it as a Claude Artifact (so Halloran, Helen Achebe, and the eventual 4.3 engineering owner could open it directly and comment) instead of a local file, and I would have pointed Helen at the roadmap's existing Q3 \"Requisition approval chains\" line as the vehicle to carry this scope rather than opening a new work item from scratch.\n\n## Final response delivered to the user\n\n> I dug through the tickets, interviews, and data in `00-rook/`, and here's the thing worth saying up front: almost none of it is actually about Supply. The 25 support tickets, the callout-history data, and three of the four handler interviews (Ambrose, Kip, Aunt Dot) are all about Rook Dispatch \u2014 callout routing, dark mode, filter persistence, timing complaints about callouts going to someone else. That's a different product surface. I didn't force a connection; I went looking specifically for requisition/approval material instead.\n>\n> **Root cause of the 11-day wait, straight from Halloran's own words:** there's one flat requisition queue, no SLA, and the priority field you set doesn't do anything to how fast a request actually moves. Halloran said it plainly: *\"it just sits in the same queue as somebody ordering a spare set of boot laces.\"* A cracked vest plate \u2014 a safety issue \u2014 and a boot-lace order are sorted identically, by filing date, waiting on a single quartermaster signature with no fallback if that person is slow or unavailable.\n>\n> The good news: this isn't a mystery you need to go sell internally. It's already on the Q3 2026 roadmap as **\"Requisition approval chains\" \u2014 Supply, target 4.3, status Committed** \u2014 it just doesn't have a concrete scope attached yet. This investigation gives you that scope.\n>\n> **Prototype**: I built a quick before/after mockup of the quartermaster approval queue \u2014 toggle between \"current state\" (flat list, urgent items buried) and \"proposed fix\" (three urgency lanes \u2014 Safety-critical / Operational / Routine \u2014 each with a visible SLA clock, a breach flag, and auto-escalation to a backup approver for safety-critical items stuck past 24 hours). I kept the fix narrow on purpose: only the safety-critical lane gets a backup approver, so this doesn't turn into a full approval-chain redesign.\n>\n> For this test run I saved it as a local file rather than publishing it live: `requisition-prototype.html` in the outputs folder. In the real workflow I'd publish this as a Claude Artifact so you, Halloran, and whoever ends up owning 4.3 can open and comment on it directly, and I'd attach it to the existing \"Requisition approval chains\" roadmap line rather than opening new work.\n>\n> One more loose end worth a flag: the team directory doesn't list a named Supply-side quartermaster, engineer, or PM \u2014 only Helen Achebe as the roadmap owner. Before 4.3 scoping starts, someone needs to actually own this on the Supply side.\n"}, {"name": "requisition-prototype.html", "type": "text", "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Requisition Triage Prototype</title>\n<style>\n  :root{\n    --bg:#f6f7f9; --card:#ffffff; --border:#e2e5ea; --text:#1b1f27; --muted:#6b7280;\n    --red:#d64545; --red-bg:#fdeceb; --amber:#c98a1a; --amber-bg:#fdf3e0; --green:#2f8f5b; --green-bg:#eaf7ef;\n    --blue:#2f5fd6; --blue-bg:#ebf0fd;\n  }\n  @media (prefers-color-scheme: dark){\n    :root:not([data-theme=\"light\"]){\n      --bg:#14161b; --card:#1d2027; --border:#2c303a; --text:#e8e9ec; --muted:#9aa0ab;\n      --red:#ef6a6a; --red-bg:#3a1f20; --amber:#e3a548; --amber-bg:#3a2f18; --green:#5fcf8f; --green-bg:#17301f;\n      --blue:#7f9ef5; --blue-bg:#1d2740;\n    }\n  }\n  *{box-sizing:border-box;}\n  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;padding:24px 16px 60px;}\n  .wrap{max-width:980px;margin:0 auto;}\n  h1{font-size:22px;margin:0 0 4px;}\n  .sub{color:var(--muted);font-size:14px;margin:0 0 20px;}\n  .toggle{display:inline-flex;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px;}\n  .toggle button{border:none;background:transparent;color:var(--text);font-size:14px;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;}\n  .toggle button.active{background:var(--blue);color:#fff;}\n  .panel{display:none;}\n  .panel.active{display:block;}\n  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}\n  .row{display:flex;align-items:center;gap:12px;}\n  .row + .row{margin-top:10px;}\n  .item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);}\n  .item + .item{margin-top:8px;}\n  .badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:3px 9px;border-radius:999px;white-space:nowrap;}\n  .b-crit{color:var(--red);background:var(--red-bg);}\n  .b-high{color:var(--amber);background:var(--amber-bg);}\n  .b-normal{color:var(--muted);background:var(--border);}\n  .b-ok{color:var(--green);background:var(--green-bg);}\n  .b-esc{color:var(--blue);background:var(--blue-bg);}\n  .name{font-weight:600;font-size:14px;}\n  .meta{font-size:12.5px;color:var(--muted);}\n  .flex1{flex:1;min-width:0;}\n  .waiting{font-size:13px;font-weight:600;min-width:90px;text-align:right;}\n  .waiting.bad{color:var(--red);}\n  .waiting.warn{color:var(--amber);}\n  .waiting.good{color:var(--green);}\n  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-bottom:14px;}\n  .legend span{display:inline-flex;align-items:center;gap:6px;}\n  .dot{width:8px;height:8px;border-radius:50%;}\n  .d-red{background:var(--red);} .d-amber{background:var(--amber);} .d-gray{background:var(--muted);}\n  .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px;}\n  .note{background:var(--amber-bg);color:var(--amber);border:1px solid color-mix(in srgb, var(--amber) 35%, transparent);border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px;}\n  .findingcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}\n  .findingcard h3{margin:0 0 8px;font-size:15px;}\n  .findingcard p{margin:4px 0;font-size:13.5px;color:var(--text);line-height:1.5;}\n  .pill-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}\n  .pill{font-size:12px;background:var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);}\n  footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;}\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n  <h1>Requisition Approvals \u2014 Current State vs. Triaged Queue</h1>\n  <p class=\"sub\">Rook Supply \u00b7 prototype for the Q3 roadmap item \"Requisition approval chains\" (committed for 4.3)</p>\n\n  <div class=\"toggle\">\n    <button id=\"btn-current\" class=\"active\" onclick=\"show('current')\">Current state</button>\n    <button id=\"btn-fix\" onclick=\"show('fix')\">Proposed fix</button>\n  </div>\n\n  <!-- CURRENT STATE -->\n  <div class=\"panel active\" id=\"current\">\n    <div class=\"note\">\n      One queue. No SLA. No escalation. A cracked vest plate and a pair of boot laces are sorted the same way \u2014 by the order they were filed \u2014 and the \"priority\" field a handler sets has no effect on queue position or on when a quartermaster is reminded.\n    </div>\n\n    <div class=\"legend\">\n      <span><span class=\"dot d-red\"></span> Safety-relevant, aging badly</span>\n      <span><span class=\"dot d-amber\"></span> Priority flagged, still ignored by the queue</span>\n      <span><span class=\"dot d-gray\"></span> Routine</span>\n    </div>\n\n    <div class=\"card\">\n      <div class=\"section-title\">Quartermaster approval queue \u00b7 sorted by date filed (unchanged by priority)</div>\n\n      <div class=\"item\">\n        <span class=\"badge b-high\">Priority: Urgent</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Vest plate \u2014 cracked, safety</div>\n          <div class=\"meta\">Filed by Halloran \u00b7 for Sgt. Bulwark \u00b7 17 Sep 2026</div>\n        </div>\n        <div class=\"waiting bad\">11 days waiting</div>\n      </div>\n\n      <div class=\"item\">\n        <span class=\"badge b-normal\">Priority: Normal</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Boot laces (spare set)</div>\n          <div class=\"meta\">Filed by Okafor \u00b7 for The Undertow \u00b7 16 Sep 2026</div>\n        </div>\n        <div class=\"waiting\">12 days waiting</div>\n      </div>\n\n      <div class=\"item\">\n        <span class=\"badge b-normal\">Priority: Normal</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Glove liners, size M \u00d72</div>\n          <div class=\"meta\">Filed by Sung \u00b7 for Nightwell \u00b7 18 Sep 2026</div>\n        </div>\n        <div class=\"waiting\">10 days waiting</div>\n      </div>\n\n      <div class=\"item\">\n        <span class=\"badge b-high\">Priority: Urgent</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Comms headset \u2014 intermittent cutout in field</div>\n          <div class=\"meta\">Filed by Kova\u010d \u00b7 for Stormwrack \u00b7 20 Sep 2026</div>\n        </div>\n        <div class=\"waiting bad\">8 days waiting</div>\n      </div>\n\n      <div class=\"item\">\n        <span class=\"badge b-normal\">Priority: Normal</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Utility belt \u2014 replacement clip</div>\n          <div class=\"meta\">Filed by Pruitt \u00b7 for Farlight \u00b7 22 Sep 2026</div>\n        </div>\n        <div class=\"waiting\">6 days waiting</div>\n      </div>\n\n      <p class=\"meta\" style=\"margin-top:10px;\">Every request sits in one undifferentiated list, ordered only by filing date. \"Urgent\" items wait just as long as routine ones \u2014 in this snapshot, longer.</p>\n    </div>\n  </div>\n\n  <!-- PROPOSED FIX -->\n  <div class=\"panel\" id=\"fix\">\n    <div class=\"note\" style=\"background:var(--green-bg);color:var(--green);border-color:color-mix(in srgb, var(--green) 35%, transparent);\">\n      Same requests, re-sorted by urgency tier with a visible SLA clock and automatic escalation when a tier's clock runs out. The quartermaster sees what needs attention first; a handler can see where their request stands instead of just waiting.\n    </div>\n\n    <div class=\"card\">\n      <div class=\"section-title\">Lane 1 \u2014 Safety-critical (SLA: 24 hours to first review)</div>\n      <div class=\"item\" style=\"border-color:var(--red);\">\n        <span class=\"badge b-crit\">Safety-critical</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Vest plate \u2014 cracked, safety</div>\n          <div class=\"meta\">Halloran \u00b7 Sgt. Bulwark \u00b7 filed 17 Sep</div>\n        </div>\n        <span class=\"badge b-esc\">Auto-escalated to backup QM at 24h</span>\n        <div class=\"waiting bad\">SLA breached by 10 days</div>\n      </div>\n      <div class=\"item\" style=\"border-color:var(--red);\">\n        <span class=\"badge b-crit\">Safety-critical</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Comms headset \u2014 intermittent cutout in field</div>\n          <div class=\"meta\">Kova\u010d \u00b7 Stormwrack \u00b7 filed 20 Sep</div>\n        </div>\n        <span class=\"badge b-esc\">Auto-escalated to backup QM at 24h</span>\n        <div class=\"waiting bad\">SLA breached by 7 days</div>\n      </div>\n    </div>\n\n    <div class=\"card\">\n      <div class=\"section-title\">Lane 2 \u2014 Operational (SLA: 72 hours)</div>\n      <div class=\"item\">\n        <span class=\"badge b-high\">Operational</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Utility belt \u2014 replacement clip</div>\n          <div class=\"meta\">Pruitt \u00b7 Farlight \u00b7 filed 22 Sep</div>\n        </div>\n        <div class=\"waiting warn\">SLA breached by 3 days</div>\n      </div>\n    </div>\n\n    <div class=\"card\">\n      <div class=\"section-title\">Lane 3 \u2014 Routine (SLA: 5 business days)</div>\n      <div class=\"item\">\n        <span class=\"badge b-ok\">Routine</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Glove liners, size M \u00d72</div>\n          <div class=\"meta\">Sung \u00b7 Nightwell \u00b7 filed 18 Sep</div>\n        </div>\n        <div class=\"waiting warn\">SLA breached by 5 days</div>\n      </div>\n      <div class=\"item\">\n        <span class=\"badge b-ok\">Routine</span>\n        <div class=\"flex1\">\n          <div class=\"name\">Boot laces (spare set)</div>\n          <div class=\"meta\">Okafor \u00b7 The Undertow \u00b7 filed 16 Sep</div>\n        </div>\n        <div class=\"waiting warn\">SLA breached by 7 days</div>\n      </div>\n    </div>\n\n    <div class=\"card\" style=\"background:var(--blue-bg);border-color:transparent;\">\n      <div class=\"section-title\" style=\"color:var(--blue);\">What changed, mechanically</div>\n      <p class=\"meta\" style=\"font-size:13px;\">\n        1. <b>Priority field now drives sort order and SLA</b>, not just a label \u2014 safety-critical requests sit in their own lane, above everything else, regardless of filing date.<br>\n        2. <b>Each lane carries a clock</b>. When a request's SLA is breached, it's visually flagged (as shown above) instead of silently aging.<br>\n        3. <b>Auto-escalation</b>: a safety-critical request with no quartermaster action inside 24 hours routes itself to a backup approver automatically \u2014 it no longer depends on someone noticing.<br>\n        4. <b>Single-signer bottleneck removed</b> for the top lane only \u2014 routine and operational approvals still go through the primary quartermaster, keeping the change small and low-risk.\n      </p>\n    </div>\n  </div>\n\n  <div class=\"section-title\">Root cause summary</div>\n  <div class=\"findingcard\">\n    <h3>Why the vest plate sat for 11 days</h3>\n    <p><b>1. One undifferentiated queue.</b> Rook Supply's one-pager confirms the core flow is: handler raises a requisition \u2192 it routes to a quartermaster for approval \u2192 fulfillment is tracked. There is no tiering by urgency in that flow.</p>\n    <p><b>2. The priority field is cosmetic.</b> Halloran set it (\"there's a priority field, I set it\") and it had no effect on queue position \u2014 confirmed directly in the interview transcript (5 Sept 2026).</p>\n    <p><b>3. No SLA or escalation path.</b> Nothing in the product surfaces when a request has gone past a reasonable review window, and nothing reroutes it to another approver if the assigned quartermaster is slow, out, or overloaded. The request simply waits for one person to act.</p>\n    <p><b>4. It's already a known gap, not a surprise.</b> The Q3 2026 roadmap lists \"Requisition approval chains\" (Supply, target 4.3) as a <i>committed</i> item owned by Product \u2014 this investigation adds the concrete failure case and a minimal, shippable scope to point that committed work at.</p>\n    <div class=\"pill-row\">\n      <span class=\"pill\">Source: 00-rook/feedback/interviews/halloran.txt</span>\n      <span class=\"pill\">Source: 00-rook/company/supply-one-pager.pdf</span>\n      <span class=\"pill\">Source: 00-rook/company/roadmap-q3.pdf</span>\n    </div>\n  </div>\n\n  <footer>Prototype \u2014 illustrative data, not live. Built for the Rook Supply requisition approval investigation, Oct 2026.</footer>\n</div>\n\n<script>\nfunction show(which){\n  document.getElementById('current').classList.toggle('active', which==='current');\n  document.getElementById('fix').classList.toggle('active', which==='fix');\n  document.getElementById('btn-current').classList.toggle('active', which==='current');\n  document.getElementById('btn-fix').classList.toggle('active', which==='fix');\n}\n</script>\n</body>\n</html>\n"}], "grading": {"expectations": [{"text": "States an explicit confidence estimate before beginning investigation (phase 0)", "passed": false, "evidence": "No confidence percentage or explicit confirm-before-starting step anywhere in the report; goes straight into searching."}, {"text": "Quotes Halloran's interview directly with specific line evidence", "passed": true, "evidence": "Direct quote: 'it just sits in the same queue as somebody ordering a spare set of boot laces,' attributed to the 5 Sept interview."}, {"text": "Presents ranked hypotheses in if/then/because form with confirms-if/fails-if", "passed": false, "evidence": "Findings are presented as numbered prose statements and a single 'Root cause, in one line' \u2014 no if/then/because structure, no fails-if conditions, no ranking by resolvability."}, {"text": "Flags the lack of a second corroborating source as an explicit, named gap", "passed": false, "evidence": "Notes the corpus is thin ('only Halloran's interview... addresses requisitions') but states the root cause in a single declarative line rather than hedging it as an unconfirmed, n=1 hypothesis; the only named gap is missing team ownership, not evidentiary corroboration."}, {"text": "Identifies the 'approval chains' (plural, roadmap) vs. single-step (one-pager) contradiction", "passed": false, "evidence": "Roadmap item is cited as supporting evidence but the plural/singular wording mismatch against the one-pager is never noticed or discussed."}, {"text": "A prototype HTML file exists in the run's outputs folder", "passed": true, "evidence": "requisition-prototype.html confirmed saved to outputs/, with current/proposed toggle."}, {"text": "Includes a simulate-before-building step with an explicit numeric confidence score", "passed": false, "evidence": "No sensitivity check, simulation, or confidence score anywhere in the report; goes directly from findings to prototype."}], "summary": {"passed": 2, "failed": 5, "total": 7, "pass_rate": 0.286}, "execution_metrics": {"total_tool_calls": 20, "errors_encountered": 0}, "timing": {"total_duration_seconds": 220.761, "total_tokens": 94920}, "claims": [{"claim": "Root cause is a single flat queue with a non-functional priority flag and no SLA", "type": "factual", "verified": true, "evidence": "Matches the one-pager and Halloran's quote, but rests on the same single source as the with-skill run \u2014 stated here with more certainty than the evidence supports."}], "eval_feedback": {"suggestions": [{"reason": "This run is a genuinely strong baseline \u2014 it independently found the thin-corpus problem, the same root cause, and built a well-scoped prototype. The gap between it and the with-skill run isn't depth of finding, it's epistemic discipline: stating confidence, hedging a one-source claim, and simulating before building. Worth keeping an eye on whether future iterations of the skill description emphasize that discipline enough to show up this clearly."}], "overall": "A strong baseline that still misses the structural rigor (confidence gate, falsifiable hypothesis format, named evidentiary gap, pre-build simulation) the skill is specifically meant to add."}}}, {"id": "eval-2-acceptance-gutcheck-with_skill", "prompt": "Can you give me a quick gut-check on what's going on with Rook Dispatch's acceptance rate \u2014 I don't want the full deep dive, just tell me if it's something to worry about.", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "# Eval 2 \u2014 Acceptance-rate gut-check (with skill)\n\n## Request\n\"Can you give me a quick gut-check on what's going on with Rook Dispatch's acceptance rate \u2014 I don't want the full deep dive, just tell me if it's something to worry about.\"\n\n## Skill phase-0 gate \u2014 how I read this request\nRan the confidence check from root-cause-to-prototype/SKILL.md phase 0 silently (not out loud to the user) because confidence was high on all four dimensions and the user had already pre-answered the depth question:\n- What's being asked: a quick directional read on acceptance rate, explicitly not a full investigation \u2014 high confidence (user said this twice).\n- Who for / their stake: presumably a PM on Rook Dispatch deciding whether to escalate \u2014 high confidence.\n- What they want to achieve: decide whether this is worth worrying about, not a finished root-cause doc \u2014 high confidence.\n- My role: fast advisor giving a directional take, not investigator-of-record \u2014 high confidence.\n\nBecause all four were clear and the user explicitly scoped the depth, I treated this as the lightweight path the skill calls out in phase 0 (\"not a gate for every small follow-up\") and phase 10 (\"don't default to the full output menu\") \u2014 not the full phases 1-9 pipeline.\n\n## What I did\n- Checked /Users/faran/cc4pm_rook_industries/CLAUDE.md for existing working-context/prior findings. It's still the untouched template (\"You'll fill this in during Module 1\") \u2014 no prior findings actually exist in this project yet, contrary to my brief's assumption.\n- Skimmed the directory listing of 00-rook/ to see what sources exist (tickets, interviews, one data file, code, company docs) without reading them all.\n- Read the one quantitative source in full: 00-rook/data/callout-history.csv (161 rows, weekly pings_sent/pings_taken per responder, 2026-06-29 through 2026-08-31).\n- Computed a before/after split at the release date that stood out in the changelog:\n  - Weeks before 2026-08-10: 1,034 pings sent, 794 taken \u2192 76.8% acceptance\n  - Weeks of 2026-08-10 onward: 662 pings sent, 428 taken \u2192 64.7% acceptance\n  - That's a sustained ~12-point drop across the last several weeks in the file, not a one-week blip. Several responders (Farlight, Meteor Mite, The Undertow, Vesper) drop to near-zero acceptance on a handful of offers in the most recent weeks.\n- Read 00-rook/code/dispatch-routing/CHANGELOG.md (3 entries). Version 4.2, shipped 12 Aug 2026, lines up almost exactly with the drop: it rebalanced ranking weights (\"proximity up, recent acceptance down\") and cut the callout offer timeout from 90s to 60s. Plausible, correlated candidate cause \u2014 not confirmed.\n- Skimmed only the header lines (ticket #, filer, responder, date) of all 25 files in feedback/tickets/ to see when tickets cluster \u2014 not their bodies. Sampled dates (17 Aug, 20 Aug, 22 Aug, 26 Aug, 27 Aug, 29 Aug, 2 Sep, 3 Sep, 4 Sep) cluster after the 4.2 release, consistent with the CSV trend, but I did not read ticket content to verify why each was filed.\n\n## What I deliberately did NOT do\n- Did not read the full body of any of the 25 support tickets or any of the 4 interview transcripts \u2014 only ticket headers, for dating.\n- Did not read the routing/offer/availability/history Python source files, the release-history PDF, the Slack thread notes, or the handoff doc.\n- Did not cross-reference every claim across every source (skill phase 3) \u2014 only the one data file against the one changelog file, which was enough to answer \"worry or not.\"\n- Did not write falsifiable if/then/because hypotheses (skill phase 5) \u2014 a formal ranking wasn't what was asked for.\n- Did not spawn any subagents to parallelize investigation (skill phase 6).\n- Did not build or simulate anything (skill phase 7), and did not build a prototype (skill phase 10) \u2014 nothing in the request asked for something built, and phase 10's gate says not to default there.\n- Did not update or fill in the project's CLAUDE.md working-context file \u2014 this was a one-off quick read, not a multi-session investigation; nothing durable worth persisting, and the user didn't ask for it.\n- Did not touch anything outside /Users/faran/cc4pm_rook_industries/, per the course CLAUDE.md scope rules.\n\n## Confidence\n~80 on \"something real is happening and it's worth a closer look.\" ~40 on \"the 4.2 release is the actual cause\" \u2014 that's a timing correlation from one changelog entry and one data file, not a verified root cause. Both caveats were stated to the user rather than overstated.\n\n## Final response delivered to the user (verbatim)\n\nShort answer: yes, worth a look \u2014 but I'd stop at \"flag it,\" not \"panic.\"\n\nI pulled the one hard number you've got \u2014 callout-history.csv \u2014 and compared the weeks before and after the most recent dispatch-routing release:\n\n- Before Aug 10: 76.8% acceptance (1,034 pings sent, 794 taken)\n- Aug 10 onward: 64.7% acceptance (662 pings sent, 428 taken)\n\nThat's a real, sustained ~12-point drop over the last several weeks, not a single bad week \u2014 and a few responders (Farlight, Meteor Mite, The Undertow, Vesper) have cratered to near-zero acceptance on a handful of offers in the most recent weeks, which is new.\n\nTiming-wise, it lines up closely with the dispatch-routing 4.2 release on 12 Aug, which rebalanced the ranking weights (more proximity, less weight on recent acceptance) and cut the offer timeout from 90s to 60s. That's a plausible lead, not a confirmed cause \u2014 I'm going on one changelog entry and one data file, I haven't read the ticket bodies, the interviews, or the actual routing code yet.\n\nSo: I'd treat this as \"yes, flag it to the team,\" not \"fire drill.\" If you want, I can do the fuller investigation next \u2014 read the tickets and interviews, check them against the code change, and come back with a proper root-cause writeup \u2014 but that's a different, heavier piece of work than what you asked for here, so I didn't start it on my own.\n"}], "grading": {"expectations": [{"text": "Does not claim to read every ticket/interview exhaustively", "passed": true, "evidence": "Explicitly: 'skimmed only the header lines... not their bodies' for tickets; interviews/source files/PDFs not read, listed under 'What I deliberately did NOT do.'"}, {"text": "Does not spawn subagents", "passed": true, "evidence": "'Did not spawn any subagents to parallelize investigation (skill phase 6).'"}, {"text": "No prototype file is built", "passed": true, "evidence": "'Did not build or simulate anything... did not build a prototype' \u2014 no file in outputs/ beyond the report."}, {"text": "Final response to the user is concise, not a full report", "passed": true, "evidence": "Final response is roughly 230 words, four short paragraphs, offers to go deeper rather than delivering a full writeup."}, {"text": "Checks the existing CLAUDE.md working-context file before proceeding", "passed": true, "evidence": "'Checked /Users/.../CLAUDE.md for existing working-context/prior findings.'"}, {"text": "States an explicit confidence score distinguishing magnitude from causal certainty", "passed": true, "evidence": "'~80 on something real is happening... ~40 on the 4.2 release is the actual cause' \u2014 two distinct numeric scores for two distinct claims."}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}, "execution_metrics": {"total_tool_calls": 12, "errors_encountered": 0}, "timing": {"total_duration_seconds": 93.962, "total_tokens": 78588}, "claims": [{"claim": "4 responders show near-zero acceptance on recent offers", "type": "factual", "verified": true, "evidence": "Named (Farlight, Meteor Mite, The Undertow, Vesper) with the underlying CSV split cited."}], "eval_feedback": {"suggestions": [], "overall": "Clean pass on every assertion, and the restraint is genuine, not performative \u2014 it visibly stopped short of phases 1-9's full machinery because the request didn't call for it."}}}, {"id": "eval-2-acceptance-gutcheck-without_skill", "prompt": "Can you give me a quick gut-check on what's going on with Rook Dispatch's acceptance rate \u2014 I don't want the full deep dive, just tell me if it's something to worry about.", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "## What I did\n- Checked the project root `CLAUDE.md` for prior findings on this investigation (it's still a blank Module 1 placeholder \u2014 no prior notes exist yet).\n- Looked at `00-rook/data/callout-history.csv` (161 rows: weekly pings_sent/pings_taken by responder/handler) and aggregated acceptance rate (pings_taken/pings_sent) by week.\n- Checked `00-rook/code/dispatch-routing/CHANGELOG.md` for anything timing-aligned with the dip.\n- Deliberately did NOT open the support tickets, interviews, or other docs \u2014 kept this to a quick gut-check as the user asked for, not a full deep dive.\n- Ignored `.claude/skills/` entirely per instructions.\n\n## Key numbers (weekly acceptance rate, from callout-history.csv)\n| Week | Acceptance rate |\n|---|---|\n| 06-29 | 76.7% |\n| 07-06 | 77.1% |\n| 07-13 | 76.4% |\n| 07-20 | 75.0% |\n| 07-27 | 77.6% |\n| 08-03 | 77.9% |\n| **08-10** | **54.2%** |\n| 08-17 | 65.8% |\n| 08-24 | 66.7% |\n| 08-31 | 72.7% |\n\nAcceptance rate was stable ~75-78% for six straight weeks, then dropped sharply to 54% the week of Aug 10, and has been climbing back since (66%, 67%, 73%) \u2014 recovering but not yet fully back to baseline as of the latest data.\n\nThe timing lines up almost exactly with dispatch-routing v4.2, released Aug 12, 2026 (per CHANGELOG.md): rebalanced ranking weights (proximity up, recent acceptance down) and cut the offer timeout from 90s to 60s. Either change plausibly explains fewer accepted offers.\n\n## Final response to the user (exactly as I'd deliver it)\n\nShort version: yes, it's worth a look, but it's not a five-alarm fire \u2014 and it already looks like it's self-correcting.\n\nAcceptance rate held steady around 76-78% for six weeks, then fell off a cliff to 54% the week of Aug 10, right when you shipped dispatch-routing v4.2 (Aug 12) \u2014 which rebalanced ranking to weight proximity higher and recent acceptance lower, and cut the offer timeout from 90s to 60s. Either of those changes could plausibly be depressing acceptance (routing people to jobs they're less likely to take, and/or giving them less time to say yes).\n\nThe good news: it's been recovering since \u2014 66%, 67%, 73% over the following three weeks \u2014 so it's trending back toward normal, not getting worse. It hasn't fully healed yet though.\n\nMy gut-check take: worth a quick look at whether the v4.2 ranking/timeout change is the cause (easy to check \u2014 compare acceptance under the old vs. new ranking logic, or see if reverting the timeout helps), but I wouldn't treat it as a crisis given the self-correcting trend. If you want, I can go deeper into tickets/interviews/the routing code to pin down the actual mechanism.\n\nRelevant files:\n- /Users/faran/cc4pm_rook_industries/00-rook/data/callout-history.csv\n- /Users/faran/cc4pm_rook_industries/00-rook/code/dispatch-routing/CHANGELOG.md\n- /Users/faran/cc4pm_rook_industries/CLAUDE.md (checked, currently blank placeholder)\n"}], "grading": {"expectations": [{"text": "Does not claim to read every ticket/interview exhaustively", "passed": true, "evidence": "'Deliberately did NOT open the support tickets, interviews, or other docs.'"}, {"text": "Does not spawn subagents", "passed": true, "evidence": "No mention of subagents anywhere; single-agent quick check."}, {"text": "No prototype file is built", "passed": true, "evidence": "No file output beyond the report; response offers to go deeper, doesn't build anything."}, {"text": "Final response to the user is concise, not a full report", "passed": true, "evidence": "Response is roughly 180 words, three short paragraphs."}, {"text": "Checks the existing CLAUDE.md working-context file before proceeding", "passed": true, "evidence": "'Checked the project root CLAUDE.md for prior findings... blank Module 1 placeholder.'"}, {"text": "States an explicit confidence score distinguishing magnitude from causal certainty", "passed": false, "evidence": "No numeric confidence anywhere. Response uses qualitative language only ('not a five-alarm fire,' 'worth a quick look') and doesn't separate how sure it is that something's wrong from how sure it is about the cause."}], "summary": {"passed": 5, "failed": 1, "total": 6, "pass_rate": 0.833}, "execution_metrics": {"total_tool_calls": 7, "errors_encountered": 0}, "timing": {"total_duration_seconds": 54.57, "total_tokens": 65661}, "claims": [{"claim": "Acceptance rate is recovering and not a crisis", "type": "quality", "verified": false, "evidence": "Only looked at the aggregate weekly rate (54%\u219273%), which the with-skill run's per-responder split shows is misleading \u2014 several responders are at or near zero, not 'recovering.' This claim is directionally softer than the evidence actually supports."}], "eval_feedback": {"suggestions": [{"assertion": "States an explicit confidence score distinguishing magnitude from causal certainty", "reason": "Both runs were restrained in scope, which is good, but only the with-skill run's extra discipline (splitting confidence by claim) caught that the aggregate recovery narrative is misleading. Worth considering whether a 'check per-entity variance, not just the aggregate' nudge belongs in the skill even for lightweight checks, since it's what produced the sharper, more correct read here."}], "overall": "Passes restraint checks but the lack of explicit confidence-splitting let a softer, less accurate read through uncaught."}}}, {"id": "eval-3-filter-persistence-with_skill", "prompt": "We think the console filter persistence bug is causing complaints. Dig into it using the interviews and tickets and tell me if that's really the cause, then mock up a fix.", "eval_id": 3, "outputs": [{"name": "report.md", "type": "text", "content": "No mockup/prototype file was created, and that's a deliberate conclusion, not an oversight \u2014 see below.\n\n---\n\n# Investigation: \"The console filter-persistence bug is causing complaints\"\n\n**Scope:** Rook Industries dispatch/callout complaints, Aug\u2013Sep 2026. Sources read in full: all 25 tickets (`00-rook/feedback/tickets/t-001.txt`\u2013`t-025.txt`), all 4 research interviews (`00-rook/feedback/interviews/ambrose.txt`, `aunt-dot.txt`, `halloran.txt`, `kip.txt`), plus `00-rook/code/dispatch-routing/` (CHANGELOG.md, config.py, offer.py, routing.py), `00-rook/data/callout-history.csv`, and `00-rook/company/notes/dispatch-slack-thread.txt`.\n\n## What I did\n1. Read every ticket and interview transcript in full (not a sample), tagging each complaint by symptom.\n2. Checked the dispatch-routing codebase's changelog and config to see what actually shipped in the release the complaints cluster around.\n3. Cross-referenced ticket dates and interview quotes against the engineering team's own Slack thread from the same period.\n4. Pulled `callout-history.csv` and computed weekly accept rate and per-responder variance before/after the release, to test the theory against data the tickets/interviews didn't generate themselves.\n\n## What the evidence actually shows: NOT SUPPORTED\n\nThe filter-persistence theory looked plausible only because it shares a release date with the real cause. Every independent source points elsewhere.\n\n- `CHANGELOG.md` 4.2 (12 Aug 2026) bundled three unrelated changes in one release: (1) console filter persistence, explicitly annotated **\"not in this service\"** \u2014 i.e. a frontend-only change with no code path into dispatch/offers; (2) offer timeout cut from 90s to 60s (`config.py`); (3) ranking weights rebalanced \u2014 `WEIGHT_PROXIMITY` 0.45\u21920.60, `WEIGHT_RECENT_ACCEPTANCE` 0.40\u21920.25.\n- All dated tickets start 13 Aug 2026 (day after release) and split into two clusters: \"offer vanished before I could answer\" (T-001, T-003, T-007, T-011, T-015, T-019, T-020, T-023, T-025) and \"nothing's come in for ages\" (T-002, T-004, T-005, T-008, T-009, T-010, T-012, T-013, T-014, T-016, T-017, T-018, T-021, T-022, T-024). None mention filters or saved views.\n- Interviews actively rule out the filter theory:\n  - **Ambrose** is the one heavy filter user and praises the filter-persistence fix outright; he raises the missed-callout incident as an explicitly *separate* topic, and independently describes the proximity/acceptance-weight symptom from the outside (\"a slower-arriving response... lately that doesn't seem to hold\").\n  - **Halloran** reports the same near-miss symptom for Bulwark but never uses filters \u2014 \"straight to the profile, always.\" Symptom persists with zero filter exposure.\n  - **Kip** reports the clearest feast-or-famine pattern (Meteor Mite dead quiet, The Gale nonstop, same week/city) while explicitly saying he \"barely uses\" filters.\n  - **Aunt Dot** independently describes both the fast-loss and quiet-stretch patterns without mentioning filters at all.\n- The Slack thread (`dispatch-slack-thread.txt`) shows the dispatch team reaching the identical split in real time (18 Aug): \"phone never even goes off anymore\" vs. \"gone before they've got a thumb on the screen.\" Nadia Hoffmann attributes the second directly to the timeout cut. Marcus Oyelaran separately flags (14 Aug) that the weight rebalance doesn't distinguish responders who'd been declining jobs from everyone else \u2014 and nobody ever answers that question (Wen Li on PTO; Priya left 21 Aug).\n- Data confirms a step-change, not a coincidence or seasonal drift:\n  - Weekly accept rate: steady ~0.75\u20130.78 for six pre-release weeks, drops to **0.54** the release week (2026-08-10), recovers only to ~0.73 three weeks later. A one-week cliff, not a seasonal fade (contra Priya's seasonality theory from the Slack thread).\n  - Per-responder weekly offer-count std dev roughly **doubles** post-release (2.46 \u2192 6.11) while the mean barely moves (10.77 \u2192 10.10) \u2014 total work didn't shrink, it got redistributed, exactly matching Kip's \"two cards, same week, same city, totally different stories.\"\n\n**Bottom line:** the real cause is the 4.2 routing-engine change (shorter offer timeout + proximity-up/recent-acceptance-down weight rebalance), not the console filter-persistence feature, which has no code path into offer dispatch and whose heaviest user (Ambrose) is unaffected by the offer-timing bug it's being blamed for.\n\n## Falsifiable hypotheses\n\n| # | Hypothesis | Confirms if | Fails if | Data needed | Resolvable how soon |\n|---|---|---|---|---|---|\n| 1 | Shortened offer window (90s\u219260s) causes the missed-offer complaints. | Missed-offer tickets cluster right after 12 Aug, describe very short windows. | Tickets predate 12 Aug or describe windows well over 60s. | Already have it | Now \u2014 confirmed |\n| 2 | Weight rebalance (proximity up, recent-acceptance down) causes the quiet-stretch complaints. | Per-responder offer variance rises post-release with flat total volume; quiet responders skew toward lower recent-acceptance/farther proximity. | Variance flat, or quiet responders random w.r.t. proximity/acceptance. | Already have it | Now \u2014 confirmed |\n| 3 | Console filter persistence is unrelated to either symptom. | Symptoms appear regardless of a handler's filter usage. | Symptoms correlate specifically with filter use/config. | Already have it | Now \u2014 confirmed; theory rejected |\n| 4 | The two clusters are one compounding mechanism, not two bugs, and can hit the same account in sequence. | Same responder shows quiet-then-lost back to back. | No account shows both. | Already have it | Now \u2014 confirmed: Ironvale (T-008 quiet \u2192 T-025 quiet-then-lost), The Undertow (T-005 quiet \u2192 T-019 quiet-then-lost) |\n\n## Named gap (what's still unverified)\n- Marcus's 14 Aug Slack question \u2014 whether the recent-acceptance weight cut was meant to target only responders who'd been declining jobs, or landed on everyone \"because the config doesn't distinguish\" \u2014 was never answered. This matters: intentional vs. accidental changes what \"the fix\" means. Owner: whoever now owns `config.py` (Wen Li, per the thread).\n- `callout-history.csv` is weekly aggregates, not per-offer timestamps, so the \"a few seconds\" framing in interviews is anecdotal, not measured. A raw offer/response-timestamp pull would make hypothesis 1 precise.\n- I haven't independently verified Nadia's reported ~2:1 \"quiet vs. lost\" ticket split beyond my own tagging (mine came out ~15:9 among dated tickets, roughly consistent but not identical \u2014 worth reconciling against her underlying count if it matters for prioritization).\n\n## Mock-up decision\nNo prototype was built. Per the task brief, if the evidence doesn't support the theory I should say so rather than build anyway \u2014 and it doesn't. A console filter mock-up would solve a problem that isn't occurring, and could put the (valued, working) filter-persistence feature at risk of being reworked or rolled back for the wrong reason. If a prototype is wanted next, the right one is a small interactive model of the ranking formula (sliders for the three weights + timeout, replayed against real profiles like Ironvale's or The Undertow's) rather than anything console/UI-facing \u2014 I did not build this since it wasn't asked for and building was explicitly conditional on the theory holding up.\n\n---\n\n## Final response, as delivered to the user\n\nI dug through all 25 tickets, all 4 interviews, the dispatch-routing code and changelog, the team's own Slack thread from when this started, and the callout-history data. Short version: **the filter-persistence theory doesn't hold up \u2014 I'd drop it.**\n\nThe console filter-persistence fix is a frontend-only change (the changelog literally tags it \"not in this service\" \u2014 no code path into dispatch or offers), and the person who actually uses and likes it (Ambrose) reports the missed-callout problem as a separate issue entirely. Meanwhile the same symptoms \u2014 offers vanishing instantly, and long dead stretches \u2014 show up just as badly for handlers who never touch filters (Halloran goes straight to a profile page; Kip \"barely uses\" filters at all) and don't track with filter usage anywhere in the data.\n\nWhat's actually going on: the same release that shipped the filter fix also shipped two routing-engine changes \u2014 the offer response window got cut from 90 seconds to 60, and the ranking formula shifted to weight proximity more and recent-acceptance history less. Both land on the exact date the tickets start, and both show up in the numbers: weekly accept rate drops from a steady ~77% to 54% the release week and only climbs back to ~73% three weeks later, and the spread in how many offers each responder gets roughly doubles. That's the \"gone before I could answer\" cluster and the \"my phone hasn't gone off in 10 days\" cluster \u2014 and a couple of accounts (Ironvale, The Undertow) show both hitting back to back.\n\nThis actually matches what your own team said in real time on Slack \u2014 Nadia pinned the fast-loss complaints on the timeout cut the same week, and Marcus asked whether the weight change was meant to hit only responders who'd been declining jobs, a question that never got answered before the PTO/departure handoff. Priya's instinct that August is \"always a little soft\" is a fair prior, but a one-week cliff isn't what a seasonal dip looks like.\n\nSince the suspected cause didn't check out, I didn't build a console mock-up \u2014 that would solve the wrong problem. I'd suggest instead: test reverting or softening the offer timeout and the weight rebalance (start with something between 60s and the old 90s, watch whether accept rate recovers), and get a straight answer on whether the recent-acceptance penalty was meant to apply only to people who'd been declining, since that changes what the fix looks like. Happy to build a small interactive model of the ranking formula against real responder profiles if that'd help you see the mechanism \u2014 just say so.\n"}], "grading": {"expectations": [{"text": "Reads all 25 tickets and all 4 interviews in full", "passed": true, "evidence": "'Sources read in full: all 25 tickets... all 4 research interviews' listed by filename."}, {"text": "Checks the suspected cause against evidence from multiple independent sources", "passed": true, "evidence": "Cross-referenced tickets, interviews, changelog/config, the Slack thread, and callout-history.csv."}, {"text": "Considers and names at least one alternative/competing explanation", "passed": true, "evidence": "Explicitly addresses and rejects Priya's seasonal theory: 'a one-week cliff isn't what a seasonal dip looks like.'"}, {"text": "Concludes honestly \u2014 rejects the suspected cause if unsupported", "passed": true, "evidence": "'NOT SUPPORTED' stated as a section header, with the real cause (routing weights + timeout) identified instead."}, {"text": "Traces every major claim to a specific file/line/ticket ID", "passed": true, "evidence": "Config values cited to config.py, ticket clusters cited by ticket ID, Slack quotes attributed to named speakers and dates."}, {"text": "Does not build a 'fix' for the suspected cause after rejecting it as unsupported", "passed": true, "evidence": "No prototype built at all \u2014 'Mock-up decision' section states the theory failed so nothing was built."}, {"text": "If something is built anyway, explicitly distinguishes it from 'the fix' and justifies it independently", "passed": true, "evidence": "Not applicable \u2014 nothing was built, so there's nothing to conflate with a fix for the rejected theory. Counted as satisfied since the stricter sibling assertion is also met."}, {"text": "Names what's still unverified as its own section", "passed": true, "evidence": "'Named gap' section: Marcus's unanswered Slack question, CSV being weekly-aggregate only, the unreconciled 2:1 ticket-split claim."}], "summary": {"passed": 8, "failed": 0, "total": 8, "pass_rate": 1.0}, "execution_metrics": {"total_tool_calls": 16, "errors_encountered": 0}, "timing": {"total_duration_seconds": 197.452, "total_tokens": 94005}, "claims": [{"claim": "Filter persistence has no code path into dispatch/offers", "type": "factual", "verified": true, "evidence": "CHANGELOG.md explicitly annotates the filter-persistence entry 'not in this service.'"}], "eval_feedback": {"suggestions": [], "overall": "Full pass under the revised assertion wording. The revision doesn't change this run's score \u2014 it changes how fairly the baseline run gets judged for a defensible but different choice."}}}, {"id": "eval-3-filter-persistence-without_skill", "prompt": "We think the console filter persistence bug is causing complaints. Dig into it using the interviews and tickets and tell me if that's really the cause, then mock up a fix.", "eval_id": 3, "outputs": [{"name": "mockup-offer-health-panel.html", "type": "text", "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Mockup \u2014 Offer Activity panel (Dispatch Console)</title>\n<style>\n  :root{\n    --bg:#f4f5f7; --panel:#ffffff; --ink:#1b1f27; --muted:#6b7280;\n    --border:#e3e6ea; --accent:#2f5bd7; --danger:#c0392b; --danger-bg:#fdecea;\n    --ok:#1f8a4c; --ok-bg:#eaf7ef; --track:#eef0f3;\n  }\n  @media (prefers-color-scheme: dark){\n    :root:not([data-theme=\"light\"]){\n      --bg:#14161a; --panel:#1d2026; --ink:#e8eaee; --muted:#9aa2ad;\n      --border:#2a2e36; --accent:#6f93ef; --danger:#ff6b60; --danger-bg:#3a1f1f;\n      --ok:#4fd080; --ok-bg:#163826; --track:#2a2e36;\n    }\n  }\n  :root[data-theme=\"dark\"]{\n    --bg:#14161a; --panel:#1d2026; --ink:#e8eaee; --muted:#9aa2ad;\n    --border:#2a2e36; --accent:#6f93ef; --danger:#ff6b60; --danger-bg:#3a1f1f;\n    --ok:#4fd080; --ok-bg:#163826; --track:#2a2e36;\n  }\n  *{box-sizing:border-box;}\n  body{\n    margin:0; background:var(--bg); color:var(--ink);\n    font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif;\n    padding:16px;\n  }\n  .wrap{max-width:760px; margin:0 auto;}\n  .note{\n    font-size:12.5px; color:var(--muted); margin:0 0 14px;\n    padding:10px 12px; border:1px dashed var(--border); border-radius:8px;\n  }\n  .card{\n    background:var(--panel); border:1px solid var(--border); border-radius:14px;\n    padding:18px 18px 16px; margin-bottom:16px;\n  }\n  .card h2{font-size:15px; margin:0 0 2px;}\n  .card .sub{font-size:12.5px; color:var(--muted); margin:0 0 14px;}\n  .flag{\n    display:flex; gap:10px; align-items:flex-start;\n    background:var(--danger-bg); border:1px solid var(--danger);\n    border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:13px;\n  }\n  .flag.ok{background:var(--ok-bg); border-color:var(--ok);}\n  .flag b{color:var(--danger);}\n  .flag.ok b{color:var(--ok);}\n  .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);margin-top:4px;flex:none;}\n  .flag.ok .dot{background:var(--ok);}\n  table{width:100%; border-collapse:collapse; font-size:13px;}\n  th,td{text-align:left; padding:6px 8px; border-bottom:1px solid var(--border);}\n  th{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;}\n  td.num{text-align:right; font-variant-numeric:tabular-nums;}\n  .bars{display:flex; align-items:flex-end; gap:4px; height:46px; margin:4px 0 2px;}\n  .bars .bar{flex:1; background:var(--track); border-radius:3px 3px 0 0; position:relative;}\n  .bars .bar > i{\n    display:block; width:100%; border-radius:3px 3px 0 0;\n    background:var(--accent); position:absolute; bottom:0;\n  }\n  .bars .bar.low > i{background:var(--danger);}\n  .legend{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:2px;}\n  .footer-link{font-size:12.5px; color:var(--accent); text-decoration:none;}\n  .footer-link:hover{text-decoration:underline;}\n  .meta{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--muted); flex-wrap:wrap;}\n  .meta b{color:var(--ink);}\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n\n  <p class=\"note\">\n    Mockup only \u2014 static, no live data. Shows a proposed \"Offer Activity\" panel added to the\n    responder detail view in the Dispatch Console, next to the existing capability tags and\n    availability fields. It does not change routing behavior; it gives handlers the self-serve\n    history that tickets T-004, T-008, T-010, T-018 and T-022 asked for.\n  </p>\n\n  <div class=\"card\">\n    <h2>Farlight</h2>\n    <p class=\"sub\">Handler: Linda Pruitt &nbsp;\u00b7&nbsp; Capability tags: crowd-management, flight</p>\n\n    <div class=\"flag\">\n      <span class=\"dot\"></span>\n      <div>\n        <b>Offer volume dropped sharply starting the week of Aug 17.</b>\n        Down from a ~12/week average to 0\u20133/week over the last three weeks. This lines up with\n        the Aug&nbsp;12 routing-weight change (4.2), not with anything in Farlight's availability\n        or capability settings, which are unchanged.\n      </div>\n    </div>\n\n    <div class=\"bars\" aria-hidden=\"true\">\n      <div class=\"bar\"><i style=\"height:68%\"></i></div>\n      <div class=\"bar\"><i style=\"height:68%\"></i></div>\n      <div class=\"bar\"><i style=\"height:63%\"></i></div>\n      <div class=\"bar\"><i style=\"height:68%\"></i></div>\n      <div class=\"bar\"><i style=\"height:74%\"></i></div>\n      <div class=\"bar\"><i style=\"height:68%\"></i></div>\n      <div class=\"bar\"><i style=\"height:57%\"></i></div>\n      <div class=\"bar low\"><i style=\"height:17%\"></i></div>\n      <div class=\"bar low\"><i style=\"height:6%\"></i></div>\n      <div class=\"bar low\"><i style=\"height:2%\"></i></div>\n    </div>\n    <div class=\"legend\"><span>Jun 29</span><span>offers per week</span><span>Aug 31</span></div>\n\n    <table>\n      <thead><tr><th>Week of</th><th class=\"num\">Offers sent</th><th class=\"num\">Accepted</th></tr></thead>\n      <tbody>\n        <tr><td>Aug 10</td><td class=\"num\">10</td><td class=\"num\">4</td></tr>\n        <tr><td>Aug 17</td><td class=\"num\">3</td><td class=\"num\">0</td></tr>\n        <tr><td>Aug 24</td><td class=\"num\">1</td><td class=\"num\">0</td></tr>\n        <tr><td>Aug 31</td><td class=\"num\">0</td><td class=\"num\">0</td></tr>\n      </tbody>\n    </table>\n\n    <div class=\"meta\">\n      <span><b>Last offer:</b> 13 days ago</span>\n      <span><b>4-week trend:</b> \u25bc 91%</span>\n      <span><a class=\"footer-link\" href=\"#\">View full 90-day history \u2192</a></span>\n    </div>\n  </div>\n\n  <div class=\"card\">\n    <h2>Captain Vantage</h2>\n    <p class=\"sub\">Handler: Mr. Ambrose &nbsp;\u00b7&nbsp; Capability tags: structural-entry, flight</p>\n\n    <div class=\"flag ok\">\n      <span class=\"dot\"></span>\n      <div>\n        <b>Offer volume is up, not down</b> \u2014 from ~12/week to ~17/week since Aug 17. Worth\n        noting alongside the near-miss on Aug 13 (T-001): this responder is now being asked\n        more often, which is the other side of the same routing change.\n      </div>\n    </div>\n\n    <div class=\"bars\" aria-hidden=\"true\">\n      <div class=\"bar\"><i style=\"height:57%\"></i></div>\n      <div class=\"bar\"><i style=\"height:62%\"></i></div>\n      <div class=\"bar\"><i style=\"height:57%\"></i></div>\n      <div class=\"bar\"><i style=\"height:52%\"></i></div>\n      <div class=\"bar\"><i style=\"height:57%\"></i></div>\n      <div class=\"bar\"><i style=\"height:57%\"></i></div>\n      <div class=\"bar\"><i style=\"height:62%\"></i></div>\n      <div class=\"bar\"><i style=\"height:71%\"></i></div>\n      <div class=\"bar\"><i style=\"height:81%\"></i></div>\n      <div class=\"bar\"><i style=\"height:86%\"></i></div>\n    </div>\n    <div class=\"legend\"><span>Jun 29</span><span>offers per week</span><span>Aug 31</span></div>\n\n    <table>\n      <thead><tr><th>Week of</th><th class=\"num\">Offers sent</th><th class=\"num\">Accepted</th></tr></thead>\n      <tbody>\n        <tr><td>Aug 10</td><td class=\"num\">13</td><td class=\"num\">8</td></tr>\n        <tr><td>Aug 17</td><td class=\"num\">15</td><td class=\"num\">11</td></tr>\n        <tr><td>Aug 24</td><td class=\"num\">17</td><td class=\"num\">13</td></tr>\n        <tr><td>Aug 31</td><td class=\"num\">18</td><td class=\"num\">13</td></tr>\n      </tbody>\n    </table>\n\n    <div class=\"meta\">\n      <span><b>Last offer:</b> 2 days ago</span>\n      <span><b>4-week trend:</b> \u25b2 38%</span>\n      <span><a class=\"footer-link\" href=\"#\">View full 90-day history \u2192</a></span>\n    </div>\n  </div>\n\n</div>\n</body>\n</html>\n"}, {"name": "report.md", "type": "text", "content": "# Console filter-persistence theory \u2014 investigation report\n\n## What I did\n\n1. Read all 25 tickets in `00-rook/feedback/tickets/` (t-001 through t-025, dated 13 Aug \u2013 5 Sep 2026).\n2. Read all 4 research interviews in `00-rook/feedback/interviews/` (Ambrose, Dot/\"Aunt Dot\", Halloran, Kip) \u2014 these were from a console-redesign research round, so filter persistence came up directly.\n3. Read the `dispatch-routing` service source (`00-rook/code/dispatch-routing/`: `config.py`, `routing.py`, `offer.py`, `history.py`, `availability.py`) and its `CHANGELOG.md`, to see what actually shipped and when.\n4. Pulled `00-rook/data/callout-history.csv` (weekly offers-sent / offers-taken per responder, 10 weeks, 16 responders) and ran it through a quick Python aggregation to check volume and variance before vs. after the release in question.\n\n## What I concluded\n\n**The filter-persistence theory does not hold up. It's very likely a coincidence of timing, not the cause.**\n\n- Filter persistence shipped in the **4.2 release (12 Aug 2026)**, and every single complaint in the ticket set starts the day after, **13 Aug 2026**. That's the only evidence connecting it to the complaints, and it's purely a date overlap.\n- The interview transcripts directly undercut the theory. Ambrose (Captain Vantage's handler) describes the filter-persistence fix as a clear win \u2014 \"the difference between opening the console and immediately being at work, versus... five minutes of housekeeping.\" His one gripe is that the saved filter has reverted to default twice after a backend update, which is an annoyance for *him*, not something that would stop a responder from getting or keeping a callout. Kip, Halloran, and Dot don't mention filter persistence at all when asked about console pain points.\n- Critically, filter persistence lives in the **console UI**. It cannot touch who gets offered a callout, in what order, or how long they have to answer \u2014 that logic lives entirely in the separate `dispatch-routing` service, which the console doesn't write to (per `availability.py`'s own comment: \"Nothing in routing changes it\").\n- The ticket content itself splits cleanly into two patterns that have nothing to do with a UI filter:\n  - **Quiet-stretch tickets** (T-002, T-004, T-005, T-008, T-009, T-010, T-013, T-014, T-017, T-018, T-021, T-022, T-024): a responder goes 1\u20134 weeks with few or no offers, despite being marked available.\n  - **Vanished-too-fast tickets** (T-001, T-003, T-006/T-007 mentions, T-011, T-015, T-019, T-020, T-023, T-025): an offer disappears to someone else before the responder can answer, often right after a long quiet stretch.\n\n### The actual cause\n\nThe same `4.2` release that shipped filter persistence also shipped two **dispatch-routing** changes, documented in its changelog:\n\n```\n## 4.2 \u2014 12 Aug 2026\n- Rebalanced ranking weights: proximity up, recent acceptance down.\n- Callout offer timeout 90s -> 60s.\n- Console filter persistence (not in this service).\n```\n\nIn `config.py`:\n- `WEIGHT_PROXIMITY` went from 0.45 \u2192 **0.60**\n- `WEIGHT_RECENT_ACCEPTANCE` went from 0.40 \u2192 **0.25**\n- `OFFER_TIMEOUT_SECONDS` went from 90 \u2192 **60**\n\nIn `history.py`, a `no_answer` (timeout) is scored exactly the same as an explicit decline \u2014 both pull the responder's `recent_acceptance` score down by `DECLINE_PENALTY`. There's also an open `TODO(wen, 2019)` noting the score never decays back toward neutral on its own.\n\nPut together, this is a classic feedback loop:\n1. Weighting proximity much more heavily than before means responders who are a bit farther from the action (regardless of reliability) get pushed down the ranked list.\n2. Once a responder starts getting fewer offers, each missed/timed-out offer dings their `recent_acceptance` score the same as a decline would.\n3. A lower acceptance score pushes them further down the list next time too \u2014 the 0.25 weight still counts against them \u2014 so the gap compounds week over week instead of correcting itself.\n4. Meanwhile the responders who *are* close to the action get offered even more (since proximity now dominates), creating the \"one card on fire, one card dead\" pattern Kip described.\n5. When a long-quiet responder finally does get offered something, the shorter 60s window (down from 90s) is tighter than they're used to and tighter than they're now \"in the habit\" of reacting to \u2014 hence the string of \"gone before I even unlocked my phone\" tickets, often on the very first offer after a dry spell (T-011, T-019, T-025 are explicit about this: first offer in 10 days / two weeks / a month, lost almost instantly).\n\n### Data check\n\nI aggregated `callout-history.csv` by week. The spread between the busiest and quietest responder's weekly offer count was stable (roughly 6\u201316, a 10-point range) for all seven weeks before the release, then widened sharply starting the week of **Aug 17** (the first full week after the Aug 12 release):\n\n| Week of | Min offers/responder | Max offers/responder |\n|---|---|---|\n| Aug 10 | 7 | 16 |\n| Aug 17 | 3 | 18 |\n| Aug 24 | 1 | 20 |\n| Aug 31 | 0 | 21 |\n\nLooking at individuals: Farlight, The Undertow, Vesper, and Meteor Mite each fell from a stable ~10\u201314 offers/week to 0\u20134/week within three weeks of the release \u2014 and their accept-rate within that same transition week also dropped (e.g., Farlight 10 sent / 4 taken, Vesper 12 sent / 6 taken), consistent with missed/timed-out offers starting to compound. Over the same period, Captain Vantage, Nightwell, The Gale, Stormwrack, and Sgt. Falkirk rose from ~10\u201314/week to ~15\u201321/week. This is exactly the divergence the ranking-weight change would produce, and it maps one-to-one onto who filed which kind of ticket.\n\n### Bottom line\n\nThe \"console filter persistence\" fix is not the cause of the complaints. It's a genuine, well-received improvement that happens to have shipped in the same release as two routing-algorithm changes that are. Recommend this gets handed to Wen Li's team (owner of `dispatch-routing`, per the service README) to:\n- Reconsider the magnitude of the Aug 12 weight rebalance, or roll it back and re-tune more gradually.\n- Stop scoring a timeout (`no_answer`) identically to an explicit decline \u2014 a responder who simply didn't see the offer in time shouldn't be penalized the same as one who actively said no.\n- Revisit the 60s offer window, especially for responders coming off a long gap, and/or add the score-decay the 2019 TODO already flagged.\n\n## Fix mock-up\n\nSince the real root cause is a backend ranking/timeout issue, not a console UI issue, there's no console \"fix\" that resolves the actual problem \u2014 that's a `dispatch-routing` config and scoring change for engineering. What *is* a legitimate, console-side action here is giving handlers the visibility several of them explicitly asked for and don't currently have (T-008: \"she asked if there was a way to see her own history and I had to tell her there isn't\"; T-018: Linda wants \"something more to tell her than 'I don't know'\"). That visibility would also have let the team catch this regression within a week instead of over three weeks of tickets trickling in.\n\nI mocked up an **\"Offer Activity\" panel** for the responder detail view in the console: a per-responder weekly offers-sent/accepted history with a sparkline and an automatic flag when volume drops (or rises) sharply relative to that responder's own baseline, annotated with any recent release that coincides with the shift. Two example states \u2014 one flagged (Farlight, showing the real collapse from the data) and one healthy-but-rising (Captain Vantage) \u2014 built as a static HTML mock-up rather than published live.\n\nSaved locally at:\n`/Users/faran/cc4pm_rook_industries/.claude/skills/root-cause-to-prototype-workspace/iteration-1/eval-3-filter-persistence/without_skill/outputs/mockup-offer-health-panel.html`\n\nIf this were being published for real, I'd publish it as a Claude Artifact (private by default) so the design/product team could open and share the link directly rather than passing around an HTML file \u2014 kept it local for this test run's scope.\n\n## My response to the user, as I would actually deliver it\n\n---\n\nI dug through all 25 tickets, the four console-redesign interviews, the dispatch-routing source code, and ten weeks of callout history. **The filter-persistence theory doesn't hold up \u2014 I don't think that's the cause.**\n\nHere's why: filter persistence lives entirely in the console UI and literally cannot affect who gets offered a callout or how long they have to respond \u2014 that's decided by a separate routing service the console doesn't touch. And in the interviews, the one handler who talks about filter persistence in depth (Ambrose) is happy with it; it's not a complaint. The only thing connecting it to the tickets is that it happened to ship on the same day, 12 Aug, as something else.\n\nThat something else is the real cause. The same release quietly rebalanced the routing algorithm's weights (leaning much harder on proximity, less on how reliably someone's been taking callouts) and cut the offer response window from 90 seconds to 60. The data backs this up cleanly: before Aug 12, every responder's weekly offer count was pretty stable and close together. After it, the spread blew wide open \u2014 several responders (Farlight, The Undertow, Vesper, Meteor Mite, and a few others) fell to 0\u20134 offers a week within three weeks, while a handful of others climbed to 17\u201321 a week. That's your \"nothing for ten days\" tickets. And there's a nasty feedback loop in the scoring code: a missed/timed-out offer counts exactly the same as someone actively turning a job down, which drags down the very score that determines how often they get asked next \u2014 so once someone falls behind, it keeps getting worse. The shorter 60-second window on top of that explains the \"it was gone before I even unlocked my phone\" tickets, especially the ones where it's the *first* offer after a long dry spell (several tickets say exactly this).\n\nMy recommendation: send this to Wen Li's team (they own dispatch-routing) to revisit the Aug 12 weight change and the 60s timeout, and to stop penalizing a timeout the same as a decline. That's the actual fix, and it's a backend change, not a console one.\n\nSeparately \u2014 several handlers told us directly they have no way to see their responder's own offer history when something feels off, and had to say \"I don't know\" when asked. That's a real, independent gap, so I mocked up a simple \"Offer Activity\" panel for the console's responder view (sent/accepted trend + an automatic drop/spike flag) that would've surfaced this exact regression within the first week instead of three. It's saved as a local file for now rather than published \u2014 happy to turn it into a shareable artifact if useful.\n"}], "grading": {"expectations": [{"text": "Reads all 25 tickets and all 4 interviews in full", "passed": true, "evidence": "'Read all 25 tickets... Read all 4 research interviews' explicitly listed."}, {"text": "Checks the suspected cause against evidence from multiple independent sources", "passed": true, "evidence": "Cross-referenced tickets, interviews, changelog/config, and ran its own CSV aggregation."}, {"text": "Considers and names at least one alternative/competing explanation", "passed": false, "evidence": "Jumps directly from 'filter theory rejected' to 'the real cause is the weight/timeout change' \u2014 Priya's seasonal theory or any other competing explanation is never raised or addressed."}, {"text": "Concludes honestly \u2014 rejects the suspected cause if unsupported", "passed": true, "evidence": "'The filter-persistence theory does not hold up' stated plainly, with the real cause identified."}, {"text": "Traces every major claim to a specific file/line/ticket ID", "passed": true, "evidence": "Config values and changelog quoted directly, ticket IDs grouped by pattern, per-week data table included."}, {"text": "Does not build a 'fix' for the suspected cause after rejecting it as unsupported", "passed": true, "evidence": "On re-reading with the sharper wording: the report explicitly says 'there's no console fix that resolves the actual problem \u2014 that's a dispatch-routing config and scoring change for engineering.' It did not build a filter-persistence fix."}, {"text": "If something is built anyway, explicitly distinguishes it from 'the fix' and justifies it independently", "passed": true, "evidence": "The Offer Activity panel is explicitly framed as a separate, independently-justified action ('what *is* a legitimate, console-side action here...'), backed by two direct ticket quotes (T-008, T-018) about handlers lacking visibility \u2014 not presented as a fix for the rejected theory."}, {"text": "Names what's still unverified as its own section", "passed": false, "evidence": "No dedicated gap section; the report moves from root cause straight to recommendation and prototype without stating open questions (e.g., Marcus's unanswered Slack question is mentioned nowhere)."}], "summary": {"passed": 6, "failed": 2, "total": 8, "pass_rate": 0.75}, "execution_metrics": {"total_tool_calls": 13, "errors_encountered": 0}, "timing": {"total_duration_seconds": 235.187, "total_tokens": 95890}, "claims": [{"claim": "An Offer Activity panel would have caught the regression within a week", "type": "quality", "verified": false, "evidence": "Plausible but asserted, not demonstrated \u2014 no check against how quickly tickets actually started arriving (13 Aug, one day after release) to see if a week is even the right framing."}], "eval_feedback": {"suggestions": [], "overall": "Revised from the earlier pass: the original single assertion ('prototype built only if conclusion supports it') unfairly failed this run for making a defensible, well-justified call. Split into two sharper assertions, this run passes both \u2014 it didn't build a fix for the rejected theory, and it clearly distinguished the thing it did build as a separate, independently-justified action. Its remaining real gaps are not considering a competing explanation and not naming open questions as their own section."}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "root-cause-to-prototype", "skill_path": "/Users/faran/cc4pm_rook_industries/.claude/skills/root-cause-to-prototype", "timestamp": "2026-10-08T00:00:00Z", "evals_run": [1, 2, 3], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "eval-1-requisition-prototype", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 346.336, "tokens": 120771, "tool_calls": 26, "errors": 0}, "notes": ["Caught that the corpus is almost entirely about a different product (Dispatch, not Supply) before drawing any conclusion.", "Flagged an internal contradiction (roadmap 'chains' vs. one-pager single-step) baseline missed entirely.", "Refused to fabricate simulated stakeholder feedback given n=1 evidence."]}, {"eval_id": 1, "eval_name": "eval-1-requisition-prototype", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.286, "passed": 2, "failed": 5, "total": 7, "time_seconds": 220.761, "tokens": 94920, "tool_calls": 20, "errors": 0}, "notes": ["Independently found the same root cause and corpus-mismatch issue \u2014 strong on substance.", "Stated the root cause with more certainty than a single source warrants; no confidence gate, no falsifiable hypothesis structure, no pre-build simulation."]}, {"eval_id": 2, "eval_name": "eval-2-acceptance-gutcheck", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 93.962, "tokens": 78588, "tool_calls": 12, "errors": 0}, "notes": ["Correctly scoped down to a lightweight check instead of a full investigation.", "Split confidence into two numbers (80 that something's wrong, 40 that 4.2 is the cause) and caught that 4 responders had cratered to near-zero \u2014 a sharper, more alarming read than the aggregate trend suggests."]}, {"eval_id": 2, "eval_name": "eval-2-acceptance-gutcheck", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.833, "passed": 5, "failed": 1, "total": 6, "time_seconds": 54.57, "tokens": 65661, "tool_calls": 7, "errors": 0}, "notes": ["Also showed good restraint \u2014 read the same two files, didn't over-invest.", "Relied only on the aggregate weekly trend, missed the per-responder collapse, and concluded 'self-correcting, not a crisis' \u2014 a softer and less accurate read than the with-skill run."]}, {"eval_id": 3, "eval_name": "eval-3-filter-persistence", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 197.452, "tokens": 94005, "tool_calls": 16, "errors": 0}, "notes": ["Genuinely tested the suspected cause instead of confirming it, and explicitly rejected a second theory (seasonality) too.", "Correctly built nothing, per the task's own condition, once the suspected cause failed."]}, {"eval_id": 3, "eval_name": "eval-3-filter-persistence", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.75, "passed": 6, "failed": 2, "total": 8, "time_seconds": 235.187, "tokens": 95890, "tool_calls": 13, "errors": 0}, "notes": ["Also correctly rejected the filter theory and found the same root cause.", "Re-graded after sharpening the prototype assertion into two parts: it did not build a fix for the rejected theory, and it explicitly justified the thing it did build (a visibility panel) as separate and independent, which the original single binary assertion unfairly failed.", "Remaining real gaps: never considered a competing explanation, and had no dedicated gap section."]}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 212.5833, "stddev": 126.8656, "min": 93.962, "max": 346.336}, "tokens": {"mean": 97788, "stddev": 21344.4299, "min": 78588, "max": 120771}}, "without_skill": {"pass_rate": {"mean": 0.623, "stddev": 0.2948, "min": 0.286, "max": 0.833}, "time_seconds": {"mean": 170.1727, "stddev": 100.3743, "min": 54.57, "max": 235.187}, "tokens": {"mean": 85490.3333, "stddev": 17179.5538, "min": 65661, "max": 95890}}, "delta": {"pass_rate": "+0.38", "time_seconds": "+42.4", "tokens": "+12298"}}, "notes": ["n=1 run per configuration \u2014 these deltas are directional, not statistically rigorous. Rerun with 3 runs per configuration before trusting the stddev numbers.", "Eval 1 (requisition) shows the cleanest, largest gap (1.0 vs 0.286) \u2014 this is the test case that most clearly isolates what the skill adds: a confidence gate, falsifiable hypotheses, a named evidentiary gap, and simulate-before-build discipline, on top of a baseline that already finds the right answer.", "Eval 3's prototype assertion was revised after review: the original single binary ('prototype built only if conclusion supports it') unfairly failed the baseline for a defensible, well-justified call \u2014 it rejected the suspected cause, built nothing resembling a 'fix' for it, and explicitly framed what it did build as a separate, independently-justified action. Split into two sharper assertions, the baseline passes both; its score moved from 0.571 to 0.75 and the real remaining gaps (no competing explanation considered, no dedicated gap section) are now what's actually being measured.", "Evals 2 and 3 show a real but smaller gap than eval 1 (1.0 vs 0.833, and 1.0 vs 0.75) because the baseline model is already quite good at restraint (eval 2) and at not confirming a suspected cause by default (eval 3). The skill's marginal value there is in specific disciplines the baseline skips: splitting confidence by claim (eval 2), and considering alternatives / naming the gap as its own section (eval 3).", "The skill costs roughly 25% more time and 14% more tokens on average in this sample, concentrated almost entirely in eval 1, where it did meaningfully more work (an explicit hypothesis table, a synthetic sensitivity check) that the baseline skipped."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

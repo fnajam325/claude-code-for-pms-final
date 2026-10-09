@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requisition Triage Prototype</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --border:#e2e5ea; --text:#1b1f27; --muted:#6b7280;
+    --red:#d64545; --red-bg:#fdeceb; --amber:#c98a1a; --amber-bg:#fdf3e0; --green:#2f8f5b; --green-bg:#eaf7ef;
+    --blue:#2f5fd6; --blue-bg:#ebf0fd;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161b; --card:#1d2027; --border:#2c303a; --text:#e8e9ec; --muted:#9aa0ab;
+      --red:#ef6a6a; --red-bg:#3a1f20; --amber:#e3a548; --amber-bg:#3a2f18; --green:#5fcf8f; --green-bg:#17301f;
+      --blue:#7f9ef5; --blue-bg:#1d2740;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px 16px 60px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px;}
+  .toggle{display:inline-flex;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px;}
+  .toggle button{border:none;background:transparent;color:var(--text);font-size:14px;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;}
+  .toggle button.active{background:var(--blue);color:#fff;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+  .row{display:flex;align-items:center;gap:12px;}
+  .row + .row{margin-top:10px;}
+  .item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);}
+  .item + .item{margin-top:8px;}
+  .badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .b-crit{color:var(--red);background:var(--red-bg);}
+  .b-high{color:var(--amber);background:var(--amber-bg);}
+  .b-normal{color:var(--muted);background:var(--border);}
+  .b-ok{color:var(--green);background:var(--green-bg);}
+  .b-esc{color:var(--blue);background:var(--blue-bg);}
+  .name{font-weight:600;font-size:14px;}
+  .meta{font-size:12.5px;color:var(--muted);}
+  .flex1{flex:1;min-width:0;}
+  .waiting{font-size:13px;font-weight:600;min-width:90px;text-align:right;}
+  .waiting.bad{color:var(--red);}
+  .waiting.warn{color:var(--amber);}
+  .waiting.good{color:var(--green);}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;}
+  .d-red{background:var(--red);} .d-amber{background:var(--amber);} .d-gray{background:var(--muted);}
+  .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px;}
+  .note{background:var(--amber-bg);color:var(--amber);border:1px solid color-mix(in srgb, var(--amber) 35%, transparent);border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px;}
+  .findingcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
+  .findingcard h3{margin:0 0 8px;font-size:15px;}
+  .findingcard p{margin:4px 0;font-size:13.5px;color:var(--text);line-height:1.5;}
+  .pill-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .pill{font-size:12px;background:var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);}
+  footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Requisition Approvals — Current State vs. Triaged Queue</h1>
+  <p class="sub">Rook Supply · prototype for the Q3 roadmap item "Requisition approval chains" (committed for 4.3)</p>
+
+  <div class="toggle">
+    <button id="btn-current" class="active" onclick="show('current')">Current state</button>
+    <button id="btn-fix" onclick="show('fix')">Proposed fix</button>
+  </div>
+
+  <!-- CURRENT STATE -->
+  <div class="panel active" id="current">
+    <div class="note">
+      One queue. No SLA. No escalation. A cracked vest plate and a pair of boot laces are sorted the same way — by the order they were filed — and the "priority" field a handler sets has no effect on queue position or on when a quartermaster is reminded.
+    </div>
+
+    <div class="legend">
+      <span><span class="dot d-red"></span> Safety-relevant, aging badly</span>
+      <span><span class="dot d-amber"></span> Priority flagged, still ignored by the queue</span>
+      <span><span class="dot d-gray"></span> Routine</span>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Quartermaster approval queue · sorted by date filed (unchanged by priority)</div>
+
+      <div class="item">
+        <span class="badge b-high">Priority: Urgent</span>
+        <div class="flex1">
+          <div class="name">Vest plate — cracked, safety</div>
+          <div class="meta">Filed by Halloran · for Sgt. Bulwark · 17 Sep 2026</div>
+        </div>
+        <div class="waiting bad">11 days waiting</div>
+      </div>
+
+      <div class="item">
+        <span class="badge b-normal">Priority: Normal</span>
+        <div class="flex1">
+          <div class="name">Boot laces (spare set)</div>
+          <div class="meta">Filed by Okafor · for The Undertow · 16 Sep 2026</div>
+        </div>
+        <div class="waiting">12 days waiting</div>
+      </div>
+
+      <div class="item">
+        <span class="badge b-normal">Priority: Normal</span>
+        <div class="flex1">
+          <div class="name">Glove liners, size M ×2</div>
+          <div class="meta">Filed by Sung · for Nightwell · 18 Sep 2026</div>
+        </div>
+        <div class="waiting">10 days waiting</div>
+      </div>
+
+      <div class="item">
+        <span class="badge b-high">Priority: Urgent</span>
+        <div class="flex1">
+          <div class="name">Comms headset — intermittent cutout in field</div>
+          <div class="meta">Filed by Kovač · for Stormwrack · 20 Sep 2026</div>
+        </div>
+        <div class="waiting bad">8 days waiting</div>
+      </div>
+
+      <div class="item">
+        <span class="badge b-normal">Priority: Normal</span>
+        <div class="flex1">
+          <div class="name">Utility belt — replacement clip</div>
+          <div class="meta">Filed by Pruitt · for Farlight · 22 Sep 2026</div>
+        </div>
+        <div class="waiting">6 days waiting</div>
+      </div>
+
+      <p class="meta" style="margin-top:10px;">Every request sits in one undifferentiated list, ordered only by filing date. "Urgent" items wait just as long as routine ones — in this snapshot, longer.</p>
+    </div>
+  </div>
+
+  <!-- PROPOSED FIX -->
+  <div class="panel" id="fix">
+    <div class="note" style="background:var(--green-bg);color:var(--green);border-color:color-mix(in srgb, var(--green) 35%, transparent);">
+      Same requests, re-sorted by urgency tier with a visible SLA clock and automatic escalation when a tier's clock runs out. The quartermaster sees what needs attention first; a handler can see where their request stands instead of just waiting.
+    </div>
+
+    <div class="card">
+      <div class="section-title">Lane 1 — Safety-critical (SLA: 24 hours to first review)</div>
+      <div class="item" style="border-color:var(--red);">
+        <span class="badge b-crit">Safety-critical</span>
+        <div class="flex1">
+          <div class="name">Vest plate — cracked, safety</div>
+          <div class="meta">Halloran · Sgt. Bulwark · filed 17 Sep</div>
+        </div>
+        <span class="badge b-esc">Auto-escalated to backup QM at 24h</span>
+        <div class="waiting bad">SLA breached by 10 days</div>
+      </div>
+      <div class="item" style="border-color:var(--red);">
+        <span class="badge b-crit">Safety-critical</span>
+        <div class="flex1">
+          <div class="name">Comms headset — intermittent cutout in field</div>
+          <div class="meta">Kovač · Stormwrack · filed 20 Sep</div>
+        </div>
+        <span class="badge b-esc">Auto-escalated to backup QM at 24h</span>
+        <div class="waiting bad">SLA breached by 7 days</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Lane 2 — Operational (SLA: 72 hours)</div>
+      <div class="item">
+        <span class="badge b-high">Operational</span>
+        <div class="flex1">
+          <div class="name">Utility belt — replacement clip</div>
+          <div class="meta">Pruitt · Farlight · filed 22 Sep</div>
+        </div>
+        <div class="waiting warn">SLA breached by 3 days</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Lane 3 — Routine (SLA: 5 business days)</div>
+      <div class="item">
+        <span class="badge b-ok">Routine</span>
+        <div class="flex1">
+          <div class="name">Glove liners, size M ×2</div>
+          <div class="meta">Sung · Nightwell · filed 18 Sep</div>
+        </div>
+        <div class="waiting warn">SLA breached by 5 days</div>
+      </div>
+      <div class="item">
+        <span class="badge b-ok">Routine</span>
+        <div class="flex1">
+          <div class="name">Boot laces (spare set)</div>
+          <div class="meta">Okafor · The Undertow · filed 16 Sep</div>
+        </div>
+        <div class="waiting warn">SLA breached by 7 days</div>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--blue-bg);border-color:transparent;">
+      <div class="section-title" style="color:var(--blue);">What changed, mechanically</div>
+      <p class="meta" style="font-size:13px;">
+        1. <b>Priority field now drives sort order and SLA</b>, not just a label — safety-critical requests sit in their own lane, above everything else, regardless of filing date.<br>
+        2. <b>Each lane carries a clock</b>. When a request's SLA is breached, it's visually flagged (as shown above) instead of silently aging.<br>
+        3. <b>Auto-escalation</b>: a safety-critical request with no quartermaster action inside 24 hours routes itself to a backup approver automatically — it no longer depends on someone noticing.<br>
+        4. <b>Single-signer bottleneck removed</b> for the top lane only — routine and operational approvals still go through the primary quartermaster, keeping the change small and low-risk.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-title">Root cause summary</div>
+  <div class="findingcard">
+    <h3>Why the vest plate sat for 11 days</h3>
+    <p><b>1. One undifferentiated queue.</b> Rook Supply's one-pager confirms the core flow is: handler raises a requisition → it routes to a quartermaster for approval → fulfillment is tracked. There is no tiering by urgency in that flow.</p>
+    <p><b>2. The priority field is cosmetic.</b> Halloran set it ("there's a priority field, I set it") and it had no effect on queue position — confirmed directly in the interview transcript (5 Sept 2026).</p>
+    <p><b>3. No SLA or escalation path.</b> Nothing in the product surfaces when a request has gone past a reasonable review window, and nothing reroutes it to another approver if the assigned quartermaster is slow, out, or overloaded. The request simply waits for one person to act.</p>
+    <p><b>4. It's already a known gap, not a surprise.</b> The Q3 2026 roadmap lists "Requisition approval chains" (Supply, target 4.3) as a <i>committed</i> item owned by Product — this investigation adds the concrete failure case and a minimal, shippable scope to point that committed work at.</p>
+    <div class="pill-row">
+      <span class="pill">Source: 00-rook/feedback/interviews/halloran.txt</span>
+      <span class="pill">Source: 00-rook/company/supply-one-pager.pdf</span>
+      <span class="pill">Source: 00-rook/company/roadmap-q3.pdf</span>
+    </div>
+  </div>
+
+  <footer>Prototype — illustrative data, not live. Built for the Rook Supply requisition approval investigation, Oct 2026.</footer>
+</div>
+
+<script>
+function show(which){
+  document.getElementById('current').classList.toggle('active', which==='current');
+  document.getElementById('fix').classList.toggle('active', which==='fix');
+  document.getElementById('btn-current').classList.toggle('active', which==='current');
+  document.getElementById('btn-fix').classList.toggle('active', which==='fix');
+}
+</script>
+</body>
+</html>

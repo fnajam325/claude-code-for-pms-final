@@ -1,0 +1,22 @@
+{
+  "expectations": [
+    {"text": "Reads all 25 tickets and all 4 interviews in full", "passed": true, "evidence": "'Read all 25 tickets... Read all 4 research interviews' explicitly listed."},
+    {"text": "Checks the suspected cause against evidence from multiple independent sources", "passed": true, "evidence": "Cross-referenced tickets, interviews, changelog/config, and ran its own CSV aggregation."},
+    {"text": "Considers and names at least one alternative/competing explanation", "passed": false, "evidence": "Jumps directly from 'filter theory rejected' to 'the real cause is the weight/timeout change' — Priya's seasonal theory or any other competing explanation is never raised or addressed."},
+    {"text": "Concludes honestly — rejects the suspected cause if unsupported", "passed": true, "evidence": "'The filter-persistence theory does not hold up' stated plainly, with the real cause identified."},
+    {"text": "Traces every major claim to a specific file/line/ticket ID", "passed": true, "evidence": "Config values and changelog quoted directly, ticket IDs grouped by pattern, per-week data table included."},
+    {"text": "Does not build a 'fix' for the suspected cause after rejecting it as unsupported", "passed": true, "evidence": "On re-reading with the sharper wording: the report explicitly says 'there's no console fix that resolves the actual problem — that's a dispatch-routing config and scoring change for engineering.' It did not build a filter-persistence fix."},
+    {"text": "If something is built anyway, explicitly distinguishes it from 'the fix' and justifies it independently", "passed": true, "evidence": "The Offer Activity panel is explicitly framed as a separate, independently-justified action ('what *is* a legitimate, console-side action here...'), backed by two direct ticket quotes (T-008, T-018) about handlers lacking visibility — not presented as a fix for the rejected theory."},
+    {"text": "Names what's still unverified as its own section", "passed": false, "evidence": "No dedicated gap section; the report moves from root cause straight to recommendation and prototype without stating open questions (e.g., Marcus's unanswered Slack question is mentioned nowhere)."}
+  ],
+  "summary": {"passed": 6, "failed": 2, "total": 8, "pass_rate": 0.75},
+  "execution_metrics": {"total_tool_calls": 13, "errors_encountered": 0},
+  "timing": {"total_duration_seconds": 235.187, "total_tokens": 95890},
+  "claims": [
+    {"claim": "An Offer Activity panel would have caught the regression within a week", "type": "quality", "verified": false, "evidence": "Plausible but asserted, not demonstrated — no check against how quickly tickets actually started arriving (13 Aug, one day after release) to see if a week is even the right framing."}
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Revised from the earlier pass: the original single assertion ('prototype built only if conclusion supports it') unfairly failed this run for making a defensible, well-justified call. Split into two sharper assertions, this run passes both — it didn't build a fix for the rejected theory, and it clearly distinguished the thing it did build as a separate, independently-justified action. Its remaining real gaps are not considering a competing explanation and not naming open questions as their own section."
+  }
+}

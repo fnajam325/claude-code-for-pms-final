@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-2-acceptance-gutcheck",
+  "prompt": "Can you give me a quick gut-check on what's going on with Rook Dispatch's acceptance rate — I don't want the full deep dive, just tell me if it's something to worry about.",
+  "assertions": []
+}

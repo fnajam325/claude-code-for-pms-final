@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-3-filter-persistence",
+  "prompt": "We think the console filter persistence bug is causing complaints. Dig into it using the interviews and tickets and tell me if that's really the cause, then mock up a fix.",
+  "assertions": [
+    "Reads all 25 tickets and all 4 interviews in full (not a sample)",
+    "Checks the suspected cause against evidence from multiple independent sources, not just one",
+    "Considers and names at least one alternative/competing explanation",
+    "Concludes honestly based on evidence — rejects the suspected cause if unsupported, rather than confirming it by default",
+    "Traces every major claim to a specific file, line, or ticket ID",
+    "Does not build a 'fix' for the suspected cause after rejecting it as unsupported",
+    "If something is built anyway for a different, legitimate reason, explicitly distinguishes it from 'the fix' for the rejected theory and justifies it independently",
+    "Names what's still unverified as its own section"
+  ]
+}

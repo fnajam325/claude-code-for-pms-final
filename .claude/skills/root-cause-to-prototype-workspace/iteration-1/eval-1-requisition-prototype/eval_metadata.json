@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-requisition-prototype",
+  "prompt": "Investigate why requisition approvals are taking so long in Rook Supply — Halloran complained about an 11-day wait on a cracked vest plate. Use whatever tickets, interviews, and data we have, figure out the root cause, then build me a quick prototype of the fix.",
+  "assertions": []
+}

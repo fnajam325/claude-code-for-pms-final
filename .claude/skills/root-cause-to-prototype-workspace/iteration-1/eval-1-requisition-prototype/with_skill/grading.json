@@ -1,0 +1,21 @@
+{
+  "expectations": [
+    {"text": "States an explicit confidence estimate before beginning investigation (phase 0)", "passed": true, "evidence": "Report's Phase 0 section: '~90%+ on all four checkpoints', with reasoning given for each."},
+    {"text": "Quotes Halloran's interview directly with specific line evidence", "passed": true, "evidence": "Cites halloran.txt L24 and L28 with direct quotes in the Findings table."},
+    {"text": "Presents ranked hypotheses in if/then/because form with confirms-if/fails-if", "passed": true, "evidence": "H1, H2, H3 each written in that exact structure with confirms-if/fails-if/data-needed/resolvable-how-soon."},
+    {"text": "Flags the lack of a second corroborating source as an explicit, named gap", "passed": true, "evidence": "Gap section: 'n = 1... no second account to corroborate', explicitly names it as unconfirmed."},
+    {"text": "Identifies the 'approval chains' (plural, roadmap) vs. single-step (one-pager) contradiction", "passed": true, "evidence": "Finding row 5 and Phase 3 section call this out explicitly as an unresolved internal contradiction."},
+    {"text": "A prototype HTML file exists in the run's outputs folder", "passed": true, "evidence": "requisition-queue-prototype.html confirmed saved to outputs/."},
+    {"text": "Includes a simulate-before-building step with an explicit numeric confidence score", "passed": true, "evidence": "Phase 7: synthetic sensitivity check in the prototype, confidence stated as 35/100, with what would raise it."}
+  ],
+  "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0},
+  "execution_metrics": {"total_tool_calls": 26, "errors_encountered": 0},
+  "timing": {"total_duration_seconds": 346.336, "total_tokens": 120771},
+  "claims": [
+    {"claim": "Almost none of the corpus actually covers Supply/requisitions", "type": "factual", "verified": true, "evidence": "Confirmed by full-corpus read: 25 tickets, the CSV, the routing code, and 3 of 4 interviews are all Dispatch-related, not Supply."}
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Report fully satisfies every assertion with specific, checkable evidence. No eval changes suggested from this run."
+  }
+}
