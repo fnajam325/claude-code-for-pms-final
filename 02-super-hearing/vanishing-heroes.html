@@ -1,0 +1,380 @@
+<title>The Vanishing Heroes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;800&display=swap">
+<style>
+  /* Layout concept: a comic-book case file. Thick outlines, hard shadows, halftone dots, one bold panel per question. */
+  :root{
+    /* Laguna Seca blue ground, white panels, navy ink, yellow and orange as the hero accents */
+    --paper:#1c6ec4; --panel:#ffffff; --ink:#0a1f44; --muted:#42557a; --edge:#071a3a;
+    --onbg:#ffffff; --onbgMuted:#dcebff;
+    --red:#e0212b; --blue:#1c6ec4; --yellow:#ffd21f; --cyan:#12a8e8; --green:#0f9d58; --purple:#6a35e8; --orange:#ff7a1a;
+    --dots:rgba(255,255,255,.15); --yellowInk:#0a1f44; --bar:#e3ecfa;
+    --display:"Bangers","Impact","Arial Narrow",system-ui,sans-serif;
+    --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+    --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+      --onbg:#f3f8ff; --onbgMuted:#bcd3f2;
+      --red:#ff5a5f; --blue:#6fb0ff; --yellow:#ffd21f; --cyan:#4fd0ff; --green:#43e08a; --purple:#b9a0ff; --orange:#ff9340;
+      --dots:rgba(255,255,255,.07); --bar:#1a4f94; color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+    --onbg:#f3f8ff; --onbgMuted:#bcd3f2;
+    --red:#ff5a5f; --blue:#6fb0ff; --yellow:#ffd21f; --cyan:#4fd0ff; --green:#43e08a; --purple:#b9a0ff; --orange:#ff9340;
+    --dots:rgba(255,255,255,.07); --bar:#1a4f94; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--onbg);font:16px/1.5 var(--body);
+       background-image:radial-gradient(var(--dots) 1.4px,transparent 1.6px);background-size:14px 14px}
+  .wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+  h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.03em;margin:0;text-wrap:balance}
+  .hero-title{font-size:clamp(2.2rem,7vw,4.4rem);line-height:1;color:var(--yellow);
+       -webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:5px 5px 0 var(--red)}
+  .file{display:inline-block;background:var(--red);color:#fff;font:800 .95rem var(--cond);letter-spacing:.12em;padding:2px 10px;border:3px solid var(--edge);transform:rotate(-2deg);margin-bottom:10px}
+  .tag{font:600 1.15rem var(--cond);margin:10px 0 0;max-width:62ch}
+  h2{font-size:clamp(1.6rem,4vw,2.3rem);color:var(--ink);margin:40px 0 4px;display:inline-block;background:var(--yellow);color:var(--yellowInk);border:3px solid var(--edge);padding:2px 12px;box-shadow:5px 5px 0 var(--edge);transform:rotate(-.6deg)}
+  .lead{margin:10px 0 16px;max-width:70ch;color:var(--onbgMuted)}
+  .panel{background:var(--panel);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:14px 16px}
+  .panel,.step,.order,.stat,.toggle,.filters button,.ctl select,textarea{color:var(--ink)}
+  #barText,#copyFallback .head{color:var(--onbgMuted)}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr))}
+  .grid>*{min-width:0}
+  .burst{background:var(--yellow);color:var(--yellowInk);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:14px 14px 12px;text-align:center;transform:rotate(-1deg)}
+  .burst:nth-child(2){background:var(--red);color:#fff;transform:rotate(1deg)}
+  .burst:nth-child(3){background:#ffffff;color:#0a1f44;transform:rotate(-.6deg)}
+  .burst:nth-child(4){background:#0a1f44;color:#fff;transform:rotate(.8deg)}
+  .burst b{display:block;font:400 clamp(1.9rem,5vw,2.8rem)/1 var(--display);letter-spacing:.03em}
+  .burst span{font:700 .9rem var(--cond);letter-spacing:.06em;text-transform:uppercase}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:4px solid var(--cyan);outline-offset:2px}
+  .chip{display:inline-block;font:700 .85rem var(--cond);letter-spacing:.05em;background:var(--blue);color:#fff;border:2px solid var(--edge);padding:1px 8px}
+  .chip.alt{background:var(--panel);color:var(--ink)}
+  .toggle{display:inline-flex;align-items:center;gap:10px;font:700 1rem var(--cond);background:var(--panel);border:3px solid var(--edge);padding:6px 12px;box-shadow:4px 4px 0 var(--edge)}
+  .toggle input{width:20px;height:20px;accent-color:var(--red)}
+  /* mission steps */
+  .steps{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+  .step{background:var(--panel);border:3px solid var(--edge);box-shadow:5px 5px 0 var(--edge)}
+  .step button{all:unset;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 14px;width:100%;cursor:pointer;box-sizing:border-box}
+  .step button:focus-visible{outline:4px solid var(--cyan);outline-offset:-4px}
+  .num{width:40px;height:40px;display:grid;place-items:center;background:var(--blue);color:#fff;border:3px solid var(--edge);border-radius:50%;font:400 1.4rem var(--display)}
+  .step h3{font-size:1.3rem}
+  .step .files{display:flex;flex-wrap:wrap;gap:6px}
+  .step .more{display:none;padding:0 14px 14px 66px;color:var(--ink)}
+  .step.open .more{display:block}
+  .step.stuck{background:linear-gradient(0deg,rgba(228,21,43,.14),rgba(228,21,43,.14)),var(--panel)}
+  .stuckflag{display:none;font:800 .9rem var(--cond);background:var(--red);color:#fff;border:2px solid var(--edge);padding:1px 8px;letter-spacing:.06em;width:max-content;margin-top:4px}
+  .showstuck .step.stuck .stuckflag{display:inline-block}
+  .showstuck .step:not(.stuck){background:var(--bar);color:var(--muted)}
+  .showstuck .step:not(.stuck) h3{color:var(--muted)}
+  .showstuck .step.stuck{border-color:var(--red);box-shadow:6px 6px 0 var(--red)}
+  /* scoreboard & villains */
+  .row{display:grid;grid-template-columns:minmax(0,1.3fr) auto auto minmax(0,1.5fr);gap:12px;align-items:center;padding:12px 0;border-bottom:3px dashed var(--edge)}
+  .row:last-child{border-bottom:0}
+  .stamp{font:400 1.2rem var(--display);letter-spacing:.05em;border:3px solid var(--edge);padding:2px 10px;transform:rotate(-3deg);text-align:center;white-space:nowrap}
+  .yes{background:var(--green);color:#fff}.no{background:var(--red);color:#fff}.meh{background:var(--yellow);color:var(--yellowInk)}.na{background:var(--bar);color:var(--ink)}
+  .head{font:800 .85rem var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  @media (max-width:640px){.row{grid-template-columns:1fr 1fr}.row>:first-child,.row>:last-child{grid-column:1/-1}.head.hide{display:none}}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .filters button{background:var(--panel);border:3px solid var(--edge);padding:3px 12px;font:700 .95rem var(--cond);box-shadow:3px 3px 0 var(--edge)}
+  .filters button[aria-pressed="true"]{background:var(--red);color:#fff}
+  .villain h3{font-size:1.35rem;color:var(--red)}
+  .sev{display:flex;gap:4px;margin:6px 0}
+  .sev i{width:26px;height:10px;border:2px solid var(--edge);background:var(--bar)}
+  .sev i.on{background:var(--red)}
+  .vmeta{font-size:.9rem;color:var(--muted);margin-top:6px}
+  /* lab */
+  .lab{display:grid;gap:16px;grid-template-columns:minmax(0,300px) minmax(0,1fr)}
+  @media (max-width:820px){.lab{grid-template-columns:1fr}}
+  .ctl{display:grid;gap:12px}
+  .ctl label{display:grid;gap:4px;font:700 1rem var(--cond)}
+  .ctl output{float:right;color:var(--red)}
+  .ctl input[type=range]{width:100%;accent-color:var(--red)}
+  .ctl select{background:var(--panel);border:3px solid var(--edge);padding:6px 8px;width:100%}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  .btns button{background:var(--blue);color:#fff;border:3px solid var(--edge);padding:6px 12px;font:700 1rem var(--cond);box-shadow:3px 3px 0 var(--edge)}
+  .btns button.alt{background:var(--yellow);color:var(--yellowInk)}
+  .chartbox{overflow-x:auto}
+  svg text{fill:var(--ink);font-family:var(--body)}
+  .stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));margin-top:12px}
+  .stat{border:3px solid var(--edge);background:var(--panel);padding:8px 10px}
+  .stat b{font:400 1.7rem var(--display);display:block}
+  .stat small{color:var(--muted)}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:14px;height:14px;border:2px solid var(--edge);vertical-align:-2px;margin-right:4px}
+  /* orders */
+  .orders{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+  .order{display:grid;grid-template-columns:auto 1fr;gap:12px;background:var(--panel);border:3px solid var(--edge);box-shadow:5px 5px 0 var(--edge);padding:12px 14px}
+  .order input{width:26px;height:26px;accent-color:var(--green);margin-top:2px}
+  .order h3{font-size:1.25rem}
+  .order.done{opacity:.6}
+  .order.done h3{text-decoration:line-through}
+  .progress{height:22px;background:var(--bar);border:3px solid var(--edge);margin:12px 0}
+  .progress div{height:100%;background:var(--green);width:0;transition:width .25s}
+  @media (prefers-reduced-motion: reduce){.progress div{transition:none}}
+  textarea{width:100%;min-height:120px;background:var(--panel);border:3px solid var(--edge);padding:8px;font:.9rem/1.4 var(--body)}
+  ul.plain{margin:6px 0 0;padding-left:20px}
+  .src{font-size:.85rem;color:var(--onbgMuted);margin-top:36px;border-top:3px solid var(--edge);padding-top:12px}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="file">CASE FILE 4.2</span>
+    <h1 class="hero-title">The Case of the Vanishing Heroes</h1>
+    <p class="tag">What Rook Dispatch release 4.2 did to responders, why a hero can slip out of the system without anyone noticing, and what to tell the developer to fix it.</p>
+  </header>
+
+  <div class="grid g4" style="margin-top:22px" aria-label="Headline numbers">
+    <div class="burst"><b>-70%</b><span>offers lost by four heroes</span></div>
+    <div class="burst"><b>2% &rarr; 18%</b><span>offers missed</span></div>
+    <div class="burst"><b>20% &rarr; 43%</b><span>first ping to someone off-patch</span></div>
+    <div class="burst"><b>0 &rarr; 86</b><span>jobs taken outside home base</span></div>
+  </div>
+
+  <h2>1. The mission</h2>
+  <p class="lead">From the moment something goes wrong to the moment a phone buzzes. Click a step for the plain-English version and the file it lives in.</p>
+  <label class="toggle"><input type="checkbox" id="stuckToggle"> Show where the four heroes got stuck</label>
+  <div id="stuckNote" class="panel" hidden style="margin-top:14px">
+    <strong>The trap, in four moves.</strong> The window got shorter (step 8), so more offers went unanswered. An unanswered offer cost points (step 11). The lower score was read the next time (step 4), which pushed the hero down the list (step 6). Lower on the list means fewer offers, and fewer offers means no chance to earn points back.
+  </div>
+  <ol class="steps" id="steps"></ol>
+
+  <h2>2. Asked versus built</h2>
+  <p class="lead">Each change was built as written. The question is whether it did what it was meant to do.</p>
+  <div class="panel" id="score"></div>
+
+  <h2>3. The villains</h2>
+  <p class="lead">There are no crashes. The code does what it says. The trouble is what it says.</p>
+  <div class="filters" id="filters" role="group" aria-label="Filter by file"></div>
+  <div class="grid g2" id="villains"></div>
+
+  <h2>4. The hero health lab</h2>
+  <p class="lead">Pick a hero, change the rules, and watch their score history replay. The red line is today's rules. The blue line is yours.</p>
+  <div class="lab">
+    <div class="panel ctl" id="ctl">
+      <label>Hero <select id="hero"></select></label>
+      <div class="btns">
+        <button id="presetToday">Today's rules</button>
+        <button id="presetBrief" class="alt">The developer brief</button>
+      </div>
+      <label>A missed offer costs <output id="oMiss"></output><input type="range" id="miss" min="0" max="0.12" step="0.01"></label>
+      <label>A refusal costs <output id="oDecl"></output><input type="range" id="decl" min="0" max="0.12" step="0.01"></label>
+      <label>Misses in a row before any cost <output id="oGrace"></output><input type="range" id="grace" min="0" max="5" step="1"></label>
+      <label>Daily drift back toward neutral <output id="oRecov"></output><input type="range" id="recov" min="0" max="0.05" step="0.005"></label>
+      <label>Lowest score allowed <output id="oFloor"></output><input type="range" id="floor" min="0" max="0.5" step="0.05"></label>
+      <label class="toggle" style="box-shadow:none"><input type="checkbox" id="ignoreOut"> No cost for offers outside their home area</label>
+    </div>
+    <div class="panel">
+      <div class="chartbox"><svg id="chart" viewBox="0 0 760 360" role="img" aria-label="Score history for the chosen hero under today's rules and your rules" style="width:100%;min-width:560px;height:auto"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--red)"></i>score under today's rules</span>
+        <span><i style="background:var(--blue)"></i>score under your rules</span>
+        <span><i style="background:var(--green)"></i>said yes</span>
+        <span><i style="background:var(--yellow)"></i>said no</span>
+        <span><i style="background:var(--red)"></i>missed</span>
+        <span>hollow = a job outside their home area</span>
+      </div>
+      <div class="stats" id="stats"></div>
+      <p class="vmeta" style="margin-top:10px">This is a replay of what really happened to the score. With a healthier score the hero would also have been offered more jobs, and a replay cannot show that. Treat the blue line as the best-case floor, not a forecast. Neutral is 0.5, a yes adds 0.08.</p>
+    </div>
+  </div>
+
+  <h2>5. Orders for the developer</h2>
+  <p class="lead">In priority order. Tick them off as they land. Each one says what "done" looks like.</p>
+  <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+  <p id="barText" class="head"></p>
+  <ol class="orders" id="orders"></ol>
+  <div class="btns" style="margin-top:14px">
+    <button id="copyBrief">Copy the brief as text</button>
+  </div>
+  <div id="copyFallback" hidden style="margin-top:10px"><label class="head" for="briefText">Select all and copy</label><textarea id="briefText" readonly></textarea></div>
+  <div class="panel" style="margin-top:16px">
+    <strong>Two cautions to pass on.</strong>
+    <ul class="plain">
+      <li><b>Raising the floor alone is not enough.</b> At a floor of 0.3, neighbours within about 13 minutes' travel still outrank a hero at the floor. Orders 1, 2 and 3 matter more.</li>
+      <li><b>A 2019 note in the code worries that someone who truly stopped answering should stay down.</b> That is a real trade-off. Flag unresponsive heroes to their handler instead of quietly demoting them.</li>
+    </ul>
+  </div>
+
+  <h2>6. Loose ends</h2>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="panel"><strong>Not visible from this folder</strong><ul class="plain"><li>Three functions are blank in this copy: who is free, travel time, and sending the offer to the phone.</li><li>Tap speed and whether the offer reached the phone.</li><li>Whether scores survive a restart.</li></ul></div>
+    <div class="panel"><strong>Ask these people</strong><ul class="plain"><li><b>Wen or Marcus:</b> score storage, and the intent behind penalising a miss like a refusal.</li><li><b>Helen:</b> why 60 seconds, and what success was meant to look like.</li><li><b>Wen:</b> before 4.2 nobody ever took a job outside their area, and afterwards nine heroes do. Why?</li></ul></div>
+  </div>
+
+  <p class="src">Sources: the Rook database (1,696 pings, 1,319 callouts, 147 tickets), four handler interviews in the wiki, the dispatch-routing code, the release notes and roadmap. Score lines are a replay of the code's rules over the real pings, so they are estimates. Fictional teaching scenario.</p>
+</div>
+
+<script>
+// ---------- content ----------
+const STEPS=[
+ {t:"Find who is free",f:["availability.py"],p:"The system lists everyone marked available in that part of the city right now. Responders or their handlers set that in the app. Nothing here changes it."},
+ {t:"Score each free hero for this job",f:["routing.py"],p:"Each free hero gets a score for this job, made of three things: how fast they can get there, how often they have said yes lately, and whether they have the skills needed."},
+ {t:"Work out how fast they could get there",f:["availability.py","config.py"],p:"A travel-time estimate, not straight-line distance. Anyone more than 45 minutes away gets zero for this part."},
+ {t:"Look up their recent yes-streak",f:["history.py"],p:"Every hero has a running score between 0 and 1. It starts at 0.5. This is where it is read.",stuck:"3. Read here: the low score is used"},
+ {t:"Weigh the three things",f:["config.py"],p:"Closeness counts 60%, the yes-streak 25%, skills 15%. Before 4.2 these were 45%, 40% and 15%."},
+ {t:"Put everyone in order",f:["routing.py"],p:"Best score first. Nobody is removed. The order only decides who is asked first.",stuck:"4. Pushed down the list here"},
+ {t:"Ask the hero at the top",f:["offer.py"],p:"The offer goes to their phone and the phone buzzes."},
+ {t:"Wait for an answer",f:["offer.py","config.py"],p:"They get a fixed window: 60 seconds now, 90 before 4.2.",stuck:"1. The window shrank here"},
+ {t:"One of three things happens",f:["offer.py"],p:"They say yes, they say no, or they do not answer in time."},
+ {t:"If yes: the job is theirs",f:["offer.py","history.py"],p:"The system stops. Their score goes up by 0.08."},
+ {t:"If no, or no answer: next hero",f:["offer.py","history.py"],p:"Their score goes down by 0.12, the offer is taken off their phone, and the next hero is asked. A refusal and a missed offer are treated exactly the same.",stuck:"2. Penalised here"},
+ {t:"If everyone says no",f:["offer.py"],p:"The job ends with nobody taking it."}
+];
+const ASKS=[
+ {a:"Weigh closeness more",d:"Built exactly as asked (0.45 to 0.60).",built:"yes",worked:"no",n:"A nearby hero not being asked first got worse: the first ping went to someone from another area on 20% of jobs, then 43%."},
+ {a:"Shorter timeout",d:"Built exactly as asked (90s to 60s).",built:"yes",worked:"meh",n:"The goal was never written down. Missed offers went from 2% to 18%, and a miss costs the same as a refusal."},
+ {a:"Availability Confidence",d:"Never built, though the roadmap still says Committed.",built:"no",worked:"na",n:"Handlers still see only stated availability."},
+ {a:"Filter memory and three fixes",d:"Built.",built:"yes",worked:"meh",n:"Duplicate pings look fixed. Filters came with rough edges."},
+ {a:"Not asked: check the new window against the old penalty rule",d:"Nobody did.",built:"no",worked:"no",n:"This is the gap. Two pieces, each correct alone, combined into the trap."}
+];
+const VILLAINS=[
+ {t:"No way back",f:"history.py",s:3,p:"A score only rises on a yes. A low score means fewer offers, so there are fewer chances to say yes. A note from 2019 asks whether it should recover. It was never built.",e:"Four heroes were near zero by the end of August (an estimate from replaying their pings)."},
+ {t:"A miss counts as a refusal",f:"history.py",s:3,p:"A missed offer and an active no cost the same 0.12. The code's own comment says this is on purpose.",e:"Misses rose about tenfold. Farlight turned down only 2 offers but missed 7."},
+ {t:"Punished for off-patch offers",f:"offer.py",s:3,p:"The system asks heroes about jobs outside their own area, then penalises the no. Where the job is does not change the penalty.",e:"73% of penalised offers before 4.2 and 70% after were for jobs outside the hero's area."},
+ {t:"The phone never got it",f:"offer.py",s:2,p:"If the offer is never delivered, or the hero has no signal, it still counts as a miss.",e:"Tickets 3014 (out of signal) and 3034 (push unreliable on older phones)."},
+ {t:"No undo",f:"offer.py",s:2,p:"A wrong tap on no is permanent, and so is the 0.12.",e:"Ticket 3033: a hero meant to say yes and lost the job."},
+ {t:"Nobody is watching",f:"Whole folder",s:3,p:"No alarm exists for an available hero who stops getting offers. Handlers found out by counting buzzes.",e:"Two handlers filed 19 and 21 tickets. Nothing closed."},
+ {t:"Scores kept in memory",f:"history.py",s:1,p:"The scores live in a working store in this copy. It is not clear whether they survive a restart or are shared across servers.",e:"Needs Wen to confirm. Not a confirmed fault."},
+ {t:"The glossary says it recovers",f:"Documents",s:1,p:"The glossary says a lower score recovers. The code only restores points on a yes.",e:"Glossary, 4 Aug, against history.py."}
+];
+const ORDERS=[
+ {t:"Stop treating a missed offer like a refusal",f:"history.py, offer.py",p:"Make a miss cost nothing, or a small amount, and only after several in a row.",d:"A hero who misses 5 offers in a row keeps their ranking."},
+ {t:"Do not penalise offers outside the hero's own area",f:"offer.py, history.py",p:"Pass where the job is to the scoring, and skip the cost for off-patch offers.",d:"An off-patch no moves the score by zero."},
+ {t:"Give the score a way back",f:"history.py, config.py",p:"Let it drift toward neutral over time with no accepts needed.",d:"A hero at the floor is back in the pack within a set number of days."},
+ {t:"Count only offers that reached the phone",f:"offer.py",p:"Use delivery information so an undelivered offer changes no score.",d:"An undelivered offer changes no score."},
+ {t:"Add a short undo after a no",f:"offer.py",p:"A few seconds to reverse a wrong tap.",d:"A decline can be reversed within a few seconds, with no cost."},
+ {t:"Raise the lowest allowed score",f:"config.py",p:"From 0.0 to something like 0.3. Helps a little. Not a fix on its own.",d:"The floor is a named setting that product can change."},
+ {t:"Add a gone-quiet alarm",f:"New piece",p:"Flag any available hero with no offers for a set number of days, to the handler and to product.",d:"No available hero goes a week without an offer and without someone being told."},
+ {t:"Log why",f:"routing.py, history.py",p:"Record each ranking and each score change.",d:"A question like Marcus's from 14 Aug can be answered from the log."}
+];
+const HEROES={
+"Farlight":{home:"Uptown",note:"went quiet",pings:[[1,"t",0],[1,"d",1],[2,"t",0],[2,"d",1],[2,"d",0],[2,"t",0],[2,"t",0],[2,"t",0],[3,"t",0],[3,"t",0],[4,"t",0],[5,"t",0],[7,"t",0],[8,"t",0],[9,"d",0],[9,"t",0],[10,"t",0],[10,"t",0],[10,"d",1],[10,"d",1],[10,"t",0],[12,"t",0],[12,"t",0],[13,"t",0],[14,"t",0],[14,"m",1],[16,"t",0],[16,"t",0],[17,"t",0],[17,"t",0],[18,"d",1],[19,"d",1],[19,"t",0],[19,"t",0],[19,"t",0],[21,"t",0],[21,"t",0],[22,"t",0],[22,"t",0],[23,"m",1],[23,"t",0],[24,"t",0],[24,"d",1],[25,"t",0],[25,"d",0],[25,"t",0],[26,"t",0],[28,"t",0],[28,"t",0],[29,"d",1],[30,"t",0],[31,"t",0],[32,"t",0],[33,"t",0],[33,"t",0],[33,"d",0],[34,"t",0],[34,"d",1],[34,"t",0],[34,"t",0],[35,"d",1],[36,"t",0],[37,"t",0],[37,"t",0],[37,"t",0],[37,"t",0],[38,"t",0],[39,"d",1],[39,"t",0],[40,"m",1],[40,"t",0],[40,"d",1],[42,"t",0],[42,"t",0],[42,"d",1],[44,"t",0],[44,"m",1],[44,"d",1],[45,"m",0],[45,"m",1],[46,"m",0],[46,"t",0],[51,"m",0],[54,"d",0],[55,"m",1],[60,"m",1]]},
+"The Undertow":{home:"Harborside",note:"went quiet",pings:[[0,"t",0],[0,"t",0],[0,"d",1],[0,"t",0],[0,"t",0],[0,"d",1],[1,"d",1],[2,"t",0],[2,"t",0],[4,"t",0],[4,"t",0],[5,"t",0],[7,"t",0],[8,"d",0],[8,"t",0],[8,"t",0],[9,"t",0],[9,"t",0],[10,"t",0],[10,"d",0],[10,"t",0],[11,"t",0],[12,"t",0],[14,"t",0],[14,"m",1],[16,"t",0],[16,"t",0],[17,"t",0],[17,"t",0],[17,"t",0],[18,"d",1],[18,"d",1],[18,"t",0],[18,"t",0],[19,"t",0],[21,"d",0],[21,"d",0],[21,"t",0],[21,"t",0],[21,"t",0],[23,"t",0],[23,"t",0],[24,"t",0],[24,"t",0],[26,"t",0],[27,"t",0],[27,"d",1],[27,"t",0],[28,"t",0],[28,"t",0],[29,"t",0],[29,"t",0],[30,"t",0],[30,"t",0],[30,"t",0],[32,"t",0],[32,"d",1],[33,"d",1],[33,"t",0],[33,"t",0],[36,"t",0],[36,"d",0],[37,"t",0],[37,"t",0],[37,"d",1],[38,"t",0],[39,"d",1],[39,"t",0],[39,"t",0],[39,"t",0],[39,"t",0],[40,"t",0],[42,"t",0],[42,"t",0],[43,"d",1],[44,"m",1],[45,"m",0],[45,"t",0],[45,"t",0],[45,"m",0],[46,"m",1],[46,"m",1],[48,"d",1],[49,"d",1],[49,"t",0],[50,"m",0],[53,"m",0],[59,"m",0],[68,"m",0]]},
+"Vesper":{home:"Old Town",note:"went quiet",pings:[[0,"t",0],[1,"d",1],[1,"t",0],[2,"t",0],[2,"t",0],[2,"t",0],[3,"t",0],[3,"t",0],[4,"t",0],[4,"t",0],[4,"d",1],[5,"t",0],[5,"t",0],[6,"d",0],[7,"t",0],[8,"m",1],[8,"t",0],[8,"t",0],[9,"t",0],[10,"t",0],[12,"t",0],[12,"d",1],[12,"t",0],[12,"t",0],[12,"d",1],[13,"t",0],[13,"t",0],[14,"t",0],[14,"t",0],[14,"t",0],[15,"t",0],[16,"t",0],[16,"t",0],[16,"t",0],[17,"d",1],[17,"t",0],[18,"t",0],[18,"m",1],[18,"t",0],[20,"t",0],[20,"t",0],[20,"t",0],[21,"d",1],[21,"d",1],[21,"t",0],[23,"t",0],[23,"t",0],[23,"t",0],[23,"t",0],[23,"t",0],[24,"t",0],[25,"t",0],[26,"t",0],[26,"d",1],[27,"t",0],[27,"t",0],[28,"t",0],[28,"t",0],[29,"t",0],[29,"t",0],[29,"t",0],[30,"t",0],[31,"m",1],[31,"t",0],[31,"t",0],[31,"t",0],[32,"t",0],[32,"t",0],[33,"d",1],[36,"t",0],[36,"t",0],[36,"t",0],[36,"t",0],[37,"t",0],[37,"t",0],[38,"t",0],[38,"t",0],[38,"d",1],[38,"t",0],[39,"t",0],[39,"t",0],[39,"d",1],[40,"t",0],[42,"t",0],[42,"d",0],[43,"t",0],[45,"m",1],[46,"t",0],[46,"m",1],[47,"t",0],[47,"d",1],[47,"t",0],[48,"m",1],[48,"m",1],[48,"t",0],[49,"t",0],[51,"m",0],[55,"m",0],[55,"d",1],[55,"m",1],[56,"d",0],[58,"m",0],[64,"m",0]]},
+"Meteor Mite":{home:"Eastgate",note:"went quiet",pings:[[2,"t",0],[2,"d",0],[3,"t",0],[3,"t",0],[4,"t",0],[5,"d",0],[5,"d",1],[5,"d",0],[5,"t",0],[6,"t",0],[6,"t",0],[7,"t",0],[8,"t",0],[8,"t",0],[8,"t",0],[9,"t",0],[9,"t",0],[11,"d",1],[11,"t",0],[12,"d",0],[13,"t",0],[13,"t",0],[13,"d",1],[14,"t",0],[14,"d",0],[14,"t",0],[15,"d",0],[16,"t",0],[18,"t",0],[20,"t",0],[20,"t",0],[20,"d",1],[20,"d",1],[21,"t",0],[21,"t",0],[24,"m",0],[24,"d",0],[24,"t",0],[24,"t",0],[25,"t",0],[25,"d",0],[25,"d",0],[26,"t",0],[26,"t",0],[28,"t",0],[28,"t",0],[28,"t",0],[29,"t",0],[29,"m",0],[29,"t",0],[31,"t",0],[31,"d",1],[31,"t",0],[33,"t",0],[34,"t",0],[34,"d",0],[35,"t",0],[36,"t",0],[37,"d",0],[37,"t",0],[38,"d",1],[38,"t",0],[38,"d",1],[38,"t",0],[40,"t",0],[40,"t",0],[40,"t",0],[42,"d",0],[42,"t",0],[43,"t",0],[44,"d",1],[45,"m",1],[45,"m",0],[46,"m",0],[47,"t",0],[47,"t",0],[48,"m",0],[50,"d",0],[51,"t",0],[52,"m",0],[54,"m",1],[59,"d",1],[61,"m",0],[68,"m",1]]},
+"Captain Vantage":{home:"Hillcrest",note:"busy, still fine",pings:[[0,"t",0],[1,"t",0],[1,"d",1],[1,"t",0],[1,"t",0],[2,"d",0],[2,"t",0],[2,"t",0],[4,"t",0],[4,"t",0],[5,"t",0],[6,"t",0],[7,"t",0],[7,"t",0],[7,"t",0],[8,"t",0],[8,"d",1],[9,"t",0],[9,"m",1],[10,"t",0],[10,"t",0],[10,"t",0],[11,"t",0],[12,"d",1],[13,"t",0],[14,"t",0],[15,"t",0],[15,"t",0],[16,"d",1],[16,"t",0],[17,"d",1],[17,"d",1],[18,"t",0],[20,"t",0],[20,"d",1],[20,"t",0],[20,"t",0],[21,"t",0],[22,"d",1],[22,"d",1],[23,"t",0],[23,"t",0],[23,"t",0],[25,"m",1],[25,"d",0],[26,"t",0],[27,"t",0],[27,"t",0],[29,"t",0],[30,"t",0],[31,"t",0],[31,"t",0],[31,"t",0],[32,"t",0],[32,"d",1],[33,"t",0],[33,"d",1],[34,"t",0],[34,"t",0],[34,"d",1],[35,"d",1],[35,"t",0],[36,"t",0],[37,"t",0],[37,"t",0],[37,"t",0],[37,"t",0],[39,"t",0],[39,"t",0],[39,"d",1],[39,"t",0],[41,"d",0],[42,"t",0],[42,"d",1],[43,"t",0],[43,"t",0],[44,"d",1],[44,"m",1],[45,"d",1],[45,"t",0],[46,"t",0],[46,"t",0],[48,"t",0],[48,"t",0],[48,"d",1],[49,"t",0],[50,"t",0],[51,"t",0],[51,"m",1],[51,"t",0],[52,"m",1],[52,"d",0],[52,"t",0],[52,"t",0],[53,"t",0],[53,"t",1],[54,"t",1],[54,"t",0],[54,"d",1],[55,"t",1],[56,"t",1],[56,"t",1],[56,"t",0],[57,"m",0],[58,"t",0],[58,"t",0],[58,"t",0],[58,"d",1],[59,"t",0],[59,"t",1],[59,"d",1],[60,"t",1],[61,"t",0],[61,"t",0],[62,"t",0],[62,"t",1],[62,"d",1],[63,"t",1],[64,"t",0],[64,"d",1],[65,"t",0],[65,"t",1],[65,"t",0],[66,"t",1],[66,"m",1],[67,"t",0],[67,"t",1],[67,"d",1],[68,"t",0],[68,"t",1],[68,"t",0],[69,"d",1],[69,"m",1],[69,"t",1],[69,"t",0]]},
+"The Gale":{home:"Eastgate",note:"busiest, absorbing Meteor Mite's jobs",pings:[[0,"t",0],[0,"t",0],[0,"t",0],[0,"t",0],[1,"d",1],[2,"t",0],[3,"t",0],[4,"t",0],[4,"t",0],[5,"t",0],[5,"m",0],[6,"d",0],[6,"t",0],[7,"t",0],[7,"d",0],[7,"t",0],[8,"d",0],[8,"t",0],[9,"d",1],[9,"t",0],[12,"t",0],[13,"t",0],[13,"t",0],[13,"t",0],[13,"t",0],[14,"t",0],[14,"t",0],[14,"t",0],[14,"d",0],[15,"t",0],[16,"d",0],[16,"t",0],[17,"t",0],[17,"t",0],[18,"t",0],[18,"t",0],[18,"d",0],[19,"t",0],[22,"d",1],[22,"t",0],[23,"d",1],[23,"t",0],[23,"t",0],[24,"t",0],[24,"t",0],[25,"m",1],[25,"t",0],[25,"t",0],[25,"t",0],[26,"t",0],[27,"t",0],[27,"t",0],[28,"t",0],[29,"t",0],[29,"t",0],[29,"t",0],[30,"t",0],[32,"t",0],[32,"t",0],[32,"t",0],[33,"t",0],[34,"t",0],[34,"m",0],[34,"d",0],[34,"t",0],[35,"t",0],[35,"d",0],[35,"t",0],[36,"t",0],[36,"t",0],[37,"t",0],[38,"d",0],[38,"d",1],[41,"t",0],[41,"t",0],[41,"t",0],[41,"t",0],[41,"t",0],[42,"t",0],[43,"t",0],[43,"m",0],[43,"t",0],[44,"m",1],[45,"m",1],[45,"t",0],[46,"t",0],[46,"t",0],[46,"d",1],[46,"t",0],[47,"d",0],[48,"t",0],[48,"d",1],[48,"t",0],[49,"t",0],[49,"t",0],[49,"d",1],[49,"t",0],[49,"t",0],[50,"t",0],[50,"t",0],[50,"d",1],[51,"m",0],[52,"d",0],[53,"t",0],[53,"t",0],[54,"t",0],[54,"t",0],[54,"m",1],[55,"t",0],[55,"t",0],[56,"t",0],[56,"m",1],[56,"m",0],[57,"t",0],[57,"t",0],[57,"d",0],[58,"t",0],[58,"t",0],[60,"t",0],[60,"d",1],[60,"t",0],[60,"t",0],[60,"t",0],[61,"t",0],[62,"t",0],[62,"d",1],[62,"d",1],[62,"t",0],[62,"t",0],[62,"t",0],[63,"d",0],[63,"d",1],[64,"t",0],[64,"t",0],[64,"t",0],[64,"m",1],[65,"t",0],[66,"t",0],[66,"t",0],[66,"m",1],[67,"t",0],[67,"t",0],[67,"t",0],[67,"t",0],[67,"t",0],[68,"t",0],[68,"t",0],[68,"t",0],[68,"t",0],[68,"d",1],[68,"t",0]]},
+"Corporal Ashgrove":{home:"Northfield",note:"loud tickets, mild change",pings:[[0,"t",0],[1,"t",0],[2,"t",0],[2,"t",0],[2,"d",0],[2,"d",1],[3,"t",0],[3,"t",0],[4,"t",0],[5,"t",0],[7,"t",0],[7,"t",0],[7,"t",0],[8,"d",1],[8,"d",1],[8,"t",0],[9,"t",0],[10,"t",0],[10,"t",0],[13,"t",0],[13,"t",0],[16,"t",0],[17,"t",0],[18,"t",0],[18,"m",1],[19,"d",1],[19,"t",0],[20,"t",0],[20,"t",0],[20,"t",0],[20,"d",1],[21,"t",0],[22,"d",1],[22,"d",1],[22,"t",0],[22,"t",0],[24,"t",0],[26,"t",0],[26,"t",0],[27,"t",0],[28,"d",0],[28,"t",0],[30,"t",0],[30,"t",0],[31,"t",0],[31,"t",0],[31,"t",0],[32,"t",0],[34,"d",1],[34,"t",0],[35,"t",0],[36,"t",0],[36,"t",0],[37,"t",0],[37,"d",1],[37,"d",1],[38,"t",0],[39,"t",0],[40,"t",0],[41,"t",0],[42,"t",0],[42,"t",0],[43,"d",0],[44,"t",0],[45,"t",0],[45,"d",1],[46,"m",1],[46,"d",1],[47,"t",0],[48,"t",0],[49,"t",0],[49,"d",0],[49,"t",0],[52,"t",0],[52,"m",1],[55,"d",1],[55,"t",0],[55,"t",0],[56,"m",0],[57,"t",0],[58,"t",0],[59,"t",0],[60,"t",0],[61,"d",1],[62,"t",0],[64,"m",1],[64,"d",1],[64,"t",0],[64,"t",0],[66,"t",0],[67,"t",0],[68,"t",0]]}
+};
+const DAY0=Date.UTC(2026,5,29), REL=44, LAST=69;
+const TODAY={miss:.12,decl:.12,grace:0,recov:0,floor:0,ignoreOut:false};
+const BRIEF={miss:.02,decl:.12,grace:3,recov:.02,floor:.2,ignoreOut:true};
+const $=id=>document.getElementById(id);
+const el=(n,a={},p)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const fmtDay=d=>new Date(DAY0+d*864e5).toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"UTC"});
+
+// ---------- 1. mission ----------
+(function(){
+  const ol=$("steps");
+  STEPS.forEach((s,i)=>{
+    const li=document.createElement("li"); li.className="step"+(s.stuck?" stuck":"");
+    li.innerHTML=`<button type="button" aria-expanded="false"><span class="num">${i+1}</span><span><h3>${s.t}</h3>${s.stuck?`<span class="stuckflag">${s.stuck}</span>`:""}</span><span class="files">${s.f.map(f=>`<span class="chip">${f}</span>`).join("")}</span></button><div class="more">${s.p}</div>`;
+    li.querySelector("button").addEventListener("click",e=>{const b=e.currentTarget; const open=li.classList.toggle("open"); b.setAttribute("aria-expanded",open);});
+    ol.appendChild(li);
+  });
+  $("stuckToggle").addEventListener("change",e=>{ol.classList.toggle("showstuck",e.target.checked); $("stuckNote").hidden=!e.target.checked;
+    if(e.target.checked) ol.querySelectorAll(".step.stuck").forEach(x=>x.classList.add("open"));});
+})();
+
+// ---------- 2. scoreboard ----------
+(function(){
+  const lab={yes:"BUILT",no:"NOT BUILT",meh:"MIXED",na:"N/A"};
+  const wlab={yes:"WORKED",no:"DID NOT",meh:"UNCLEAR",na:"N/A"};
+  $("score").innerHTML=`<div class="row head"><span>The ask</span><span class="hide">Built?</span><span class="hide">Worked?</span><span>What happened</span></div>`+
+   ASKS.map(r=>`<div class="row"><div><strong>${r.a}</strong><div class="vmeta">${r.d}</div></div><span class="stamp ${r.built}">${r.built==="yes"?"BUILT":"NOT BUILT"}</span><span class="stamp ${r.worked}">${wlab[r.worked]}</span><div>${r.n}</div></div>`).join("");
+})();
+
+// ---------- 3. villains ----------
+(function(){
+  const files=["All",...new Set(VILLAINS.map(v=>v.f))]; let cur="All";
+  const f=$("filters"), host=$("villains");
+  function draw(){
+    f.innerHTML=""; files.forEach(n=>{const b=document.createElement("button"); b.type="button"; b.textContent=n; b.setAttribute("aria-pressed",n===cur); b.addEventListener("click",()=>{cur=n;draw();}); f.appendChild(b);});
+    host.innerHTML=VILLAINS.filter(v=>cur==="All"||v.f===cur).map(v=>`<article class="panel villain"><h3>${v.t}</h3><div class="sev" role="img" aria-label="Severity ${v.s} of 3">${[1,2,3].map(i=>`<i class="${i<=v.s?"on":""}"></i>`).join("")}</div><p style="margin:6px 0">${v.p}</p><span class="chip">${v.f}</span><p class="vmeta"><b>Evidence:</b> ${v.e}</p></article>`).join("");
+  }
+  draw();
+})();
+
+// ---------- 4. lab ----------
+function simulate(pings,r){
+  let s=Math.max(r.floor,0.5),last=pings[0][0],run=0; const out=[];
+  const drift=(from,to)=>{ if(r.recov>0&&to>from){const g=r.recov*(to-from); s=s<0.5?Math.min(0.5,s+g):(s>0.5?Math.max(0.5,s-g):s);} };
+  pings.forEach(([d,c,o])=>{
+    drift(last,d); last=d;
+    if(c==="t"){ s=Math.min(1,s+0.08); run=0; }
+    else if(c==="d"){ run=0; if(!(r.ignoreOut&&o)) s-=r.decl; }
+    else { run++; if(!(r.ignoreOut&&o)&&run>r.grace) s-=r.miss; }
+    s=Math.max(r.floor,Math.min(1,s)); out.push({d,s,c,o});
+  });
+  drift(last,LAST); out.push({d:LAST,s:Math.max(r.floor,s),c:null,o:0,end:true});
+  return out;
+}
+(function(){
+  const sel=$("hero"); Object.keys(HEROES).forEach(h=>{const o=document.createElement("option"); o.value=h; o.textContent=`${h} (${HEROES[h].note})`; sel.appendChild(o);});
+  const inputs={miss:$("miss"),decl:$("decl"),grace:$("grace"),recov:$("recov"),floor:$("floor")};
+  const outs={miss:$("oMiss"),decl:$("oDecl"),grace:$("oGrace"),recov:$("oRecov"),floor:$("oFloor")};
+  const ig=$("ignoreOut");
+  const read=()=>({miss:+inputs.miss.value,decl:+inputs.decl.value,grace:+inputs.grace.value,recov:+inputs.recov.value,floor:+inputs.floor.value,ignoreOut:ig.checked});
+  const write=r=>{Object.keys(inputs).forEach(k=>inputs[k].value=r[k]); ig.checked=r.ignoreOut; render();};
+  function render(){
+    const r=read();
+    outs.miss.textContent="-"+r.miss.toFixed(2); outs.decl.textContent="-"+r.decl.toFixed(2); outs.grace.textContent=r.grace;
+    outs.recov.textContent=r.recov?("+"+r.recov.toFixed(3)+" a day"):"none"; outs.floor.textContent=r.floor.toFixed(2);
+    const h=HEROES[sel.value], A=simulate(h.pings,TODAY), B=simulate(h.pings,r);
+    const svg=$("chart"); svg.innerHTML="";
+    const X0=48,X1=740,Y0=16,Y1=232, x=d=>X0+(X1-X0)*d/70, y=v=>Y1-(Y1-Y0)*v;
+    el("rect",{x:X0,y:y(0.15),width:X1-X0,height:y(0)-y(0.15),fill:"var(--red)",opacity:.12},svg);
+    [0,.25,.5,.75,1].forEach(v=>{el("line",{x1:X0,x2:X1,y1:y(v),y2:y(v),stroke:"var(--muted)","stroke-width":v===.5?1.5:.6,opacity:v===.5?.7:.35,"stroke-dasharray":v===.5?"6 4":""},svg);
+      const t=el("text",{x:X0-8,y:y(v)+4,"text-anchor":"end","font-size":12},svg); t.textContent=v.toFixed(2);});
+    [0,14,28,42,56,70].forEach(d=>{const t=el("text",{x:x(d),y:Y1+16,"text-anchor":"middle","font-size":12},svg); t.textContent=fmtDay(d);});
+    el("line",{x1:x(REL),x2:x(REL),y1:Y0,y2:Y1+60,stroke:"var(--ink)","stroke-width":2.5,"stroke-dasharray":"7 5"},svg);
+    const rl=el("text",{x:x(REL)+6,y:Y0+14,"font-size":13,"font-weight":700},svg); rl.textContent="4.2 ships 12 Aug";
+    const nl=el("text",{x:X0+4,y:y(0.5)-5,"font-size":11},svg); nl.textContent="neutral";
+    const path=(S,col,w)=>{const d=S.map((p,i)=>`${i?"L":"M"}${x(p.d).toFixed(1)},${y(p.s).toFixed(1)}`).join(" "); el("path",{d,fill:"none",stroke:col,"stroke-width":w,"stroke-linejoin":"round"},svg);};
+    path(A,"var(--red)",3.5); path(B,"var(--blue)",3.5);
+    // ping strip
+    const sy=Y1+34, cnt={};
+    h.pings.forEach(([d,c,o])=>{cnt[d]=(cnt[d]||0);const k=cnt[d]++; const col=c==="t"?"var(--green)":(c==="d"?"var(--yellow)":"var(--red)");
+      el("rect",{x:x(d)-3,y:sy+k*9,width:7,height:7,fill:o?"none":col,stroke:col,"stroke-width":1.8},svg);});
+    const st=document.createElementNS("http://www.w3.org/2000/svg","title"); st.textContent="Each square is one offer.";
+    const stat=S=>{const fl=r2=>S.filter(p=>!p.end&&p.s<=r2.floor+0.001).length; return {low:Math.min(...S.map(p=>p.s)),end:S[S.length-1].s};};
+    const sa=stat(A), sb=stat(B);
+    const daysLow=(S,rc)=>{let n=0; for(let d=0;d<=LAST;d++){ let q0=null; for(const q of S){ if(q.end||q.d>d) break; q0=q; } if(!q0) continue; let v=q0.s; if(rc>0){const g=rc*(d-q0.d); v=v<0.5?Math.min(0.5,v+g):(v>0.5?Math.max(0.5,v-g):v);} if(v<0.15) n++; } return n;};
+    const lowA=daysLow(A,0), lowB=daysLow(B,r.recov);
+    $("stats").innerHTML=
+      `<div class="stat"><small>Lowest score</small><b>${sa.low.toFixed(2)} <span style="font-size:1rem">&rarr;</span> ${sb.low.toFixed(2)}</b><small>today's rules &rarr; yours</small></div>`+
+      `<div class="stat"><small>Score on 6 Sept</small><b>${sa.end.toFixed(2)} <span style="font-size:1rem">&rarr;</span> ${sb.end.toFixed(2)}</b><small>today's rules &rarr; yours</small></div>`+
+      `<div class="stat"><small>Days in the danger zone (below 0.15)</small><b>${lowA} <span style="font-size:1rem">&rarr;</span> ${lowB}</b><small>out of 70 days</small></div>`;
+  }
+  Object.values(inputs).forEach(i=>i.addEventListener("input",render)); ig.addEventListener("change",render); sel.addEventListener("change",render);
+  $("presetToday").addEventListener("click",()=>write(TODAY)); $("presetBrief").addEventListener("click",()=>write(BRIEF));
+  sel.value="Farlight"; write(BRIEF);
+})();
+
+// ---------- 5. orders ----------
+(function(){
+  const KEY="vanishing-heroes-orders"; let done={};
+  try{ done=JSON.parse(localStorage.getItem(KEY)||"{}")||{}; }catch(e){ done={}; }
+  const ol=$("orders");
+  ORDERS.forEach((o,i)=>{
+    const li=document.createElement("li"); li.className="order"+(done[i]?" done":"");
+    li.innerHTML=`<input type="checkbox" id="ord${i}" ${done[i]?"checked":""} aria-label="Done: ${o.t}"><div><h3>${i+1}. ${o.t}</h3><p style="margin:4px 0">${o.p}</p><span class="chip">${o.f}</span><p class="vmeta"><b>Done when:</b> ${o.d}</p></div>`;
+    li.querySelector("input").addEventListener("change",e=>{done[i]=e.target.checked; li.classList.toggle("done",e.target.checked); try{localStorage.setItem(KEY,JSON.stringify(done));}catch(err){} bar();});
+    ol.appendChild(li);
+  });
+  function bar(){const n=Object.values(done).filter(Boolean).length; $("bar").style.width=(n/ORDERS.length*100)+"%"; $("barText").textContent=`${n} of ${ORDERS.length} orders complete`;}
+  bar();
+  const text=()=>"Developer brief: stop heroes silently leaving Dispatch\n\n"+ORDERS.map((o,i)=>`${i+1}. ${o.t} (${o.f})\n   ${o.p}\n   Done when: ${o.d}`).join("\n\n");
+  $("copyBrief").addEventListener("click",()=>{
+    const t=text(), ta=$("briefText");
+    const fallback=()=>{ta.value=t; $("copyFallback").hidden=false; ta.focus(); ta.select();};
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>{$("copyBrief").textContent="Copied";setTimeout(()=>$("copyBrief").textContent="Copy the brief as text",1500);}).catch(fallback); } else fallback();
+  });
+})();
+</script>
