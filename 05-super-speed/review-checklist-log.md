@@ -10,3 +10,7 @@ First logged run; the brief was last changed 2026-10-08 (baf5672), so it counts 
 **Problem before fix:** Pass — "The friction we're seeing" (line 9) and "What we don't know yet" (line 14) come before "What we're starting with" (line 18).
 
 3 of 4 passed; the one failure is a small fix: state upfront that scoring/timeout work is a related follow-on outside the app-friction scope, or move it to an explicit "out of scope, tracked separately" line. Also tighten the third success bullet to a metric the data can measure (e.g. weekly offers per responder for the four stop falling).
+
+## 2026-10-19 — nothing to review this week
+
+The only brief-like document, `05-super-speed/helen-brief.md`, has not changed since 2026-10-08 (baf5672), before the last logged run on 2026-10-12, so it was not re-reviewed. The only markdown added since then, `02-super-hearing/4-2-before-and-after.md` (bb338c0, 2026-10-13), is an evidence write-up, not a brief to a stakeholder. No other brief, PRD or one-pager exists in the repo.
