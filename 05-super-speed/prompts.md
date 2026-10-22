@@ -172,3 +172,93 @@ lets look at the repo, is there any design system for our app?
 ### 38.
 
 i want you to be creative and rethink this ui. use bold ideas and rich super hero-like colors to design this experience.
+
+### 39.
+
+Read 05-super-speed/director-request.txt and explain to me what my director wants to see
+
+What it led to: A plain explanation of Helen's ask: a fix seen from the affected person's side, not a setting, ideally clickable.
+
+### 40.
+
+check my brief against her ask
+
+What it led to: The brief was compared with Helen's request, showing where it fell short.
+
+### 41.
+
+The note says this shouldn't just be a setting we quietly flip. Read the responder I picked from CLAUDE.md and use that name. Do not ask me which one. Walk me through what's still missing from the brief before this could actually get built.
+
+What it led to: A list of what was missing before a build; CLAUDE.md held no recorded responder choice, which was flagged.
+
+### 42.
+
+lets write write the brief first before we build anything
+
+What it led to: A first full brief for Helen, written before any prototype work.
+
+### 43.
+
+this brief is hard to read. let's simplify to where there's 1-2 sentences per section, we're bringing in the key data, tables are fine, and its written at the 5th grade level
+
+What it led to: The brief was cut to short sections, tables and key data at about a 5th-grade level.
+
+### 44.
+
+lets organize the brief as follows: 1. executive overview 2. decisions we need from Helen 3. open item, decisions we need from other teams 4. problem we're solving for and why now 5. ideal state and plan to get there 6. supporting data 7. open questions with assigned owners
+
+What it led to: The brief was rebuilt in the seven sections, with owners on every open question.
+
+### 45.
+
+pretend you are Helen, give this brief a read and provide feedback. to make sure i have a better confidence as you are playing helen i want you to do so using multiple models. don't come back to me until the different helen's are aligned and you have clear guidance on what changes we need to make to this brief.
+
+What it led to: A multi-model Helen panel gave aligned feedback, which became brief v3.
+
+### 46.
+
+it feels like their analysis was using sources outside the decision brief (e.g. prototypes). assume no prototypes exist yet and have them solely judging on the brief alone
+
+What it led to: The panel was rerun on the brief text alone, with no tools; this challenge changed the result.
+
+### 47.
+
+apply v3 and rerun the check
+
+What it led to: Brief v3 was applied and the Helen panel was rerun on it.
+
+### 48.
+
+apply as a v4 and cut to get under one page
+
+What it led to: Brief v4 (about one page) plus a separate reference page holding the detail.
+
+### 49.
+
+commit and push the v4 brief files
+
+What it led to: The v4 brief and its reference page were saved to GitHub.
+
+### 50.
+
+this brief is going to serve as the input for our working prototype with the fixes. before we build anything, read the brief and ask me clarifying questions on what we to build until you are 95% confident.
+
+What it led to: Questions answered one by one; the prototype was scoped to promises 1 and 2 as a scripted, two-device page.
+
+### 51.
+
+play the role of the handlers and heros and do some user testing and synthesize feedback so we can iterate on this
+
+What it led to: Eight simulated testers (four handlers, four responders) gave feedback that merged into nine findings and a v2 change list.
+
+### 52.
+
+yep make them and track a change log of the changes and the reason why
+
+What it led to: Prototype v2 was built and a change log with the reason for every change was written.
+
+### 53.
+
+run another round of testing with a different set of users
+
+What it led to: Nine new testers built from real tickets found v2 had moved the blame, not removed it; that led to prototype v3.

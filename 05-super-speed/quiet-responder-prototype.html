@@ -1,0 +1,427 @@
+<title>The Quiet Responder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;800&display=swap">
+<style>
+  /* Layout concept: a comic-book case file with two devices on one stage. Laguna Seca blue ground, white screens, navy ink, yellow and orange accents. */
+  :root{
+    --paper:#1c6ec4; --panel:#ffffff; --ink:#0a1f44; --muted:#42557a; --edge:#071a3a;
+    --onbg:#ffffff; --onbgMuted:#dcebff; --soft:#eef4fd; --line:#cfdcf0;
+    --red:#e0212b; --yellow:#ffd21f; --orange:#ff7a1a; --green:#0b7a43; --onGreen:#ffffff; --blue:#1c6ec4;
+    --ring:#0a1f44; --ringAlt:#ffffff;
+    --dots:rgba(255,255,255,.15);
+    --display:"Bangers","Impact","Arial Narrow",system-ui,sans-serif;
+    --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+    --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+      --onbg:#f3f8ff; --onbgMuted:#bcd3f2; --soft:#0c3469; --line:#2b5a9c;
+      --red:#ff5a5f; --yellow:#ffd21f; --orange:#ff9340; --green:#43e08a; --onGreen:#03112b; --blue:#6fb0ff;
+      --ring:#ffffff; --ringAlt:#03112b;
+      --dots:rgba(255,255,255,.07); color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+    --onbg:#f3f8ff; --onbgMuted:#bcd3f2; --soft:#0c3469; --line:#2b5a9c;
+    --red:#ff5a5f; --yellow:#ffd21f; --orange:#ff9340; --green:#43e08a; --onGreen:#03112b; --blue:#6fb0ff;
+    --ring:#ffffff; --ringAlt:#03112b;
+    --dots:rgba(255,255,255,.07); color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--onbg);font:16px/1.5 var(--body);
+       background-image:radial-gradient(var(--dots) 1.4px,transparent 1.6px);background-size:14px 14px}
+  .wrap{max-width:1160px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+  h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.03em;margin:0;text-wrap:balance}
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .badge{display:inline-block;background:var(--red);color:#fff;font:800 .95rem var(--cond);letter-spacing:.12em;padding:2px 10px;border:3px solid var(--edge);transform:rotate(-2deg);margin-bottom:10px}
+  .title{font-size:clamp(2.2rem,7vw,4.2rem);line-height:1;color:var(--yellow);-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:5px 5px 0 var(--red)}
+  .sub{font:600 1.15rem var(--cond);margin:10px 0 0;max-width:64ch;color:var(--onbg)}
+  .scope{display:inline-block;margin:10px 0 0;background:var(--panel);color:var(--ink);border:3px solid var(--edge);padding:4px 12px;font:700 1rem var(--cond)}
+  .story{margin-top:20px;background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:14px 16px;display:grid;gap:10px}
+  .stepline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .stepno{font:800 .95rem var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .dots{display:flex;gap:6px}
+  .dots i{width:14px;height:14px;border:3px solid var(--edge);border-radius:50%;background:var(--soft)}
+  .dots i.on{background:var(--yellow)}
+  .dots i.now{background:var(--orange)}
+  .caption{font:700 1.2rem/1.35 var(--cond);margin:0;min-height:2.7em}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  button{font:inherit;color:inherit;cursor:pointer}
+  /* Double ring (dark inside, light outside) so focus shows on every ground, including the orange alert strip. */
+  :focus-visible{outline:3px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px var(--ringAlt)}
+  .btn{background:var(--yellow);color:#0a1f44;border:3px solid var(--edge);padding:6px 14px;font:800 1rem var(--cond);letter-spacing:.04em;box-shadow:3px 3px 0 var(--edge)}
+  .btn.alt{background:var(--panel);color:var(--ink)}
+  .btn.hot{background:var(--orange);color:#0a1f44}
+  .btn.small{padding:2px 10px;font-size:.9rem;box-shadow:2px 2px 0 var(--edge)}
+  /* Unavailable buttons stay focusable (aria-disabled) so keyboard focus is never lost; a dashed border means it is not a colour-only cue. */
+  .btn[aria-disabled="true"]{opacity:.7;border-style:dashed;cursor:not-allowed;box-shadow:none}
+  .stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}
+  @media (max-width:880px){.stage{grid-template-columns:1fr}}
+  .stage>*{min-width:0}
+  .label{font:800 .9rem var(--cond);letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px;color:var(--onbg)}
+  /* console */
+  .console{background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge)}
+  .bar{display:flex;align-items:center;gap:8px;background:var(--edge);color:#fff;padding:8px 12px;font:700 .9rem var(--cond);letter-spacing:.06em}
+  .bar i{width:11px;height:11px;border-radius:50%;background:var(--yellow);display:inline-block}
+  .bar i:nth-child(2){background:var(--orange)}.bar i:nth-child(3){background:#fff}
+  .bar span{margin-left:8px}
+  .chead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:3px solid var(--edge)}
+  .chead h2{font-size:1.4rem}
+  .pill{display:inline-block;font:800 .8rem var(--cond);letter-spacing:.08em;text-transform:uppercase;padding:1px 9px;border:2px solid var(--edge);background:var(--soft)}
+  .pill.ok{background:var(--green);color:var(--onGreen)}
+  .pill.date{background:var(--yellow);color:#0a1f44}
+  .chip{display:inline-block;font:800 .9rem var(--cond);letter-spacing:.06em;padding:2px 10px;border:3px solid var(--edge);background:var(--orange);color:#0a1f44}
+  .chip.closed{background:var(--green);color:var(--onGreen)}
+  button.chip{font-size:1.1rem;padding:4px 14px;box-shadow:3px 3px 0 var(--edge)}
+  .cards{display:grid;gap:14px;padding:14px}
+  .rcard{border:3px solid var(--edge);background:var(--panel)}
+  .rtop{display:flex;gap:12px;align-items:center;padding:10px 12px}
+  .av{width:42px;height:42px;border:3px solid var(--edge);border-radius:50%;background:var(--yellow);color:#0a1f44;display:grid;place-items:center;font:400 1.2rem var(--display)}
+  .rname{font:400 1.35rem var(--display);letter-spacing:.03em;line-height:1.1}
+  .rmeta{font-size:.9rem;color:var(--muted)}
+  /* Quiet pattern line on every card: no alert, just the numbers, so a slow decline or a heavy week is visible. */
+  .pattern{margin:0;padding:6px 12px 10px;border-top:2px solid var(--line);font:700 .95rem var(--cond);letter-spacing:.03em}
+  .alert{margin:0;padding:12px;background:var(--orange);color:#0a1f44;border-top:3px solid var(--edge);display:grid;gap:10px}
+  .alert p{margin:0;font-weight:700}
+  .alert .help{font-weight:600;font-size:.9rem}
+  .compose{padding:12px;border-top:3px solid var(--edge);background:var(--soft);display:grid;gap:8px}
+  .compose textarea{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:2px dashed var(--ink);padding:8px 10px;resize:vertical;min-height:5.4em}
+  .note{padding:10px 12px;border-top:3px solid var(--edge);background:var(--soft);font-weight:600}
+  .note.good{background:#d7f3e3;color:#08532d}
+  .note.reply{background:var(--panel);border-left:8px solid var(--blue)}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .note.good{background:#0f5a3a;color:#d7f3e3}}
+  :root[data-theme="dark"] .note.good{background:#0f5a3a;color:#d7f3e3}
+  [hidden]{display:none !important}
+  /* phone */
+  .phonewrap{display:flex;justify-content:center}
+  .phone{width:100%;max-width:330px;background:#0a1f44;border:3px solid var(--edge);border-radius:34px;padding:12px 10px 14px;box-shadow:6px 6px 0 var(--edge)}
+  .screen{background:var(--panel);color:var(--ink);border-radius:24px;min-height:600px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .status{display:flex;justify-content:space-between;padding:10px 18px 4px;font:700 .8rem var(--cond);color:var(--muted)}
+  .phead{display:flex;justify-content:space-between;align-items:center;padding:6px 16px 10px;border-bottom:2px solid var(--line)}
+  .phead h2{font-size:1.5rem}
+  .pbody{padding:12px 14px;display:grid;gap:12px;align-content:start}
+  .toast{position:absolute;top:8px;left:8px;right:8px;background:var(--edge);color:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 6px 0 rgba(0,0,0,.25);z-index:2;animation:drop .35s ease-out}
+  .toast b{display:block;font:800 .8rem var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+  @keyframes drop{from{transform:translateY(-120%)}to{transform:none}}
+  @media (prefers-reduced-motion: reduce){.toast{animation:none}}
+  /* Neutral information style, not a warning. Can be tucked away with "Got it". */
+  .banner{background:var(--soft);color:var(--ink);border:2px solid var(--blue);border-left-width:8px;border-radius:10px;padding:10px 12px;display:grid;gap:8px}
+  .banner p{margin:0}
+  .bannerslim{background:var(--soft);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 10px;text-align:left;font-weight:600;font-size:.9rem;width:100%}
+  .bubble{background:var(--soft);border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+  .bubble small{display:block;font:800 .75rem var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .replies{display:grid;gap:8px;margin-top:10px}
+  .ask{border:3px solid var(--edge);padding:10px 12px;margin-top:10px;display:grid;gap:8px;background:var(--panel)}
+  .ask p{margin:0;font-weight:700}
+  .sentreply{border:2px solid var(--line);border-radius:14px;padding:8px 12px;margin-top:10px;font-weight:600}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;border:2px dashed var(--line);border-radius:14px}
+  .offer{border:3px solid var(--edge);padding:12px;background:#fff7d6;color:#0a1f44}
+  .offer b{font:400 1.25rem var(--display)}
+  .how{margin-top:26px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+  .panel{background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:12px 16px}
+  .panel h3{font-size:1.25rem;margin-bottom:4px}
+  .panel ul{margin:6px 0 0;padding-left:20px}
+  .src{font-size:.9rem;color:var(--onbg);margin-top:18px}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="badge">PROTOTYPE v3 · PROMISES 1 AND 2</span>
+    <h1 class="title">The Quiet Responder</h1>
+    <p class="sub">What Kip and Meteor Mite would see when a responder stops getting offers. One example, from 25 Aug. Click the buttons on the screens, or use Next.</p>
+    <p class="scope">Not covered here: offers that vanish too fast. That is the 60-second timer decision, which comes later.</p>
+  </header>
+
+  <section class="story" aria-label="Story controls">
+    <div class="stepline">
+      <span class="stepno" id="stepno">Step 1 of 6</span>
+      <span class="dots" id="dots" aria-hidden="true"></span>
+    </div>
+    <p class="caption" id="caption" aria-live="polite"></p>
+    <div class="row">
+      <button class="btn alt" id="back" type="button">&larr; Back</button>
+      <button class="btn" id="next" type="button">Next &rarr;</button>
+      <button class="btn alt" id="replay" type="button">Replay</button>
+      <span class="row" id="pick" hidden>
+        <button class="btn hot" id="pickOk" type="button">Mite: "Nothing has changed on my end"</button>
+        <button class="btn hot" id="pickOff" type="button">Mite: "Something looks off"</button>
+      </span>
+      <span class="row" id="pick2" hidden>
+        <button class="btn hot" id="pickTaken" type="button">Mite takes the offer</button>
+        <button class="btn hot" id="pickMissed" type="button">The offer goes unanswered</button>
+      </span>
+    </div>
+  </section>
+
+  <div class="stage">
+    <div>
+      <p class="label">Kip's console (handler)</p>
+      <section class="console" aria-label="Handler console">
+        <div class="bar"><i></i><i></i><i></i><span>Rook Dispatch · Responders</span></div>
+        <div class="chead">
+          <h2>Kip's responders</h2>
+          <span class="row"><button class="chip" id="openChip" type="button" aria-expanded="false" aria-controls="alert" hidden>Watching 1 responder</button><span class="chip closed" id="closedChip" hidden>Done: offer taken 27 Aug</span><span class="pill date" id="datepill">Tue 25 Aug</span></span>
+        </div>
+        <div class="cards">
+          <article class="rcard" id="cardMite" aria-label="Meteor Mite">
+            <div class="rtop">
+              <div class="av" aria-hidden="true">MM</div>
+              <div><h3 class="rname">Meteor Mite</h3><div class="rmeta">Eastgate · Last offer: 22 Aug, not taken</div></div>
+              <span class="pill ok" id="miteStatus" style="margin-left:auto">Available</span>
+            </div>
+            <p class="pattern">Last 7 days: 3 offers · usual 11 · down 73%</p>
+            <div class="alert" id="alert">
+              <p>Meteor Mite: no offers in 3 days (usually 11 a week). Last offer: 22 Aug, not taken.</p>
+              <div class="row">
+                <button class="btn hot" id="btnMessage" type="button" aria-label="Message responder Meteor Mite">Message responder</button>
+                <button class="btn alt" id="btnDismiss" type="button" aria-label="Hide for now: Meteor Mite card">Hide for now</button>
+              </div>
+              <p class="help">Hide only puts this card away. Kip keeps watching, and the "Watching" chip stays in the header.</p>
+            </div>
+            <div class="compose" id="compose" hidden>
+              <span class="pill" id="composePill">Pre-written · edit before sending</span>
+              <label for="composeText" class="rmeta">Message to Meteor Mite</label>
+              <textarea id="composeText" rows="4" aria-describedby="composePill"></textarea>
+              <div class="row"><button class="btn" id="btnSend" type="button" aria-label="Send check-in to Meteor Mite">Send</button></div>
+            </div>
+            <div class="note good" id="sentNote" tabindex="-1" hidden>Check-in sent to Meteor Mite. Waiting for a reply.</div>
+            <div class="note reply" id="replyNote" tabindex="-1" hidden></div>
+            <div class="note" id="resultNote" tabindex="-1" hidden></div>
+          </article>
+          <article class="rcard" id="cardGale" aria-label="The Gale">
+            <div class="rtop">
+              <div class="av" aria-hidden="true">TG</div>
+              <div><h3 class="rname">The Gale</h3><div class="rmeta">Eastgate · Last offer: 25 Aug</div></div>
+              <span class="pill ok" style="margin-left:auto">Available</span>
+            </div>
+            <p class="pattern">Last 7 days: 15 offers · usual 13 · up 15%</p>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <p class="label">Meteor Mite's phone (responder)</p>
+      <div class="phonewrap">
+        <section class="phone" aria-label="Responder phone">
+          <div class="screen">
+            <div class="status"><span id="clock">Tue 25 Aug · 21:00</span><span>Rook</span></div>
+            <div class="toast" id="toast" hidden>
+              <b>Rook Dispatch</b>
+              <span>You haven't had an offer since 22 Aug. We've told your handler, and we're looking into why.</span>
+            </div>
+            <div class="phead"><h2>Offers</h2><span class="pill ok" id="phoneStatus">Available</span></div>
+            <div class="pbody">
+              <div class="banner" id="banner" hidden>
+                <p>You haven't had an offer since 22 Aug. We've told your handler, and we're looking into why.</p>
+                <div class="row"><button class="btn alt small" id="btnGotIt" type="button">Got it</button></div>
+              </div>
+              <button class="bannerslim" id="bannerSlim" type="button" aria-expanded="false" hidden>No offers since 22 Aug · Show message</button>
+              <div class="thread" id="thread" hidden>
+                <div class="bubble"><small>From Kip, your handler</small><span id="bubbleText"></span></div>
+                <div class="replies" id="replies">
+                  <button class="btn" id="btnOk" type="button" aria-describedby="replyHint">Nothing has changed on my end</button>
+                  <button class="btn alt" id="btnWrong" type="button" aria-describedby="replyHint">Something looks off</button>
+                  <small id="replyHint" style="color:var(--muted)">Replies unlock at step 5, after Kip has hidden the card.</small>
+                </div>
+                <div class="ask" id="ask" role="group" aria-labelledby="askTitle" hidden>
+                  <p id="askTitle">What are you seeing?</p>
+                  <button class="btn" id="kind1" type="button" data-kind="Offers arrive late">Offers arrive late</button>
+                  <button class="btn" id="kind2" type="button" data-kind="Offers arrive twice">Offers arrive twice</button>
+                  <button class="btn" id="kind3" type="button" data-kind="Offers disappear before I can answer">Offers disappear before I can answer</button>
+                  <button class="btn" id="kind4" type="button" data-kind="I get nothing at all">I get nothing at all</button>
+                  <button class="btn alt" id="btnCancelAsk" type="button">Cancel</button>
+                </div>
+              </div>
+              <div class="sentreply" id="sentReply" tabindex="-1" hidden></div>
+              <div class="offer" id="offer" hidden>
+                <small id="offerDate">Thu 27 Aug</small><br><b>New offer · Eastgate</b><br><span id="offerText">Answer within 60 seconds.</span>
+              </div>
+              <div class="empty" id="empty">No offers right now</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="vh" id="liveConsole" role="status" aria-live="polite"></div>
+  <div class="vh" id="livePhone" role="status" aria-live="polite"></div>
+
+  <section class="how" aria-label="How the card decides">
+    <div class="panel">
+      <h3>How the card decides</h3>
+      <ul>
+        <li>It shows after 3 days with no offers, or when a responder has under a quarter of their usual offers in 7 days. At most once a week.</li>
+        <li>It uses only offer history and availability. No location.</li>
+        <li>Hiding the card does not end the watch. The chip stays in the header. Click the chip to bring the card back.</li>
+        <li>The watch ends only when the responder takes an offer. An offer that goes unanswered does not end it.</li>
+        <li>Every card shows its last 7 days against the usual, with no alert, so a slow decline or a heavy week is visible.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>What this shows, and what it doesn't</h3>
+      <ul>
+        <li>Shows promises 1 and 2: the handler card and the responder message. Both go out together.</li>
+        <li>The check-in wording and the replies are proposals. "Your availability and tags look right from here" must be something Rook can really check.</li>
+        <li>Still open before this ships: "we're looking into why" needs a named owner and a date, or it should go. So do the "[time to be agreed]" update windows.</li>
+        <li>Still open: a flat 3-day rule fires on low-volume responders. It should scale to each responder's own gaps. Ravi to test on the pre-4.2 data.</li>
+        <li>Still open: whether Rook can show that an offer reached the phone. Nothing here does.</li>
+        <li>A dated "on leave" status is a separate item, not part of this check-in.</li>
+        <li>Does not show the way back (promise 3), the options for the four, or the stop rules. Those are still held.</li>
+        <li>These are example screens. No real system changes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="src">Example data: Meteor Mite's real offers from the Rook database. The last offer before this was 22 Aug at 20:53, so the 3-day mark falls on the evening of 25 Aug. In the last 7 days Mite had 3 offers against about 11 usually, and The Gale had 15 against 13. Fictional teaching scenario.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const DEFAULT_CHECKIN="Checking in: you haven't had an offer since 22 Aug. Your availability and tags look right from here. Has anything changed on your end?";
+const CAPTIONS=[
+  "Tuesday 25 Aug, 9 pm. Meteor Mite has had no offers for 3 days. The card on Kip's console and the message on Mite's phone go out together.",
+  "Kip taps Message responder. The check-in is pre-written, with facts Kip can edit. On Mite's phone, the push becomes a banner.",
+  "Kip sends it. Mite sees the check-in with two ways to reply. Kip's console says it is waiting for a reply.",
+  "Kip taps Hide for now. The card hides, but the chip 'Watching 1 responder' stays in the header. Click it to bring the card back.",
+  "Mite chooses how to reply. Pick one on the phone, or use the buttons above."
+];
+const TOTAL=6;
+let step=0, branch=null, kind=null, outcome=null, peek=false, asking=false, collapsed=false, sentText=DEFAULT_CHECKIN, focusId=null;
+let lastConsole="", lastPhone="";
+
+function setDis(id,v){ const e=$(id); if(v) e.setAttribute("aria-disabled","true"); else e.removeAttribute("aria-disabled"); }
+function say(id,text,last){ if(text && text!==last) $(id).textContent=text; return text||last; }
+
+function go(n){
+  const to=Math.max(0,Math.min(TOTAL-1,n));
+  if(step===1 && to>1) sentText=$("composeText").value.trim()||DEFAULT_CHECKIN;
+  if(to===0) $("composeText").value=DEFAULT_CHECKIN;
+  step=to; peek=false; asking=false; collapsed=false;
+  if(step<5){ branch=null; kind=null; outcome=null; }
+  focusId={0:"btnMessage",1:"composeText",2:"sentNote",3:"openChip",4:"btnOk"}[to]||null;
+  render();
+}
+function choose(b){
+  if(step!==4) return;
+  if(b==="off"){ asking=true; focusId="kind1"; render(); return; }
+  branch="ok"; kind=null; outcome=null; step=5; asking=false; peek=false; focusId="replyNote"; render();
+}
+function chooseKind(k){
+  if(step!==4 || !asking) return;
+  branch="off"; kind=k; step=5; asking=false; peek=false; focusId="replyNote"; render();
+}
+function setOutcome(o){
+  if(step!==5 || branch!=="ok" || outcome) return;
+  outcome=o; focusId="resultNote"; render();
+}
+function nextStep(){ if(step===4||step===5) return; go(step+1); }
+
+function render(){
+  const res=step===5, ok=res&&branch==="ok", off=res&&branch==="off", taken=ok&&outcome==="taken";
+
+  // story bar
+  $("stepno").textContent="Step "+(step+1)+" of "+TOTAL;
+  $("dots").innerHTML=Array.from({length:TOTAL},(_,i)=>'<i class="'+(i<step?'on':(i===step?'now':''))+'"></i>').join("");
+  let cap;
+  if(!res) cap=CAPTIONS[step];
+  else if(off) cap="Mite says something looks off, and what kind. Kip sees the reply, and the watch stays on. Mite is told an update is coming.";
+  else if(!outcome) cap="Thursday 27 Aug. An offer arrives for Mite. The banner clears, but the watch stays on until Mite takes one. Choose what happens to this offer.";
+  else if(taken) cap="Mite takes the offer. Only now does the watch end on Kip's console.";
+  else cap="The offer goes unanswered. Kip's console still says Watching. An offer arriving is not enough to end it.";
+  $("caption").textContent=cap;
+  setDis("back",step===0);
+  setDis("next",step===4||step===5);
+  $("pick").hidden = step!==4;
+  $("pick2").hidden = !(ok && !outcome);
+
+  // console
+  const chipOn = step===3 || step===4 || (res && !taken);
+  $("alert").hidden = !(step<3 || (peek && chipOn));
+  $("compose").hidden = step!==1;
+  $("sentNote").hidden = !(step>=2 && step<=4);
+  $("openChip").hidden = !chipOn;
+  $("openChip").setAttribute("aria-expanded",String(peek&&chipOn));
+  $("closedChip").hidden = !taken;
+  $("replyNote").hidden = !res;
+  let replyText="", resultText="";
+  if(res){
+    replyText = ok ? 'Reply from Meteor Mite: "Nothing has changed on my end"' : 'Reply from Meteor Mite: "Something looks off: '+kind+'"';
+    resultText = off ? "Still watching. Update to Mite due by [time to be agreed]."
+      : !outcome ? "Offer sent 27 Aug. Waiting to see if it is taken."
+      : taken ? "Offer taken 27 Aug. No longer watching."
+      : "Offer sent 27 Aug, not answered. Still watching.";
+    $("replyNote").textContent=replyText;
+    $("resultNote").textContent=resultText;
+  }
+  $("resultNote").hidden = !res;
+  $("datepill").textContent = ok ? "Thu 27 Aug" : "Tue 25 Aug";
+  setDis("btnMessage",step!==0);
+  setDis("btnDismiss",!(step===2 || peek));
+  setDis("btnSend",step!==1);
+
+  // phone
+  $("toast").hidden = step!==0;
+  const showBanner = (step>=1 && step<=4) || off;
+  $("banner").hidden = !(showBanner && !collapsed);
+  $("bannerSlim").hidden = !(showBanner && collapsed);
+  $("bannerSlim").setAttribute("aria-expanded","false");
+  $("bubbleText").textContent = sentText;
+  $("thread").hidden = !(step>=2 && step<=4);
+  $("replies").hidden = asking;
+  $("ask").hidden = !asking;
+  setDis("btnOk",step!==4); setDis("btnWrong",step!==4);
+  $("replyHint").hidden = step===4;
+  const sentReplyText = off ? 'You replied: "Something looks off: '+kind+'". Kip has your answer. Next update by [time to be agreed].' : "";
+  $("sentReply").hidden = !off;
+  $("sentReply").textContent = sentReplyText;
+  $("offer").hidden = !ok;
+  if(ok){
+    $("offerText").textContent = !outcome ? "Answer within 60 seconds." : (taken ? "You took this offer." : "Offer expired. No answer in time.");
+  }
+  $("empty").hidden = ok;
+  $("clock").textContent = ok ? "Thu 27 Aug · 20:03" : "Tue 25 Aug · 21:00";
+
+  // announcements for screen readers (the product UI changes, not just the story caption)
+  let cm="", pm="";
+  if(step===0) { cm="Alert card shown: Meteor Mite has had no offers in 3 days."; pm="Push: You haven't had an offer since 22 Aug. We've told your handler, and we're looking into why."; }
+  else if(step===1) { cm="Check-in box opened. You can edit the message before sending."; pm="Banner shown at the top of Offers."; }
+  else if(step===2) { cm="Check-in sent to Meteor Mite. Waiting for a reply."; pm="Message from Kip: "+sentText+" Two replies available."; }
+  else if(step===3) { cm=peek?"Card shown again.":"Card hidden. Watching 1 responder."; }
+  else if(step===4) { cm=peek?"Card shown again.":"Card hidden. Watching 1 responder."; pm=asking?"What are you seeing? Four choices and Cancel.":""; }
+  else { cm=replyText+". "+resultText; pm= off ? sentReplyText : (!outcome?"New offer. Answer within 60 seconds.":(taken?"You took this offer.":"Offer expired. No answer in time.")); }
+  if(collapsed && showBanner) pm="Banner collapsed to one line.";
+  lastConsole=say("liveConsole",cm,lastConsole);
+  lastPhone=say("livePhone",pm,lastPhone);
+
+  if(focusId){ const f=$(focusId); focusId=null; if(f && !f.hidden) f.focus(); }
+}
+
+// Unavailable buttons stay focusable; this guard stops them acting.
+document.addEventListener("click",e=>{
+  const b=e.target.closest('button[aria-disabled="true"]');
+  if(b){ e.stopImmediatePropagation(); e.preventDefault(); }
+},true);
+
+$("next").addEventListener("click",nextStep);
+$("back").addEventListener("click",()=>go(step-1));
+$("replay").addEventListener("click",()=>go(0));
+$("btnMessage").addEventListener("click",()=>{ if(step===0) go(1); });
+$("btnSend").addEventListener("click",()=>{ if(step===1) go(2); });
+$("btnDismiss").addEventListener("click",()=>{ if(step===2) go(3); else if(peek){ peek=false; focusId="openChip"; render(); } });
+$("openChip").addEventListener("click",()=>{ peek=!peek; render(); });
+$("btnOk").addEventListener("click",()=>choose("ok"));
+$("btnWrong").addEventListener("click",()=>choose("off"));
+$("pickOk").addEventListener("click",()=>choose("ok"));
+$("pickOff").addEventListener("click",()=>choose("off"));
+$("pickTaken").addEventListener("click",()=>setOutcome("taken"));
+$("pickMissed").addEventListener("click",()=>setOutcome("missed"));
+["kind1","kind2","kind3","kind4"].forEach(id=>$(id).addEventListener("click",e=>chooseKind(e.currentTarget.dataset.kind)));
+$("btnCancelAsk").addEventListener("click",()=>{ asking=false; focusId="btnWrong"; render(); });
+$("btnGotIt").addEventListener("click",()=>{ collapsed=true; focusId="bannerSlim"; render(); });
+$("bannerSlim").addEventListener("click",()=>{ collapsed=false; focusId="btnGotIt"; render(); });
+$("composeText").value=DEFAULT_CHECKIN;
+render();
+</script>
