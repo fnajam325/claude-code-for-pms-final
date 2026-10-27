@@ -1,7 +1,7 @@
 # Brief for Helen: no responder should quietly disappear
 
-**Owner:** Faran (Dispatch PM). **Dated:** 22 Oct 2026. **Status:** An idea for your OK. Nothing changes until you say yes.
-**Scope:** What handlers and responders see when a responder stops getting jobs, and how they get back. The 60-second timer is a later decision. No screens exist yet. Our numbers end 6 Sept.
+**Owner:** Faran (Dispatch PM). **Dated:** 22 Oct 2026, updated 27 Oct 2026 to match prototype v3. **Status:** An idea for your OK. Nothing changes until you say yes.
+**Scope:** What handlers and responders see when a responder stops getting jobs, how they get back, and an interim scoring fix for the four (section 5). The 60-second timer is a later decision. Missed offers and jobs nobody took appear as context and as stop-line guardrails, not as goals. A clickable prototype of promises 1 and 2 exists (https://claude.ai/artifact/PPRL62aqpZuG7UXrTus91w); it was tested with simulated users, not real ones. Our numbers end 6 Sept.
 
 ## 1. Executive overview
 
@@ -11,7 +11,8 @@ Since release 4.2, four responders have lost about 70% of their job offers, and 
 
 | Decision | When |
 |---|---|
-| Yes: start design on promises 1 and 2 | Now |
+| Yes: start design on promises 1 and 2 (the handler card and the responder message, section 5) | Now |
+| Name who "we" is in "we're looking into why", and by when. Or drop the line. | Week 1 |
 | Pick option A, B or C for the four (section 5) | Week 1 |
 | Yes or no on promise 3, the way back | Week 3 |
 
@@ -22,10 +23,10 @@ Since release 4.2, four responders have lost about 70% of their job offers, and 
 | **Marcus** | A release slot (and what it bumps), a size, an off switch for promise 3 | Week 1 |
 | **Wen** | The answers in section 7 | Week 1 |
 | **Supply PM** | Does a change in offers affect gear repairs? | Before promise 3 |
-| **Sofia** | Mock the two screens | Week 2 |
-| **Security** | Check the wording (Policy 4.1) | Week 1 |
+| **Sofia** | Mock the two screens (prototype v3 is the starting point) | Week 2 |
+| **Security** | Check the wording (Policy 4.1), including "your availability and tags look right from here" | Week 1 |
 | **Nadia** | Answer the 45 open tickets (32 quiet, 13 vanished, as of 7 Sept) and write a script | Now |
-| **Ravi** | Refresh the numbers, check stop lines weekly | Week 1 |
+| **Ravi** | Refresh the numbers, test a card rule that scales to each responder's own gaps, check stop lines weekly | Week 1 |
 
 ## 4. The problem we are solving, and why now
 
@@ -39,11 +40,11 @@ Every offer without a "yes" costs a responder 0.12 points, even a missed one. On
 
 | Promise | Draft text (example: Meteor Mite, as of 25 Aug) |
 |---|---|
-| **1. Handler card** | "Meteor Mite: no offers in 3 days (usually 11 a week). Last offer missed, 22 Aug. [Message responder] [Dismiss]". [Message responder] opens a pre-written check-in. |
-| **2. Responder message** | "You haven't had an offer since 22 Aug. We've told your handler, and we're looking into why." |
+| **1. Handler card** | "Meteor Mite: no offers in 3 days (usually 11 a week). Last offer: 22 Aug, not taken. [Message responder] [Hide for now]". [Message responder] opens a pre-written check-in the handler can edit: "Checking in: you haven't had an offer since 22 Aug. Your availability and tags look right from here. Has anything changed on your end?" |
+| **2. Responder message** | "You haven't had an offer since 22 Aug. We've told your handler, and we're looking into why." The responder can reply "Nothing has changed on my end" or "Something looks off", and say what kind (late, twice, disappearing, nothing at all). |
 | **3. A way back (held)** | Cheaper misses, nothing for offers outside the responder's own area (where they usually work), a slow rise. All numbers are guesses. |
 
-The card shows after 3 days with no offers, once a week at most. Dismissing it does not close the case. On our data (29 Jun to 6 Sept) it would have fired 10 times for the four, and 7 times across the other twelve.
+The card shows after 3 days with no offers, once a week at most. Hiding it does not end the watch. The watch ends only when the responder takes an offer; an offer nobody answers does not end it (all of Farlight's offers from 19 to 28 Aug were missed or declined). Every card also shows its last 7 days against the usual, with no alert, so a slow decline is visible. On our data (29 Jun to 6 Sept) the card would have fired 10 times for the four, and 7 times across the other twelve. About six of those seven come from three healthy responders (The Drift 3, The Gale 2, Ironvale 1, in the six weeks before 4.2), because a flat 3-day rule is too sensitive at low volume. A rule that scales to each responder's own gaps needs testing (Ravi).
 
 | Help for the four until the release (Helen chooses) | Risk |
 |---|---|
@@ -55,7 +56,7 @@ The card shows after 3 days with no offers, once a week at most. Dismissing it d
 
 If offers never reach Mite's phone, promise 3 is the wrong fix. We fix delivery and keep 1 and 2.
 
-**Success:** each of the four gets at least 8 offers a week (70% of their level before 4.2) with at least 9 in 10 answered in time, within 4 weeks of release. **Stop** (proposed; measured from launch day): jobs nobody took up 2 points, the other twelve's yes-rate down 5 points, or time to accept 10% slower. Faran calls it, Marcus undoes it.
+**Success for promises 1 and 2:** zero responders with no offers 7 days after a card was shown (hiding a card does not count as handled). **Success for the way back (promise 3):** each of the four gets at least 8 offers a week (70% of their level before 4.2) with at least 9 in 10 answered in time, within 4 weeks of release. **Stop** (proposed; guardrails, measured from launch day): jobs nobody took up 2 points, the other twelve's yes-rate down 5 points, or time to accept 10% slower. Faran calls it, Marcus undoes it.
 
 ## 6. Supporting data
 
@@ -73,9 +74,10 @@ Before is 29 Jun to 11 Aug, after is 12 Aug to 6 Sept (Rook database). Replaying
 
 | Question | Owner | By |
 |---|---|---|
-| Does Mite miss offers because he is slow, or because they never reach his phone? | Wen | Week 1 |
+| Does Mite miss offers because they are slow, or because offers never reach the phone? | Wen | Week 1 |
 | Do scores survive a restart? | Wen | Week 1 |
-| Was a miss counting like a "no" on purpose? Does her 2019 view still stand? | Wen | Week 1 |
+| Was a miss counting like a "no" on purpose? Does Wen's 2019 view still stand? | Wen | Week 1 |
+| Can the check-in truthfully say "your availability and tags look right from here"? | Wen | Week 1 |
 | What was the 60-second timer meant to fix? | Helen | Week 1 |
 | Does promise 1 replace Availability Confidence? We think not. A separate conversation. | Helen | Week 1 |
 | Who is the Supply PM? | Helen | Week 1 |

@@ -12,7 +12,7 @@ Detail behind `helen-brief-v4.md`. Numbers come from the Rook database (pings an
 | Measure | Goal | Owner |
 |---|---|---|
 | Offers a week for each of the four | At least 8 (70% of their 11 to 14 before 4.2), with at least 9 in 10 answered in time, within 4 weeks of release. For comparison, the four answered 97 in 100 before 4.2, under the 90-second timer (all responders: 98 in 100). The 9 in 10 target allows for the shorter 60-second timer. | Ravi reports, Faran owns |
-| Responders with no offers 7 days after a card was shown | Zero. A dismissed card does not count as handled. | Faran |
+| Responders with no offers 7 days after a card was shown | Zero. A hidden card does not count as handled. | Faran |
 | Jobs nobody took | No more than 2 points above the level on the day promise 3 ships (5% before 4.2, 11% since) | Ravi |
 | The other twelve say yes | No more than 5 points below the level on the day promise 3 ships | Ravi |
 | Time to accept | No more than 10% slower than on the day promise 3 ships. Ravi pulls the baseline first. | Ravi |
@@ -20,7 +20,7 @@ Detail behind `helen-brief-v4.md`. Numbers come from the Rook database (pings an
 The stop lines are proposals. They are set as changes from the level on launch day so that they measure promise 3, not the damage 4.2 already did.
 
 ## The card rule, from the data
-It shows after 3 days with no offers, or when a responder has under a quarter of their usual offers in 7 days. "Usual" is the average over the first six weeks (29 Jun to 9 Aug). It shows once a week at most per responder. Dismissing a card does not close the case: the responder stays on the list until they get an offer.
+It shows after 3 days with no offers, or when a responder has under a quarter of their usual offers in 7 days. "Usual" is the average over the first six weeks (29 Jun to 9 Aug). It shows once a week at most per responder. Hiding a card does not end the watch: the responder stays on the list until they take an offer. An offer that goes unanswered does not end it.
 - **The four:** it would have fired 10 times in total: Farlight 3 (first on 17 Aug), Vesper 3 (first on 22 Aug), The Undertow 2 (first on 24 Aug), Meteor Mite 2 (first on 25 Aug).
 - **The other twelve:** 7 times in total across 9 weeks, under one a week across all twelve of them, not one each.
 
