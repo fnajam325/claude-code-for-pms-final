@@ -3,293 +3,383 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Release 4.2 Debrief: Final Report</title>
+<title>Release 4.2 Debrief: a playable briefing</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
-/* Plan: a slide deck in the 70s comic-book look this report already had: cream newsprint, heavy ink,
-   halftone dots, primary-colour bursts. One committed light look. Every number on a slide is built at
-   load time from the real files (CSV, prompts.md, git line counts), so nothing here is typed by hand
-   except the words. */
+/* Plan: a 90s 16-bit game used as an information format, not just a skin. The report is a world you
+   explore: pick a path for who you are, then play each level (scrub the git history, race the 16
+   responders, play the score, replay the checklist) and open "Show me the rows" under any claim to see
+   the raw evidence. Dark purple sky, neon cyan/magenta/yellow/lime, white-bordered dialog boxes, CRT
+   scanlines. Press Start 2P for labels, VT323 for body. Every number is built from the repo files. */
 :root{
-  --paper:#f3e6c8; --paper2:#ead9ad; --ink:#171310; --muted:#5a4e38;
-  --red:#e63b2e; --redText:#b3261b; --yellow:#f6c23e; --blue:#2c6ea6; --green:#3f8f5f; --greenText:#2c6b45; --purple:#7a4fae;
-  --display:"Bangers","Arial Black",sans-serif; --body:"Comic Neue","Comic Sans MS",sans-serif;
-  color-scheme:light;
+  --bg:#10062b; --panel:#0b1450; --panel2:#1d2bb0; --deep:#05031a;
+  --ink:#f4f4ff; --muted:#a9b0ff;
+  --red:#ff2a4d; --redText:#ff7a93; --yellow:#ffe600; --blue:#00e5ff; --green:#39ff14; --greenText:#7dff5c; --purple:#ff3df2;
+  --pixel:"Press Start 2P","Courier New",monospace; --body:"VT323","Courier New",monospace;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{
-  background:radial-gradient(circle,rgba(23,19,16,.09) 1px,transparent 1.3px) 0 0/14px 14px,var(--paper);
-  color:var(--ink); font-family:var(--body); font-weight:700; font-size:19px; line-height:1.45;
-  padding:20px 16px 110px;
+  background:
+    radial-gradient(1.5px 1.5px at 12% 18%,#fff 98%,transparent),radial-gradient(1.5px 1.5px at 78% 12%,#fff 98%,transparent),
+    radial-gradient(1px 1px at 34% 42%,#9fa8ff 98%,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#fff 98%,transparent),
+    radial-gradient(1px 1px at 6% 70%,#9fa8ff 98%,transparent),radial-gradient(1.5px 1.5px at 56% 82%,#fff 98%,transparent),
+    linear-gradient(#10062b,#1b0f4a 60%,#2a0f5e);
+  background-size:340px 340px,420px 420px,260px 260px,380px 380px,300px 300px,460px 460px,100% 100%;
+  color:var(--ink); font-family:var(--body); font-size:25px; line-height:1.2; letter-spacing:.01em;
+  padding:70px 16px 120px; min-height:100vh;
 }
-h1,h2,h3{font-family:var(--display); font-weight:400; letter-spacing:.02em; line-height:1.12; margin:0; text-wrap:balance}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:30;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
+h1,h2,h3{font-family:var(--pixel);font-weight:400;line-height:1.5;margin:0}
 p{margin:0}
 a{color:var(--blue)}
-code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em; background:rgba(23,19,16,.08); padding:1px 5px; border-radius:3px}
-:focus-visible{outline:4px solid var(--ink); outline-offset:3px; box-shadow:0 0 0 3px var(--yellow)}
+code{font-family:var(--body);font-size:.95em;background:rgba(0,229,255,.16);color:var(--blue);padding:0 5px;border:1px solid rgba(0,229,255,.5)}
+:focus-visible{outline:4px solid var(--yellow);outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none !important}
+
+/* HUD + controls */
+.hud{position:fixed;top:0;left:0;right:0;z-index:6;background:var(--deep);border-bottom:4px solid var(--blue);display:flex;gap:12px;align-items:center;justify-content:space-between;padding:8px 14px;font-family:var(--pixel);font-size:10px;color:var(--ink);flex-wrap:wrap}
+.hud b{color:var(--yellow);font-weight:400}
+.hud .xp{flex:1;min-width:80px;max-width:300px;height:14px;border:3px solid #fff;background:var(--deep);position:relative}
+.hud .xp i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--green) 0 8px,#1f9a0c 8px 10px);width:0}
+.hud .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.controls{position:fixed;left:0;right:0;bottom:0;background:var(--deep);border-top:4px solid var(--blue);display:flex;align-items:center;justify-content:center;gap:16px;padding:9px 12px;z-index:5;flex-wrap:wrap}
+.dots{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.dots button{width:14px;height:14px;border:2px solid #fff;background:transparent;padding:0;cursor:pointer;border-radius:0}
+.dots button.off{border-style:dashed;opacity:.6}
+.dots button[aria-current="true"]{background:var(--yellow);border-color:var(--yellow);animation:blink 1.1s steps(2) infinite}
+.count{font-family:var(--pixel);font-size:10px;min-width:96px;text-align:center;color:var(--yellow)}
 
 .deck{max-width:1060px;margin:0 auto}
-.slide{animation:pop .25s ease-out}
-.slide[hidden]{display:none}
-@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.slide{animation:none}}
+.screen{animation:pop .35s steps(5,end)}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}.dots button[aria-current="true"],.eyebrow,.bubble::after,.press{animation:none !important}}
 
-.box{background:#fff8e6;border:4px solid var(--ink);border-radius:6px;box-shadow:6px 6px 0 var(--ink);padding:18px 20px}
+/* shared blocks */
+.box{background:linear-gradient(180deg,#14238f,#0b1450);border:4px solid #fff;border-radius:4px;box-shadow:0 0 0 4px var(--deep),8px 10px 0 4px rgba(0,0,0,.55);padding:18px 20px;color:var(--ink)}
 .box.tight{padding:14px 16px}
-.tag{display:inline-block;font-family:var(--display);font-size:14px;letter-spacing:.04em;background:var(--ink);color:var(--yellow);padding:4px 10px;border-radius:3px;transform:rotate(-1.5deg);margin-bottom:10px}
-.tag.blue{background:var(--blue);color:#fff8e6;border:3px solid var(--ink)}
-.slide-title{font-size:clamp(28px,5vw,46px);color:var(--purple);-webkit-text-stroke:1.5px var(--ink);margin:6px 0 14px}
-.lede{font-size:clamp(19px,2.6vw,24px);max-width:62ch}
-.lede + .lede{margin-top:10px}
-.src{font-size:14px;color:var(--muted);font-weight:700;margin-top:8px}
-.small{font-size:16px}
-.grid{display:grid;gap:18px}
+.tag{display:inline-block;font-family:var(--pixel);font-size:10px;letter-spacing:.04em;background:var(--purple);color:#fff;padding:7px 10px;border:3px solid #fff;box-shadow:3px 3px 0 var(--deep);margin-bottom:12px}
+.tag.blue{background:var(--blue);color:var(--deep)}
+.stage-title{display:flex;gap:16px;align-items:center;margin:6px 0 16px}
+.stage-title .sprite{flex:0 0 auto}
+.slide-title{font-size:clamp(15px,2.8vw,28px);line-height:1.55;color:var(--yellow);text-shadow:3px 3px 0 var(--purple),6px 6px 0 var(--deep);margin:6px 0 14px}
+.lede{font-size:clamp(24px,2.6vw,30px);max-width:62ch}
+.src{font-size:20px;color:var(--muted);margin-top:8px}
+.small{font-size:24px}
+.grid{display:grid;gap:22px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
 .grid>*{min-width:0}
+.sprite{width:64px;height:64px;image-rendering:pixelated;display:block}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{font-family:var(--pixel);font-size:11px;letter-spacing:.04em;color:var(--deep);background:var(--yellow);border:4px solid #fff;padding:11px 14px;box-shadow:0 6px 0 var(--deep),0 0 0 4px var(--deep);cursor:pointer;text-decoration:none;display:inline-block;line-height:1.4}
+.btn.blue{background:var(--blue)} .btn.ghost{background:var(--panel2);color:#fff} .btn.red{background:var(--red);color:#fff}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--deep),0 0 0 4px var(--deep)}
+.btn[aria-pressed="true"],.btn.on{background:var(--purple);color:#fff}
+.btn.small{font-size:9px;padding:8px 10px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.hud .btn,.controls .btn{box-shadow:0 3px 0 #000;font-size:9px;padding:7px 9px;border-width:3px}
+.hint{color:var(--muted);font-size:23px}
+.note{margin-top:14px;border-left:8px solid var(--blue);background:var(--deep);padding:10px 14px;font-size:23px}
+.note.warn{border-left-color:var(--red)}
+.caption{margin-top:14px;background:var(--deep);border:3px solid var(--yellow);padding:12px 14px}
+.caption p{font-size:25px}
+.label{font-family:var(--pixel);font-size:10px;line-height:1.6;letter-spacing:.04em;display:block;margin-bottom:8px;color:var(--yellow)}
+.finding{font-size:clamp(25px,2.6vw,30px)}
+.finding b{background:var(--yellow);color:var(--deep);padding:0 5px}
+.bubble{position:relative;margin-top:18px;background:linear-gradient(180deg,#2233b8,#0b1466);border:4px solid #fff;border-radius:4px;padding:14px 18px 24px;box-shadow:0 0 0 4px var(--deep),6px 8px 0 4px rgba(0,0,0,.5)}
+.bubble::after{content:"▼";position:absolute;right:14px;bottom:4px;font-family:var(--pixel);font-size:12px;color:var(--yellow);animation:blink 1s steps(2) infinite}
+.bubble p{font-size:26px;white-space:pre-wrap}
+.bubble + .bubble{margin-top:22px}
 
-/* cover */
-.cover{position:relative;overflow:hidden}
-.cover .eyebrow{font-family:var(--display);font-size:18px;letter-spacing:.08em;background:var(--red);color:#fff8e6;padding:3px 10px;border:3px solid var(--ink);display:inline-block;transform:rotate(-2deg)}
-.cover h1{font-size:clamp(40px,9vw,92px);color:var(--yellow);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:6px 6px 0 var(--red);margin:12px 0 6px}
-.cover .by{font-size:20px;color:var(--muted)}
-.stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
-.stat{background:var(--yellow);border:3px solid var(--ink);border-radius:5px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;box-shadow:4px 4px 0 var(--ink);min-width:150px}
-.stat b{font-family:var(--display);font-size:13px;letter-spacing:.04em;color:var(--ink);text-transform:uppercase;font-weight:400}
-.stat span{font-family:var(--display);font-size:26px;line-height:1.1}
-.stat.warn span{color:var(--redText)}
-.stat.ok span{color:var(--greenText)}
-.cta{margin-top:22px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.btn{font-family:var(--display);font-size:20px;letter-spacing:.03em;color:#fff8e6;background:var(--red);border:4px solid var(--ink);border-radius:6px;padding:10px 20px;box-shadow:4px 4px 0 var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
-.btn.blue{background:var(--blue)}
-.btn.ghost{background:#fff8e6;color:var(--ink)}
-.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
-.btn[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
-.btn.small{font-size:15px;padding:6px 12px;box-shadow:3px 3px 0 var(--ink)}
-.hint{color:var(--muted);font-size:16px}
+/* drawer: show me the rows */
+details.rows{margin-top:18px;border:4px solid var(--blue);background:var(--deep)}
+details.rows summary{font-family:var(--pixel);font-size:11px;line-height:1.6;color:var(--blue);padding:12px 14px;cursor:pointer;list-style:none}
+details.rows summary::-webkit-details-marker{display:none}
+details.rows summary::before{content:"▶ ";color:var(--yellow)}
+details.rows[open] summary::before{content:"▼ "}
+details.rows .inner{padding:4px 14px 14px;font-size:21px;overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;font-size:20px}
+table.data th,table.data td{border:2px solid #3a45b5;padding:3px 8px;text-align:left;white-space:nowrap}
+table.data th{color:var(--yellow);font-family:var(--pixel);font-size:9px;font-weight:400}
+table.data tr.hot td{background:rgba(255,42,77,.25)}
+pre.plain{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--body);font-size:20px;line-height:1.2;color:#d8dcff}
 
-/* panels */
-.frames .box h3{font-size:24px;margin-bottom:8px;color:var(--ink)}
-.frames .box ul{margin:8px 0 0;padding-left:20px}
-.frames .box li{margin:4px 0;font-size:18px}
-.frames .box:nth-child(1){transform:rotate(-.4deg)} .frames .box:nth-child(2){transform:rotate(.4deg)} .frames .box:nth-child(3){transform:rotate(-.3deg)}
-.num{font-family:var(--display);color:var(--redText)}
-.frames .big{font-family:var(--display);font-size:44px;line-height:1;color:var(--redText)}
-.caption{margin-top:12px;background:var(--yellow);border:3px solid var(--ink);border-radius:3px;padding:10px 14px;box-shadow:3px 3px 0 var(--ink)}
-.caption p{font-size:18px}
-.caption .label{font-family:var(--display);font-size:13px;letter-spacing:.05em;display:block;margin-bottom:4px;font-weight:400}
+/* title + map */
+.cover{position:relative;overflow:hidden;padding-bottom:26px}
+.cover::before{content:"";position:absolute;left:-20%;right:-20%;bottom:-30px;height:150px;background:
+  linear-gradient(transparent,rgba(255,61,242,.28)),repeating-linear-gradient(90deg,rgba(255,61,242,.5) 0 2px,transparent 2px 46px),
+  repeating-linear-gradient(0deg,rgba(0,229,255,.45) 0 2px,transparent 2px 22px);transform:perspective(220px) rotateX(58deg);transform-origin:bottom;opacity:.5;pointer-events:none}
+.cover>*{position:relative}
+.eyebrow{font-family:var(--pixel);font-size:12px;letter-spacing:.12em;background:var(--red);color:#fff;padding:7px 12px;border:3px solid #fff;display:inline-block;animation:blink 1.1s steps(2) infinite}
+.cover h1{font-size:clamp(20px,5.2vw,54px);line-height:1.35;margin:18px 0 10px;background:linear-gradient(#fff 0 48%,var(--yellow) 48% 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(4px 4px 0 var(--red)) drop-shadow(8px 8px 0 var(--deep))}
+.cover .by{font-size:26px;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:20px}
+.stat{background:var(--deep);border:3px solid var(--blue);padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:4px 4px 0 var(--purple);min-width:150px}
+.stat b{font-family:var(--pixel);font-size:9px;line-height:1.5;color:var(--muted);font-weight:400}
+.stat span{font-family:var(--pixel);font-size:14px;line-height:1.3;color:var(--yellow)}
+.stat.warn span{color:var(--redText)} .stat.ok span{color:var(--greenText)}
+.paths{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));margin-top:20px}
+.path{text-align:left;background:var(--deep);border:4px solid #fff;color:var(--ink);padding:12px 14px;cursor:pointer;font-family:var(--body);font-size:23px;box-shadow:0 0 0 4px var(--deep),6px 8px 0 4px rgba(0,0,0,.5)}
+.path:hover,.path:focus-visible{background:var(--panel2)}
+.path .pt{font-family:var(--pixel);font-size:11px;line-height:1.6;color:var(--yellow);display:block;margin-bottom:6px}
+.path .pm{font-family:var(--pixel);font-size:9px;color:var(--blue);display:block;margin-top:8px}
+.mapgrid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));margin-top:16px}
+.node{position:relative;text-align:left;background:linear-gradient(180deg,#14238f,#0b1450);border:4px solid #fff;color:var(--ink);padding:14px;cursor:pointer;font-family:var(--body);font-size:23px;box-shadow:0 0 0 4px var(--deep),6px 8px 0 4px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;min-height:200px;padding-bottom:34px}
+.node:hover{background:linear-gradient(180deg,#2233b8,#14238f)}
+.node.off{border-style:dashed;opacity:.72}
+.node .nn{font-family:var(--pixel);font-size:9px;color:var(--yellow);line-height:1.6}
+.node .nt{font-family:var(--pixel);font-size:11px;line-height:1.6}
+.node .badge{position:absolute;top:8px;right:8px;font-family:var(--pixel);font-size:9px;background:var(--green);color:var(--deep);padding:4px 6px;border:2px solid #fff}
+.node .badge.opt{background:var(--deep);color:var(--muted)}
+.node .done{position:absolute;bottom:8px;right:10px;font-family:var(--pixel);font-size:10px;color:var(--greenText)}
+
+/* frames (tutorial) */
+.frames .box h3{font-size:11px;line-height:1.7;margin-bottom:10px;color:var(--yellow)}
+.frames .box ul{margin:8px 0 0;padding-left:22px}
+.frames .box li{margin:6px 0;font-size:24px}
+.num{font-family:var(--pixel);color:var(--redText);font-size:13px}
 
 /* charts */
 .chart-wrap{padding:16px 18px 10px}
 .chart-svg{width:100%;height:auto;display:block;font-family:var(--body)}
-.chart-svg .gridline{stroke:var(--muted);stroke-opacity:.25;stroke-width:1}
-.chart-svg .axis{fill:var(--muted);font-size:12px;font-weight:700}
-.chart-svg .mark{font-size:12px;font-weight:700}
-.chart-svg .lab{font-size:14px;font-weight:700}
-.legend{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0 2px;font-size:16px}
-.legend i{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid var(--ink);margin-right:6px;vertical-align:-1px}
+.chart-svg .gridline{stroke:#9fa8ff;stroke-opacity:.28;stroke-width:1}
+.chart-svg .axis{fill:var(--muted);font-size:14px}
+.chart-svg .mark{font-size:14px}
+.chart-svg .lab{font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 2px;font-size:22px}
+.legend i{display:inline-block;width:14px;height:14px;border:2px solid #fff;margin-right:7px;vertical-align:-1px}
 .tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 
-/* issue slides */
-.issue-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px}
-.issue-head .tag{margin-bottom:0}
-.finding{font-size:clamp(19px,2.4vw,23px)}
-.finding b{background:var(--yellow);padding:0 4px}
-.bubble{position:relative;margin-top:16px;background:#fff;border:4px solid var(--ink);border-radius:18px;padding:14px 18px;box-shadow:5px 5px 0 var(--ink)}
-.bubble::after{content:"";position:absolute;left:34px;bottom:-22px;border:12px solid transparent;border-top:12px solid var(--ink)}
-.bubble .label{font-family:var(--display);font-size:13px;letter-spacing:.05em;display:block;margin-bottom:4px;color:var(--redText);font-weight:400}
-.bubble p{font-size:18px;font-style:italic;white-space:pre-wrap}
-.bubble + .bubble{margin-top:26px}
-.handler{padding:12px 14px}
-.handler h3{font-size:22px;margin-bottom:2px}
-.handler .badge{display:inline-block;font-family:var(--display);font-size:12px;letter-spacing:.04em;padding:2px 8px;border:2px solid var(--ink);border-radius:3px;margin-bottom:6px;font-weight:400}
-.badge.yes{background:var(--green);color:#fff8e6}.badge.ask{background:var(--yellow)}.badge.diff{background:var(--blue);color:#fff8e6}
-.handler q{display:block;font-size:16px;font-style:italic;font-weight:700}
-.note{margin-top:10px;border-left:8px solid var(--blue);background:#fff8e6;padding:8px 12px;font-size:16px}
+/* range sliders */
+.scrub{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin:8px 0 12px}
+input[type=range]{width:100%;height:30px;accent-color:var(--yellow);cursor:pointer}
+output.big{font-family:var(--pixel);font-size:12px;line-height:1.7;color:var(--yellow)}
 
-.bignum{font-family:var(--display);font-size:clamp(64px,14vw,130px);line-height:.95;color:var(--redText);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--yellow)}
-.spark-row{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;margin:6px 0}
-.spark-row span{font-size:16px}
-.spark-row b{font-family:var(--display);font-weight:400;font-size:20px;text-align:right}
+/* time machine */
+.timeline{display:grid;gap:6px;margin-top:8px;max-height:340px;overflow:auto;padding-right:6px}
+.hd{padding:3px 8px;border-left:6px solid #3a45b5;font-size:22px}
+.hd.new{border-left-color:var(--yellow);background:rgba(255,230,0,.16)}
+.hd.new::after{content:" NEW";font-family:var(--pixel);font-size:9px;color:var(--yellow)}
+.bar{height:34px;border:4px solid #fff;background:var(--deep);position:relative;overflow:hidden}
+.bar > i{display:block;height:100%;background:var(--green);width:50%;transition:width .25s steps(8),background .25s}
+.bar::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 14px,var(--deep) 14px 18px)}
+@media (prefers-reduced-motion:reduce){.bar > i{transition:none}}
+.bignum{font-family:var(--pixel);font-size:clamp(30px,5.2vw,54px);line-height:1.15;color:var(--redText);text-shadow:4px 4px 0 var(--yellow),8px 8px 0 var(--deep)}
+
+/* signal matrix */
+table.matrix{width:100%;border-collapse:separate;border-spacing:0 6px}
+table.matrix th{font-family:var(--pixel);font-size:9px;color:var(--yellow);font-weight:400;text-align:center;line-height:1.6;padding:0 4px}
+table.matrix th:first-child{text-align:left}
+table.matrix td{padding:0}
+table.matrix td.rowname{font-size:21px;padding:6px 10px;background:var(--deep);border:3px solid #3a45b5;border-right:0}
+table.matrix td.cellwrap{width:76px;text-align:center}
+.cell{width:100%;height:46px;background:var(--deep);border:3px solid #3a45b5;color:#6a73d9;font-family:var(--pixel);font-size:14px;cursor:pointer}
+.cell.on{background:var(--panel2);color:var(--greenText);border-color:var(--blue)}
+.cell.ask{color:var(--yellow)}
+.cell.sel{outline:4px solid var(--yellow);outline-offset:-4px}
+tr.picked td.rowname{background:var(--panel2);border-color:var(--yellow)}
+.cnt{font-family:var(--pixel);font-size:9px;color:var(--muted);text-align:right;padding-left:8px;white-space:nowrap}
+
+/* roster race */
+.race{display:grid;gap:5px}
+.grp{font-family:var(--pixel);font-size:10px;color:var(--yellow);margin:10px 0 2px}
+.rr{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center}
+.rr .nm{font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rr .tr{height:20px;border:2px solid #3a45b5;background:var(--deep);position:relative}
+.rr .fl{position:absolute;inset:0 auto 0 0;background:var(--blue);transition:width .3s steps(6)}
+.rr.four .fl{background:var(--red)}
+.rr .tk{position:absolute;top:-4px;bottom:-4px;width:3px;background:#fff;opacity:.85}
+.rr .vl{font-family:var(--pixel);font-size:10px;text-align:right;color:var(--yellow)}
+@media (prefers-reduced-motion:reduce){.rr .fl{transition:none}}
+.sumtiles{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.sumtiles .stat{min-width:200px}
 
 /* code + ladder */
-pre.code{white-space:pre-wrap;word-break:break-word;margin:0;background:#1f1a14;color:#f3e6c8;border:4px solid var(--ink);border-radius:6px;padding:14px 16px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14.5px;line-height:1.5;font-weight:400;box-shadow:5px 5px 0 var(--ink)}
-pre.code .hl-off{background:rgba(230,59,46,.45);display:block;margin:0 -16px;padding:0 16px}
-pre.code .hl-on{background:rgba(63,143,95,.5);display:block;margin:0 -16px;padding:0 16px}
-pre.code .c{color:#b9a98a}
-.ladder{margin-top:6px}
-.bar{height:30px;border:3px solid var(--ink);border-radius:4px;background:#fff;overflow:hidden}
-.bar > i{display:block;height:100%;background:var(--green);width:50%;transition:width .25s,background .25s}
-@media (prefers-reduced-motion:reduce){.bar > i{transition:none}}
-.ladder .readout{font-family:var(--display);font-size:30px;margin:6px 0}
-.ladder .msg{min-height:3.2em;font-size:17px}
-.row{display:flex;flex-wrap:wrap;gap:10px}
+pre.code{white-space:pre-wrap;word-break:break-word;margin:0;background:var(--deep);color:#d8dcff;border:4px solid #fff;padding:14px 16px;overflow:auto;font-family:var(--body);font-size:21px;line-height:1.25;box-shadow:0 0 0 4px var(--deep),6px 8px 0 4px rgba(0,0,0,.5)}
+pre.code .hl-off{background:rgba(255,42,77,.32);display:block;margin:0 -16px;padding:0 16px}
+pre.code .hl-on{background:rgba(57,255,20,.2);display:block;margin:0 -16px;padding:0 16px}
+pre.code .c{color:#8f98ff}
+.ladder .readout{font-family:var(--pixel);font-size:26px;margin:10px 0;color:var(--yellow)}
+.ladder .msg{min-height:3.6em;font-size:23px}
 
-/* module 6 grid */
-table.checks{width:100%;border-collapse:collapse;font-size:17px}
-table.checks th,table.checks td{border:3px solid var(--ink);padding:8px 10px;text-align:center;background:#fff8e6}
-table.checks th{background:var(--yellow);font-family:var(--display);font-weight:400;letter-spacing:.03em;font-size:15px}
-table.checks td:first-child,table.checks th:first-child{text-align:left}
-table.checks td.ok{color:var(--greenText)} table.checks td.bad{background:#f7c9c3;color:var(--redText)}
-td .sr{position:absolute;left:-9999px}
+/* checklist game */
+.doc{background:#f4f1e6;color:#241f18;border:4px solid #fff;padding:16px 20px;font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.45;box-shadow:0 0 0 4px var(--deep),6px 8px 0 4px rgba(0,0,0,.5);max-height:430px;overflow:auto}
+.doc h3{font-family:Georgia,serif;font-size:22px;margin:0 0 2px;color:#241f18;line-height:1.3}
+.doc .meta{font-size:15px;color:#6d6455;margin-bottom:10px}
+.doc h4{margin:14px 0 4px;font-size:16px;text-transform:uppercase;letter-spacing:.06em;color:#6d6455}
+.doc p{margin:0 0 8px}
+.doc mark{padding:1px 2px;color:#241f18}
+.doc mark.miss{background:#ff9db0;outline:2px solid #ff2a4d}
+.doc mark.near{background:#ffe97a;outline:2px solid #c9a600}
+.doc mark.prob{background:#9eefff;outline:2px solid #008ba3}
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0}
+.tile{border:4px solid #fff;background:var(--deep);padding:10px;text-align:center}
+.tile .tl{font-family:var(--pixel);font-size:9px;line-height:1.6;color:var(--muted)}
+.tile .ts{font-family:var(--pixel);font-size:13px;margin-top:8px;color:var(--muted)}
+.tile.pass{border-color:var(--green)} .tile.pass .ts{color:var(--greenText)}
+.tile.flag{border-color:var(--red);background:#5a0f26} .tile.flag .ts{color:#ff9db0}
+.tile.run{border-color:var(--yellow)} .tile.run .ts{color:var(--yellow)}
+table.map{width:100%;border-collapse:separate;border-spacing:0 12px;font-size:23px}
+table.map td{background:var(--panel);border-top:3px solid var(--blue);border-bottom:3px solid var(--blue);padding:10px 14px;vertical-align:top}
+table.map td:first-child{border-left:3px solid var(--blue);font-family:var(--pixel);font-size:11px;line-height:1.7;color:var(--yellow);white-space:nowrap}
+table.map td:last-child{border-right:3px solid var(--blue)}
+@media (max-width:760px){table.map,table.map tbody,table.map tr,table.map td{display:block}table.map td{border:3px solid var(--blue);border-bottom:0}table.map td:last-child{border-bottom:3px solid var(--blue)}table.map tr{margin-bottom:14px}}
 
-/* timeline + proto */
-.proto-wrap{margin-top:14px}
-iframe.proto{width:100%;height:880px;border:4px solid var(--ink);border-radius:6px;background:#fff;box-shadow:6px 6px 0 var(--ink)}
+/* cartridge */
+.cart-label{display:inline-block;font-family:var(--pixel);font-size:10px;background:var(--red);color:#fff;padding:8px 12px;border:3px solid #fff;border-bottom:0}
+iframe.proto{display:block;width:100%;height:880px;border:6px solid #fff;background:#fff;box-shadow:0 0 0 4px var(--deep),8px 10px 0 4px rgba(0,0,0,.55)}
 @media (max-width:700px){iframe.proto{height:1100px}}
-
-/* map table */
-table.map{width:100%;border-collapse:separate;border-spacing:0 10px;font-size:17px}
-table.map td{background:#fff8e6;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);padding:10px 12px;vertical-align:top}
-table.map td:first-child{border-left:3px solid var(--ink);border-radius:6px 0 0 6px;font-family:var(--display);font-size:20px;white-space:nowrap}
-table.map td:last-child{border-right:3px solid var(--ink);border-radius:0 6px 6px 0}
-@media (max-width:760px){table.map,table.map tbody,table.map tr,table.map td{display:block}table.map td{border:3px solid var(--ink);border-bottom:0}table.map td:last-child{border-bottom:3px solid var(--ink)}table.map tr{margin-bottom:12px}}
-
-/* controls */
-.controls{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 12px;z-index:5;flex-wrap:wrap}
-.controls .btn{font-size:16px;padding:6px 14px;box-shadow:none;border-color:var(--paper)}
-.dots{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
-.dots button{width:16px;height:16px;border-radius:50%;border:2px solid var(--paper);background:transparent;padding:0;cursor:pointer}
-.dots button[aria-current="true"]{background:var(--yellow);border-color:var(--yellow)}
-.count{font-family:var(--display);letter-spacing:.05em;font-size:16px;min-width:64px;text-align:center}
-.end{text-align:center;margin-top:10px}
-.end .ender{font-family:var(--display);font-size:clamp(30px,6vw,56px);color:var(--purple);-webkit-text-stroke:1.5px var(--ink)}
+.stage-foot{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);z-index:40;background:var(--yellow);color:var(--deep);font-family:var(--pixel);font-size:10px;line-height:1.6;padding:10px 14px;border:4px solid #fff;max-width:92vw;text-align:center}
+.end{text-align:center;margin-top:18px}
+.end .ender{font-family:var(--pixel);font-size:clamp(15px,3.6vw,30px);line-height:1.6;color:var(--yellow);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--deep)}
 
 @media print{
-  .slide[hidden]{display:block !important}.slide{break-after:page}.controls{display:none}
-  body{padding-bottom:20px} iframe.proto{height:700px}
+  .screen[hidden]{display:block !important}.screen{break-after:page}.controls,.hud,body::after,.toast,.stage-foot,#scr-title,#scr-map{display:none !important}
+  body{padding:20px 16px} iframe.proto{height:700px} details.rows{display:none}
 }
-@media (max-width:620px){.frames .box{transform:none !important}}
 </style>
 </head>
 <body>
 
+<header class="hud" aria-label="Game status">
+  <span>PLAYER 1 · <b>FARAN</b></span>
+  <span id="hudWhere">TITLE SCREEN</span>
+  <div class="xp" role="img" aria-label="Progress along your path" id="hudXpWrap"><i id="hudXp"></i></div>
+  <span>PROMPTS <b id="hudPrompts">0</b></span>
+  <span class="right">
+    <button class="btn small" type="button" id="hudMap">MAP</button>
+    <button class="btn small" type="button" id="hudSound" aria-pressed="false">SOUND OFF</button>
+  </span>
+</header>
+
 <div class="deck" id="deck">
 
-<!-- 0 COVER -->
-<section class="slide" aria-label="Cover">
+<!-- TITLE -->
+<section class="screen" id="scr-title" data-title="TITLE SCREEN" aria-label="Title screen">
   <div class="box cover">
-    <span class="eyebrow">ROOK DISPATCH PRESENTS</span>
-    <h1>THE RELEASE 4.2 INCIDENT</h1>
-    <p class="by">A debrief in six issues, by Faran, Dispatch PM · 27 Oct 2026 · fictional coursework</p>
+    <span class="eyebrow">INSERT COIN</span>
+    <h1 class="stitle">THE RELEASE 4.2 INCIDENT</h1>
+    <p class="by">A playable briefing · PLAYER 1: Faran, Dispatch PM · 27 Oct 2026 · fictional coursework</p>
     <div class="stats" id="coverStats"></div>
-    <div class="cta">
-      <button class="btn" type="button" data-go="next">START THE STORY &rarr;</button>
-      <span class="hint">Use the arrow keys, or the buttons at the bottom.</span>
-    </div>
+    <p class="lede" style="margin-top:22px">Don't read this one. <b style="color:var(--yellow)">Play it.</b> Pick the path that fits you, scrub through the real data, and open <b style="color:var(--blue)">SHOW ME THE ROWS</b> under any claim to check the evidence yourself.</p>
+    <div class="paths" id="paths" role="group" aria-label="Choose your path"></div>
   </div>
 </section>
 
-<!-- 1 WHAT HAPPENED -->
-<section class="slide" hidden aria-label="What happened">
-  <span class="tag">THE SETUP</span>
-  <h2 class="slide-title">What happened with Release 4.2, plainly</h2>
+<!-- MAP -->
+<section class="screen" id="scr-map" data-title="WORLD MAP" aria-label="World map" hidden>
+  <span class="tag blue">WORLD MAP</span>
+  <h2 class="slide-title">Choose a stage</h2>
+  <div class="box" id="briefing"></div>
+  <div class="mapgrid" id="mapgrid"></div>
+  <div class="stage-foot">
+    <button class="btn blue" type="button" data-act="share">COPY LINK TO THE MAP</button>
+    <button class="btn ghost" type="button" data-act="print">PRINT OR SAVE AS PDF</button>
+    <span class="hint">Dashed stages are optional on your path. Press <b>M</b> any time to come back here.</span>
+  </div>
+</section>
+
+<!-- TUTORIAL -->
+<section class="screen" id="scr-tutorial" data-title="TUTORIAL" aria-label="Tutorial: what happened" hidden>
+  <div class="stage-title"><span data-sprite="flag"></span><div><span class="tag">TUTORIAL · THE SETUP</span><h2 class="slide-title" style="margin:0">What happened with Release 4.2, plainly</h2></div></div>
   <div class="grid g3 frames">
     <div class="box">
-      <h3>1 · What shipped, 12 Aug</h3>
+      <h3>1 · WHAT SHIPPED, 12 AUG</h3>
       <ul>
-        <li><b>Closeness counts more</b> in who gets asked first (0.45 &rarr; 0.60). How often they said yes lately counts less (0.40 &rarr; 0.25).</li>
+        <li><b>Closeness counts more</b> in who gets asked first (0.45 to 0.60). How often they said yes lately counts less (0.40 to 0.25).</li>
         <li><b>Each offer waits 60 seconds</b>, not 90.</li>
         <li>The console remembers filters, plus three defect fixes.</li>
       </ul>
       <p class="src">Source: <code>config.py</code>, release notes</p>
     </div>
     <div class="box">
-      <h3>2 · Two things went wrong at once</h3>
+      <h3>2 · TWO THINGS WENT WRONG AT ONCE</h3>
       <p class="small"><span class="num">A.</span> Four responders went from about 12 offers a week to 0&ndash;1 and never came back.</p>
       <p class="small" style="margin-top:8px"><span class="num">B.</span> Everyone else's offers vanish faster than they can answer. Tickets ran about 3&times; normal.</p>
       <p class="src">Source: callout-history.csv, tickets, Slack export</p>
     </div>
     <div class="box">
-      <h3>3 · Why the four never came back</h3>
+      <h3>3 · WHY THE FOUR NEVER CAME BACK</h3>
       <p class="small">Every offer that doesn't end in a yes costs <b>0.12 points</b>. A no and a missed offer cost the same. Only a yes gives back <b>0.08</b>.</p>
       <p class="small" style="margin-top:8px">So a responder needs about <b>6 yes in 10</b> just to hold still, and the only way up is to be offered a job.</p>
-      <p class="src">Source: <code>history.py</code>, <code>config.py</code></p>
+      <p class="src">Source: <code>history.py</code>, <code>config.py</code> (play it in Level 4)</p>
     </div>
   </div>
-  <div class="note"><b>Still not known:</b> whether that scoring was meant to work that way (Wen hasn't answered), whether missed offers are slowness or offers that never reach the phone, and whether scores survive a restart. The code shows the mechanism. It doesn't show the intent. <span class="src" style="display:inline">(Open questions in the Helen brief, section 7.)</span></div>
+  <div class="note warn"><b>Still not known:</b> whether that scoring was meant to work that way (Wen hasn't answered), whether missed offers are slowness or offers that never reach the phone, and whether scores survive a restart. The code shows the mechanism. It doesn't show the intent. <span class="src" style="display:inline">(Open in the Helen brief, section 7.)</span></div>
 </section>
 
-<!-- 2 THE CLIFF -->
-<section class="slide" hidden aria-label="The cliff in the data">
-  <span class="tag">THE EVIDENCE LOCKER</span>
-  <h2 class="slide-title">The number that looked fine was hiding the damage</h2>
-  <div class="box chart-wrap">
-    <div class="tabs" role="group" aria-label="Choose a chart">
-      <button class="btn small" type="button" data-view="offers" aria-pressed="true">Offers per week</button>
-      <button class="btn small" type="button" data-view="rate" aria-pressed="false">Yes-rate</button>
-      <button class="btn small" type="button" data-view="raw" aria-pressed="false">Raw counts</button>
-    </div>
-    <div id="cliffChart"></div>
-    <div class="legend" id="cliffLegend"></div>
-    <div class="caption"><span class="label">WHAT THIS SHOWS</span><p id="cliffCaption"></p></div>
-    <p class="src">Source: <code>00-rook/data/callout-history.csv</code>, 16 responders, 10 weeks from 29 Jun. Hover a point for the exact number.</p>
-  </div>
-</section>
-
-<!-- 3 MODULE 1 -->
-<section class="slide" hidden aria-label="Issue 1">
-  <div class="issue-head"><span class="tag blue">ISSUE #1 · ORIGIN STORY · MODULE 1</span></div>
-  <h2 class="slide-title">A context file every later session started from</h2>
-  <div class="grid g2">
-    <div class="box">
-      <p class="finding">The Rook working-context file, <code>CLAUDE.md</code>, went from a <b>23-line template</b> to <b>64 lines</b> on day one, then grew with every finding to <b>121 lines</b> by 6 Oct. It was trimmed to <b id="m1now">110</b> on 22 Oct, with older sections moved to an archive.</p>
-      <div class="bubble"><span class="label" data-plabel="m1"></span><p data-prompt="m1"></p></div>
-      <p class="src" style="margin-top:30px">Honest note: the first 64-line fill-in isn't one of your saved prompts, since it came with the module's starter step. The prompt above is the check you ran on it.</p>
-    </div>
-    <div class="box chart-wrap">
-      <h3 style="font-size:22px">Lines in <code>CLAUDE.md</code>, commit by commit</h3>
-      <div id="m1Chart"></div>
-      <p class="src">Source: <code>git log -- CLAUDE.md</code>, line count at each commit. Hover a bar for the date.</p>
+<!-- LEVEL 1 -->
+<section class="screen" id="scr-l1" data-title="LEVEL 1 · ORIGIN STORY" aria-label="Level 1: Origin Story" hidden>
+  <div class="stage-title"><span data-sprite="doc"></span><div><span class="tag blue">LEVEL 1 · ORIGIN STORY · MODULE 1</span><h2 class="slide-title" style="margin:0">The time machine: how the context file grew</h2></div></div>
+  <p class="lede">Drag the slider through every commit of <code>CLAUDE.md</code>, the Rook working-context file every later session started from.</p>
+  <div class="box" style="margin-top:14px">
+    <div class="scrub"><label for="tmRange" class="label" style="margin:0">COMMIT</label><input id="tmRange" type="range" min="0" value="0" aria-describedby="tmOut"><output class="big" id="tmOut" for="tmRange"></output></div>
+    <div class="grid g2">
+      <div>
+        <div class="label">LINES IN THE FILE</div>
+        <div class="readout bignum" id="tmLines" style="font-size:clamp(30px,6vw,56px)">0</div>
+        <div class="bar" aria-hidden="true"><i id="tmBar"></i></div>
+        <p class="small" id="tmSubject" style="margin-top:12px"></p>
+        <p class="src" id="tmMeta"></p>
+      </div>
+      <div><div class="label">SECTIONS IN THIS SNAPSHOT (NEW ONES MARKED)</div><div class="timeline" id="tmHeads" tabindex="0" aria-label="Sections in this snapshot"></div></div>
     </div>
   </div>
+  <div class="bubble"><span class="label" data-plabel="m1"></span><p data-prompt="m1"></p></div>
+  <p class="note">Honest note: the first 64-line fill-in isn't one of your saved prompts, since it came with the module's starter step. The prompt above is the check you ran on it. The file reached <b id="tmPeak">121</b> lines before being trimmed to <b id="tmNow">110</b>.</p>
+  <details class="rows"><summary>SHOW ME THE ROWS: the commit log behind the slider</summary><div class="inner" id="tmRows"></div></details>
 </section>
 
-<!-- 4 MODULE 2 -->
-<section class="slide" hidden aria-label="Issue 2">
-  <div class="issue-head"><span class="tag blue">ISSUE #2 · SUPER HEARING · MODULE 2</span></div>
-  <h2 class="slide-title">The handlers said it first, in calls that weren't about routing</h2>
-  <p class="finding"><b>3 of 4 handlers</b> raised "the callout vanished before they could answer". Two volunteered it. One mentioned it only when asked a closing catch-all question, and called it "not really a complaint".</p>
-  <div class="grid g4" style="margin-top:14px">
-    <div class="box handler"><span class="badge yes">VOLUNTEERED</span><h3>Mr. Ambrose</h3><q>halfway into the suit — coat on, one boot on — when it went to somebody else.</q></div>
-    <div class="box handler"><span class="badge yes">VOLUNTEERED</span><h3>Aunt Dot</h3><q>by the time he's actually got a thumb on the screen — it's gone.</q></div>
-    <div class="box handler"><span class="badge ask">WHEN ASKED</span><h3>Halloran</h3><q>Bulwark mentioned a callout went to someone else before he'd even got his boots on.</q></div>
-    <div class="box handler"><span class="badge diff">DIFFERENT SYMPTOM</span><h3>Kip</h3><q>Meteor Mite's been texting me all week asking if something's broken because it's so quiet.</q></div>
+<!-- LEVEL 2 -->
+<section class="screen" id="scr-l2" data-title="LEVEL 2 · SUPER HEARING" aria-label="Level 2: Super Hearing" hidden>
+  <div class="stage-title"><span data-sprite="speech"></span><div><span class="tag blue">LEVEL 2 · SUPER HEARING · MODULE 2</span><h2 class="slide-title" style="margin:0">The signal board: who said what</h2></div></div>
+  <p class="finding"><b>3 of 4 handlers</b> raised "the callout vanished before they could answer", in calls that weren't about routing. Tap any square to hear the line.</p>
+  <div class="box" style="margin-top:12px">
+    <table class="matrix" id="matrix" aria-label="Which handler raised which complaint"></table>
+    <div class="caption" id="quoteBox" aria-live="polite"><span class="label">PICK A COMPLAINT</span><p>Tap a row or a square to see how it was actually said.</p></div>
+    <p class="src"><b style="color:var(--greenText)">●</b> raised it &nbsp; <b style="color:var(--yellow)">◐</b> raised it only when asked a closing catch-all question &nbsp; Source: <code>02-super-hearing/console-feedback-synthesis.md</code></p>
   </div>
   <div class="bubble"><span class="label" data-plabel="m2"></span><p data-prompt="m2"></p></div>
-  <p class="note" style="margin-top:30px"><b>A correction we made:</b> an earlier version of this report said all three raised it "unprompted". Halloran only did when asked, and that was corrected on 15 Oct. Kip describes the other symptom: a responder starved of offers, not an offer lost too fast. Same routing change, two symptoms.</p>
-  <p class="src">Source: the four interviews in <code>00-rook/feedback/interviews/</code>; <code>02-super-hearing/console-feedback-synthesis.md</code></p>
+  <p class="note"><b>A correction we made:</b> an earlier version of this report said all three raised it "unprompted". Ambrose and Aunt Dot volunteered it. Halloran mentioned it only when asked, and called it "not really a complaint". That was corrected on 15 Oct.</p>
+  <details class="rows"><summary>SHOW ME THE ROWS: the grouped-complaint table and every quote</summary><div class="inner" id="l2Rows"></div></details>
 </section>
 
-<!-- 5 MODULE 3 -->
-<section class="slide" hidden aria-label="Issue 3">
-  <div class="issue-head"><span class="tag blue">ISSUE #3 · REWIND · MODULE 3</span></div>
-  <h2 class="slide-title">Four of sixteen: the number to put in front of Helen</h2>
+<!-- LEVEL 3 -->
+<section class="screen" id="scr-l3" data-title="LEVEL 3 · REWIND" aria-label="Level 3: Rewind" hidden>
+  <div class="stage-title"><span data-sprite="chart"></span><div><span class="tag blue">LEVEL 3 · REWIND · MODULE 3</span><h2 class="slide-title" style="margin:0">The roster race: four of sixteen</h2></div></div>
   <div class="grid g2">
-    <div class="box">
-      <div class="bignum" id="m3big">4 of 16</div>
-      <p class="finding" style="margin-top:8px"><b>25% of responders</b> were cut from about 12 offers a week to 0 or 1, three weeks after the release, with no sign of recovery.</p>
-      <div class="bubble"><span class="label" data-plabel="m3"></span><p data-prompt="m3"></p></div>
-    </div>
-    <div class="box">
-      <h3 style="font-size:22px;margin-bottom:6px">Offers per week, the four</h3>
-      <div id="m3Sparks"></div>
-      <p class="src">Weekly offers sent, first week (29 Jun) &rarr; last week (31 Aug). Every week for all four only goes down or holds flat.</p>
-      <p class="note">Why the rate looked like it was recovering: those four stopped being asked, so they stopped dragging the average down. Raw counts say otherwise (see the chart slide).</p>
-    </div>
+    <div class="box"><div class="bignum">4 of 16</div><p class="finding" style="margin-top:8px"><b>25% of responders</b> were cut from about 12 offers a week to 0 or 1, three weeks after the release, with no sign of recovery.</p></div>
+    <div class="box"><p class="finding">Drag the week slider, or press PLAY. Watch the red four drain while everyone else gets <i>more</i>.</p><p class="src">The white tick on each bar is that responder's average before 4.2.</p></div>
   </div>
-  <p class="src">Source: <code>callout-history.csv</code>; <code>02-super-hearing/console-feedback-synthesis.md</code> ("The one number for Helen")</p>
+  <div class="box" style="margin-top:16px">
+    <div class="tabs" role="group" aria-label="What the bars show"><button class="btn small" type="button" data-metric="sent" aria-pressed="true">OFFERS SENT</button><button class="btn small" type="button" data-metric="rate" aria-pressed="false">SHARE TAKEN</button></div>
+    <div class="scrub"><button class="btn small" type="button" id="racePlay">&#9654; PLAY</button><input id="weekRange" type="range" min="0" max="9" value="0" aria-label="Week" aria-describedby="weekOut"><output class="big" id="weekOut" for="weekRange"></output></div>
+    <div class="sumtiles" id="raceTiles"></div>
+    <div class="race" id="race" aria-live="polite"></div>
+    <p class="src">Source: <code>00-rook/data/callout-history.csv</code>, 16 responders, 10 weeks from 29 Jun.</p>
+  </div>
+  <div class="box chart-wrap" style="margin-top:16px">
+    <h3 style="font-size:11px;color:var(--yellow);margin-bottom:6px">THE AVERAGE LIES: TOGGLE IT</h3>
+    <div class="tabs" role="group" aria-label="Choose a chart"><button class="btn small" type="button" data-view="rate" aria-pressed="true">YES-RATE (LOOKS FINE)</button><button class="btn small" type="button" data-view="raw" aria-pressed="false">RAW COUNTS (STILL DOWN)</button></div>
+    <div id="cliffChart"></div><div class="legend" id="cliffLegend"></div>
+    <div class="caption"><span class="label">WHAT THIS SHOWS</span><p id="cliffCaption"></p></div>
+  </div>
+  <div class="bubble"><span class="label" data-plabel="m3"></span><p data-prompt="m3"></p></div>
+  <details class="rows" id="rowsL3"><summary>SHOW ME THE ROWS: the exact CSV rows for the week on the slider</summary><div class="inner" id="l3Rows"></div></details>
 </section>
 
-<!-- 6 MODULE 4 -->
-<section class="slide" hidden aria-label="Issue 4">
-  <div class="issue-head"><span class="tag blue">ISSUE #4 · X-RAY VISION · MODULE 4</span></div>
-  <h2 class="slide-title">Two functions in the code, and no way back up</h2>
+<!-- LEVEL 4 -->
+<section class="screen" id="scr-l4" data-title="LEVEL 4 · X-RAY VISION" aria-label="Level 4: X-Ray Vision" hidden>
+  <div class="stage-title"><span data-sprite="mag"></span><div><span class="tag blue">LEVEL 4 · X-RAY VISION · MODULE 4</span><h2 class="slide-title" style="margin:0">Play the score: two functions, no way back up</h2></div></div>
   <p class="finding">Exactly <b>one place</b> takes points off (a decline <i>or</i> a timeout, same price) and exactly <b>one place</b> gives them back (a yes). A 2019 comment asked whether scores should recover on their own, and was left as-is.</p>
   <div class="grid g2" style="margin-top:14px">
     <div>
@@ -303,69 +393,25 @@ table.map td:last-child{border-right:3px solid var(--ink);border-radius:0 6px 6p
       <div class="bubble"><span class="label" data-plabel="m4"></span><p data-prompt="m4"></p></div>
     </div>
     <div class="box ladder" id="ladder">
-      <h3 style="font-size:22px">Try it: one responder's score</h3>
+      <h3 style="font-size:11px;color:var(--yellow)">PLAY IT: ONE RESPONDER'S SCORE (HP BAR)</h3>
       <p class="small">Starts at 0.50 (neutral). Floor 0, ceiling 1.</p>
       <div class="readout" aria-live="polite"><span id="ladderScore">0.50</span></div>
       <div class="bar" role="img" aria-label="Score bar"><i id="ladderBar"></i></div>
-      <div class="row" style="margin-top:12px">
-        <button class="btn blue small" type="button" id="lYes">They say yes +0.08</button>
-        <button class="btn small" type="button" id="lMiss">Miss or decline &minus;0.12</button>
-        <button class="btn ghost small" type="button" id="lReset">Reset</button>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn ghost small" type="button" data-run="5">10 offers, 5 yes</button>
-        <button class="btn ghost small" type="button" data-run="6">6 yes</button>
-        <button class="btn ghost small" type="button" data-run="7">7 yes</button>
-      </div>
-      <p class="msg" id="ladderMsg" style="margin-top:10px"></p>
+      <div class="row" style="margin-top:14px"><button class="btn blue small" type="button" id="lYes">THEY SAY YES +0.08</button><button class="btn red small" type="button" id="lMiss">MISS OR DECLINE −0.12</button><button class="btn ghost small" type="button" id="lReset">RESET</button></div>
+      <div class="row" style="margin-top:12px"><button class="btn ghost small" type="button" data-run="5">10 OFFERS, 5 YES</button><button class="btn ghost small" type="button" data-run="6">6 YES</button><button class="btn ghost small" type="button" data-run="7">7 YES</button></div>
+      <p class="msg" id="ladderMsg" style="margin-top:12px"></p>
     </div>
   </div>
+  <details class="rows"><summary>SHOW ME THE ROWS: the real <code>history.py</code> and <code>config.py</code></summary><div class="inner"><pre class="plain" id="codeRows"></pre></div></details>
 </section>
 
-<!-- 7 MODULE 5 -->
-<section class="slide" hidden aria-label="Issue 5">
-  <div class="issue-head"><span class="tag blue">ISSUE #5 · SUPER SPEED · MODULE 5</span></div>
-  <h2 class="slide-title">A prototype scoped by nine questions</h2>
-  <div class="grid g2">
-    <div class="box">
-      <p class="finding">Before any building, Claude asked clarifying questions one at a time, and the answers fixed the scope: <b>two promises, a scripted walkthrough, one page showing two devices</b>. The result is the clickable prototype on the next slide.</p>
-      <div class="bubble"><span class="label" data-plabel="m5"></span><p data-prompt="m5"></p></div>
-    </div>
-    <div class="box">
-      <h3 style="font-size:22px">What got built</h3>
-      <ul class="small" style="margin:8px 0 0;padding-left:20px">
-        <li><b>Promise 1:</b> a card on the handler's console when a responder gets no offers for 3 days.</li>
-        <li><b>Promise 2:</b> a message on the responder's phone, so nobody quietly disappears.</li>
-        <li><b>Held:</b> promise 3, a way back. It waits for Wen's answers.</li>
-      </ul>
-      <p class="note">Two rounds of simulated user tests (8, then 9 testers) changed it twice. Round one made "Dismiss" into "Hide for now". Round two found the check-in blamed the responder's phone, so it was rewritten for v3.</p>
-      <p class="src">Source: <code>05-super-speed/quiet-responder-prototype-changelog.md</code></p>
-    </div>
-  </div>
-</section>
-
-<!-- 8 MODULE 6 -->
-<section class="slide" hidden aria-label="Issue 6">
-  <div class="issue-head"><span class="tag blue">ISSUE #6 · SIDEKICKS · MODULE 6</span></div>
-  <h2 class="slide-title">A sidekick that reads every brief before it ships</h2>
-  <p class="finding">The first scheduled run read four briefs and flagged <b>exactly one miss in each</b>, and a different miss every time.</p>
-  <div class="box" style="margin-top:12px;overflow-x:auto">
-    <table class="checks" aria-label="Results of the scheduled review-checklist run">
-      <thead><tr><th>Brief</th><th>Owner named</th><th>Success measure</th><th>Scope bounded</th><th>Problem first</th></tr></thead>
-      <tbody id="m6Rows"></tbody>
-    </table>
-    <p class="src">Source: <code>06-sidekicks/scheduled-run-output.txt</code>, run of 13 Oct 2026</p>
-  </div>
-  <div class="bubble"><span class="label" data-plabel="m6a"></span><p data-prompt="m6a"></p></div>
-  <div class="bubble"><span class="label" data-plabel="m6b"></span><p data-prompt="m6b"></p></div>
-</section>
-
-<!-- 9 THE FIX -->
-<section class="slide" hidden aria-label="The fix">
-  <span class="tag">OUR HERO STRIKES BACK</span>
-  <h2 class="slide-title">The fix: tell the handler, tell the responder</h2>
-  <p class="lede">This is the real prototype (v3), running inside this slide. Click through it: the handler's card on the left, Meteor Mite's phone on the right.</p>
-  <div class="proto-wrap">
+<!-- LEVEL 5 -->
+<section class="screen" id="scr-l5" data-title="LEVEL 5 · SUPER SPEED" aria-label="Level 5: Super Speed" hidden>
+  <div class="stage-title"><span data-sprite="rocket"></span><div><span class="tag blue">LEVEL 5 · SUPER SPEED · MODULE 5</span><h2 class="slide-title" style="margin:0">Play the fix: tell the handler, tell the responder</h2></div></div>
+  <p class="finding">Before any building, Claude asked clarifying questions one at a time, and the answers fixed the scope: <b>two promises, a scripted walkthrough, one page showing two devices</b>. That is the cartridge below, and it's the real prototype (v3).</p>
+  <div class="bubble"><span class="label" data-plabel="m5"></span><p data-prompt="m5"></p></div>
+  <div style="margin-top:26px">
+    <span class="cart-label">&#9654; INSERT CARTRIDGE · PROTOTYPE v3</span>
     <iframe class="proto" title="Interactive prototype: The Quiet Responder, version 3" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;title&gt;The Quiet Responder&lt;/title&gt;
 &lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Bangers&amp;family=Barlow:wght@400;600;700&amp;family=Barlow+Condensed:wght@600;800&amp;display=swap&quot;&gt;
 &lt;style&gt;
@@ -796,40 +842,61 @@ render();
 "></iframe>
     <p class="src"><a href="https://claude.ai/artifact/PPRL62aqpZuG7UXrTus91w" target="_blank" rel="noopener">Open the prototype in its own tab</a> · source: <code>05-super-speed/quiet-responder-prototype.html</code></p>
   </div>
-  <div class="box chart-wrap" style="margin-top:18px">
-    <h3 style="font-size:22px">The real Meteor Mite, 12 Aug to 6 Sep: why the card fires on the evening of 25 Aug</h3>
-    <div id="miteChart"></div>
-    <div class="legend"><span><i style="background:var(--green)"></i>taken</span><span><i style="background:var(--yellow)"></i>turned down</span><span><i style="background:var(--red)"></i>no answer in time</span></div>
-    <p class="src">Source: the <code>pings</code> table in the Rook database. After 19 Aug, no offer was taken. Under the old rule, "case closes when an offer arrives", the 27 Aug offer would have closed it, even though it was declined.</p>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="box">
+      <h3 style="font-size:11px;color:var(--yellow)">WHAT GOT BUILT</h3>
+      <ul class="small" style="margin:8px 0 0;padding-left:20px">
+        <li><b>Promise 1:</b> a card on the handler's console when a responder gets no offers for 3 days.</li>
+        <li><b>Promise 2:</b> a message on the responder's phone, so nobody quietly disappears.</li>
+        <li><b>Held:</b> promise 3, a way back. It waits for Wen's answers.</li>
+      </ul>
+      <p class="note">Two rounds of simulated user tests (8, then 9 testers) changed it twice. Round one made "Dismiss" into "Hide for now". Round two found the check-in blamed the responder's phone, so it was rewritten for v3.</p>
+    </div>
+    <div class="box chart-wrap"><h3 style="font-size:11px;color:var(--yellow);line-height:1.7">THE REAL METEOR MITE: WHY THE CARD FIRES ON THE EVENING OF 25 AUG</h3><div id="miteChart"></div>
+      <div class="legend"><span><i style="background:var(--green)"></i>taken</span><span><i style="background:var(--yellow)"></i>turned down</span><span><i style="background:var(--red)"></i>no answer in time</span></div></div>
   </div>
-  <p class="note"><b>Limits:</b> the user tests were simulated (handlers and responders played from real interviews and tickets), so they are hypotheses, not users. The most common reaction, <b>13 of 16</b>, was that "we're looking into why" is a promise nobody owns yet. That needs an owner and a date from Helen.</p>
+  <div class="note warn"><b>Limits:</b> the user tests were simulated (handlers and responders played from real interviews and tickets), so they are hypotheses, not users. The most common reaction, <b>13 of 16</b>, was that "we're looking into why" is a promise nobody owns yet. That needs an owner and a date from Helen. And under the old rule, "case closes when an offer arrives", the 27 Aug offer would have closed Meteor Mite's case, even though it was declined.</div>
+  <details class="rows"><summary>SHOW ME THE ROWS: every Meteor Mite offer since 12 Aug (<code>pings</code> table)</summary><div class="inner" id="miteRows"></div></details>
 </section>
 
-<!-- 10 THE SKILL -->
-<section class="slide" hidden aria-label="How it does not happen again">
-  <span class="tag">NEXT ISSUE</span>
-  <h2 class="slide-title">How my skill keeps this from happening quietly again</h2>
-  <p class="lede">The <b>review-checklist</b> skill runs four checks on any brief. Here is what 4.2 looked like through each one.</p>
-  <table class="map" style="margin-top:6px">
-    <tbody>
-      <tr><td>1 · Owner</td><td><b>What 4.2 looked like:</b> Marcus asked on 14 Aug whether the new weights applied to responders who'd been declining. No answer is on record. Nobody has confirmed with Helen which Q3 items are still committed.</td><td><b>The skill asks for:</b> a named person, not a team, who decides.</td></tr>
-      <tr><td>2 · Success</td><td><b>What 4.2 looked like:</b> what success looked like for the routing change is still an open question to Helen and Marcus.</td><td><b>The skill asks for:</b> a measure, a target and a time, so a change can fail.</td></tr>
-      <tr><td>3 · Scope</td><td><b>What 4.2 looked like:</b> the weights and the timeout shipped together on one day, so the data can't separate their effects.</td><td><b>The skill asks for:</b> one scope start to finish, with adjacent changes named and set aside.</td></tr>
-      <tr><td>4 · Problem first</td><td><b>What 4.2 looked like:</b> the reason for the 60-second timer isn't documented, and the previous PM says she "made calls faster than I checked them".</td><td><b>The skill asks for:</b> what's broken, for whom and at what cost, before the fix.</td></tr>
-    </tbody>
-  </table>
-  <div class="grid g3" style="margin-top:6px">
-    <div class="box tight"><h3 style="font-size:20px">It runs weekly</h3><p class="small">Scheduled for Monday mornings. Its first run flagged 4 of 4 briefs. Later runs are logged in <code>05-super-speed/review-checklist-log.md</code>.</p></div>
-    <div class="box tight"><h3 style="font-size:20px">It improves the briefs</h3><p class="small">On the Helen brief, the 12 Oct run failed scope and the 26 Oct run passed all four. The brief was rewritten as v4 in between.</p></div>
-    <div class="box tight"><h3 style="font-size:20px">It has a front door</h3><p class="small">A second skill, <b>interview-to-build</b>, asks until Claude is 95% sure what you want before it builds. It produced the On leave PRD in 9 questions.</p></div>
+<!-- LEVEL 6 -->
+<section class="screen" id="scr-l6" data-title="LEVEL 6 · SIDEKICKS" aria-label="Level 6: Sidekicks" hidden>
+  <div class="stage-title"><span data-sprite="shield"></span><div><span class="tag blue">LEVEL 6 · SIDEKICKS · MODULE 6</span><h2 class="slide-title" style="margin:0">Replay the checklist on four real briefs</h2></div></div>
+  <p class="finding">The <b>review-checklist</b> skill's first scheduled run read four briefs and flagged <b>exactly one miss in each</b>, a different one every time. Pick a brief, then replay the run.</p>
+  <div class="box" style="margin-top:12px">
+    <div class="tabs" id="briefTabs" role="group" aria-label="Choose a brief"></div>
+    <div class="grid g2">
+      <div class="doc" id="doc" tabindex="0" aria-label="The brief"></div>
+      <div>
+        <div class="tiles" id="tiles"></div>
+        <div class="row"><button class="btn red" type="button" id="runBtn">&#9654; REPLAY THE RUN</button></div>
+        <div class="caption" id="verdict" aria-live="polite" style="margin-top:14px"><span class="label">VERDICT</span><p>Press REPLAY. This replays the real run of 13 Oct 2026 and highlights where the flag came from.</p></div>
+      </div>
+    </div>
+    <p class="src">Source: <code>06-sidekicks/briefs/</code> and <code>06-sidekicks/scheduled-run-output.txt</code>. The page replays the saved run, it does not re-grade the brief.</p>
   </div>
-  <p class="note"><b>What it can't do:</b> the skill is a gate on briefs. It would not have found the scoring trap on its own. It makes the missing owner, measure, scope and problem visible before something ships.</p>
+  <div class="bubble"><span class="label" data-plabel="m6a"></span><p data-prompt="m6a"></p></div>
+  <div class="bubble"><span class="label" data-plabel="m6b"></span><p data-prompt="m6b"></p></div>
+  <h3 style="font-size:11px;color:var(--yellow);margin-top:26px;line-height:1.7">SIDEKICK UNLOCKED: HOW IT KEEPS 4.2 FROM HAPPENING QUIETLY AGAIN</h3>
+  <p class="lede" style="margin-top:6px">The same four checks, applied to what 4.2 looked like:</p>
+  <table class="map"><tbody>
+    <tr><td>1 · OWNER</td><td><b>What 4.2 looked like:</b> Marcus asked on 14 Aug whether the new weights applied to responders who'd been declining. No answer is on record. Nobody has confirmed with Helen which Q3 items are still committed.</td><td><b>The skill asks for:</b> a named person, not a team, who decides.</td></tr>
+    <tr><td>2 · SUCCESS</td><td><b>What 4.2 looked like:</b> what success looked like for the routing change is still an open question to Helen and Marcus.</td><td><b>The skill asks for:</b> a measure, a target and a time, so a change can fail.</td></tr>
+    <tr><td>3 · SCOPE</td><td><b>What 4.2 looked like:</b> the weights and the timeout shipped together on one day, so the data can't separate their effects.</td><td><b>The skill asks for:</b> one scope start to finish, with adjacent changes named and set aside.</td></tr>
+    <tr><td>4 · PROBLEM FIRST</td><td><b>What 4.2 looked like:</b> the reason for the 60-second timer isn't documented, and the previous PM says she "made calls faster than I checked them".</td><td><b>The skill asks for:</b> what's broken, for whom and at what cost, before the fix.</td></tr>
+  </tbody></table>
+  <div class="grid g3">
+    <div class="box tight"><h3 style="font-size:11px;color:var(--yellow)">IT RUNS WEEKLY</h3><p class="small">Scheduled for Monday mornings. Four checklist runs are on record in <code>review-checklist-log.md</code> and the scheduled output.</p></div>
+    <div class="box tight"><h3 style="font-size:11px;color:var(--yellow)">IT IMPROVES BRIEFS</h3><p class="small">On the Helen brief, the 12 Oct run failed scope and the 26 Oct run passed all four. The brief was rewritten as v4 in between.</p></div>
+    <div class="box tight"><h3 style="font-size:11px;color:var(--yellow)">IT HAS A FRONT DOOR</h3><p class="small">A second skill, <b>interview-to-build</b>, asks until Claude is 95% sure what you want before it builds. It produced the On leave PRD in 9 questions.</p></div>
+  </div>
+  <p class="note warn"><b>What it can't do:</b> the skill is a gate on briefs. It would not have found the scoring trap on its own. It makes the missing owner, measure, scope and problem visible before something ships.</p>
+  <details class="rows"><summary>SHOW ME THE ROWS: the raw scheduled-run output</summary><div class="inner"><pre class="plain" id="schedRaw"></pre></div></details>
 </section>
 
-<!-- 11 OPEN + END -->
-<section class="slide" hidden aria-label="What is still open">
-  <span class="tag">WHAT'S LEFT</span>
-  <h2 class="slide-title">Still open, and who can answer</h2>
+<!-- SIDE QUESTS -->
+<section class="screen" id="scr-quests" data-title="SIDE QUESTS" aria-label="Side quests: what is still open" hidden>
+  <div class="stage-title"><span data-sprite="star"></span><div><span class="tag">SIDE QUESTS</span><h2 class="slide-title" style="margin:0">Still open, and who can answer</h2></div></div>
   <div class="grid g2">
     <div class="box">
       <ul class="small" style="margin:0;padding-left:20px">
@@ -840,205 +907,344 @@ render();
       </ul>
       <p class="src">Source: <code>05-super-speed/helen-brief-v4.md</code>, section 7</p>
     </div>
-    <div class="box">
-      <h3 style="font-size:22px">By the numbers</h3>
-      <div class="stats" id="endStats"></div>
-    </div>
+    <div class="box"><h3 style="font-size:11px;color:var(--yellow);margin-bottom:8px">BY THE NUMBERS</h3><div class="stats" id="endStats"></div></div>
   </div>
-  <div class="end">
-    <div class="ender">THE END... OR IS IT?</div>
-    <p class="hint">Fictional coursework for Product School's "Claude Code for PMs" certification, cohort ccpm-2026.1. Rook Industries is not a real company.</p>
-    <p class="cta" style="justify-content:center"><button class="btn ghost" type="button" data-go="first">&larr; BACK TO THE COVER</button></p>
-  </div>
+  <div class="end"><div class="ender">GAME OVER... CONTINUE?</div>
+    <p class="hint">Fictional coursework for Product School's "Claude Code for PMs" certification, cohort ccpm-2026.1. Rook Industries is not a real company.</p></div>
 </section>
 
 </div>
 
-<nav class="controls" aria-label="Slide controls">
-  <button class="btn" type="button" id="prev" aria-label="Previous slide">&larr; PREV</button>
-  <div class="dots" id="dots" role="group" aria-label="Jump to slide"></div>
+<nav class="controls" aria-label="Stage controls">
+  <button class="btn" type="button" id="prev">&#9664; PREV</button>
+  <div class="dots" id="dots" role="group" aria-label="Your path"></div>
   <span class="count" id="count" aria-live="polite"></span>
-  <button class="btn" type="button" id="next" aria-label="Next slide">NEXT &rarr;</button>
+  <button class="btn" type="button" id="next">NEXT &#9654;</button>
 </nav>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="vh" id="announce" aria-live="polite"></div>
 
 <script>
 /* ===== real data, filled in at build time from the repo files ===== */
-const DATA = {"weeks": ["2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24", "2026-08-31"], "total": {"sent": [172, 170, 174, 176, 170, 172, 177, 158, 162, 165], "taken": [132, 131, 133, 132, 132, 134, 96, 104, 108, 120]}, "four": {"sent": [49, 48, 48, 50, 50, 49, 43, 16, 6, 3], "taken": [36, 37, 36, 37, 40, 37, 18, 3, 0, 0]}, "twelve": {"sent": [123, 122, 126, 126, 120, 123, 134, 142, 156, 162], "taken": [96, 94, 97, 95, 92, 97, 78, 101, 108, 120]}, "per": {"Farlight": [12, 12, 11, 12, 13, 12, 10, 3, 1, 0], "Meteor Mite": [11, 12, 10, 11, 12, 11, 10, 4, 2, 1], "The Undertow": [12, 11, 12, 13, 12, 12, 11, 4, 1, 1], "Vesper": [14, 13, 15, 14, 13, 14, 12, 5, 2, 1]}};
+const RESP = {"weeks": ["2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24", "2026-08-31"], "responders": [{"name": "Captain Vantage", "handler": "Mr. Ambrose", "sent": [12, 13, 12, 11, 12, 12, 13, 15, 17, 18], "taken": [10, 10, 8, 7, 9, 9, 8, 11, 13, 13]}, {"name": "Cindermark", "handler": "Farid Haddad", "sent": [9, 9, 8, 10, 9, 9, 10, 11, 12, 12], "taken": [7, 8, 6, 7, 7, 8, 6, 8, 8, 9]}, {"name": "Corporal Ashgrove", "handler": "Yusuf Demir", "sent": [10, 11, 10, 9, 10, 10, 10, 8, 7, 7], "taken": [8, 9, 7, 7, 8, 8, 6, 5, 5, 5]}, {"name": "Farlight", "handler": "Linda Pruitt", "sent": [12, 12, 11, 12, 13, 12, 10, 3, 1, 0], "taken": [9, 9, 8, 9, 10, 8, 4, 0, 0, 0]}, {"name": "Halfmoon", "handler": "Simone Fischer", "sent": [11, 10, 11, 12, 11, 11, 11, 9, 8, 8], "taken": [8, 7, 8, 8, 9, 8, 6, 5, 5, 7]}, {"name": "Ironvale", "handler": "Teresa Alvarez", "sent": [8, 8, 9, 8, 7, 8, 9, 10, 11, 12], "taken": [6, 5, 8, 6, 5, 7, 5, 6, 8, 9]}, {"name": "Meteor Mite", "handler": "Kip", "sent": [11, 12, 10, 11, 12, 11, 10, 4, 2, 1], "taken": [7, 9, 6, 7, 9, 8, 4, 1, 0, 0]}, {"name": "Nightwell", "handler": "Marjorie Sung", "sent": [15, 14, 15, 16, 15, 15, 16, 18, 20, 21], "taken": [11, 10, 12, 12, 11, 12, 9, 14, 13, 15]}, {"name": "Sgt. Bulwark", "handler": "Halloran", "sent": [9, 9, 10, 9, 8, 9, 10, 10, 11, 11], "taken": [7, 7, 8, 7, 5, 7, 5, 8, 7, 8]}, {"name": "Sgt. Falkirk", "handler": "Owen Bramwell", "sent": [10, 10, 11, 10, 9, 10, 11, 13, 15, 16], "taken": [9, 8, 8, 8, 7, 8, 7, 9, 11, 11]}, {"name": "Stormwrack", "handler": "Renata Kovač", "sent": [13, 13, 12, 14, 13, 13, 14, 16, 18, 19], "taken": [10, 11, 9, 12, 10, 10, 8, 12, 13, 15]}, {"name": "The Drift", "handler": "Beatrice Calloway", "sent": [6, 6, 7, 6, 6, 6, 7, 7, 8, 8], "taken": [5, 5, 6, 5, 5, 5, 4, 5, 6, 5]}, {"name": "The Gale", "handler": "Kip", "sent": [13, 12, 13, 14, 13, 13, 15, 17, 20, 21], "taken": [10, 9, 10, 11, 11, 10, 9, 12, 14, 16]}, {"name": "The Longcast", "handler": "Graham Petrov", "sent": [7, 7, 8, 7, 7, 7, 8, 8, 9, 9], "taken": [5, 5, 7, 5, 5, 5, 5, 6, 5, 7]}, {"name": "The Undertow", "handler": "Desmond Okafor", "sent": [12, 11, 12, 13, 12, 12, 11, 4, 1, 1], "taken": [9, 9, 9, 10, 10, 9, 4, 1, 0, 0]}, {"name": "Vesper", "handler": "Aunt Dot", "sent": [14, 13, 15, 14, 13, 14, 12, 5, 2, 1], "taken": [11, 10, 13, 11, 11, 12, 6, 1, 0, 0]}], "four": ["Farlight", "Meteor Mite", "The Undertow", "Vesper"]};
 const PROMPTS = {"totalPrompts": 144, "runs": 4, "m1": {"module": "01 Origin Story", "n": 4, "text": "is there too much information in the claude.md currently? do we need to consolidate at all at this point?"}, "m2": {"module": "02 Super Hearing", "n": 7, "text": "Read everything in 00-rook/feedback/interviews/. These are four conversations with the people who run the console for our responders. Tell me what they're unhappy about, group it, tell me how many of the four raised each thing, and quote one line for each so I can hear how they actually said it."}, "m3": {"module": "03 Rewind", "n": 6, "text": "If the Director of Product asked tomorrow what release 4.2 actually did to responders, what's the one number you'd put in front of her? Post it, and one line on where it came from."}, "m4": {"module": "04 X-Ray Vision", "n": 20, "text": "Find me the part of this code that takes points off somebody when they miss a ping or turn one down. Show it to me and explain it in plain English. Then find me every single thing in this code that puts points back on."}, "m5": {"module": "05 Super Speed", "n": 50, "text": "this brief is going to serve as the input for our working prototype with the fixes. before we build anything, read the brief and ask me clarifying questions on what we to build until you are 95% confident."}, "m6a": {"module": "06 Sidekicks", "n": 8, "text": "Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix."}, "m6b": {"module": "06 Sidekicks", "n": 12, "text": "Schedule review-checklist to run every Monday morning, and let me know what it finds. Nothing needs to be ready for it to fire today. I'm setting the habit, not waiting on the result."}};
-const CLAUDE_LINES = [{"date": "2026-09-23", "lines": 23}, {"date": "2026-09-23", "lines": 64}, {"date": "2026-09-23", "lines": 72}, {"date": "2026-09-23", "lines": 73}, {"date": "2026-09-28", "lines": 80}, {"date": "2026-09-30", "lines": 88}, {"date": "2026-10-05", "lines": 99}, {"date": "2026-10-06", "lines": 121}, {"date": "2026-10-22", "lines": 110}];
+const COMMITS = [{"hash": "ef7d2d1", "date": "2026-09-23", "subject": "Initial commit", "lines": 23, "headings": ["Session scope — Product School lab", "Working context"]}, {"hash": "e3aa9b7", "date": "2026-09-23", "subject": "Fill in CLAUDE.md working context with Rook Dispatch onboarding notes", "lines": 64, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)"]}, {"hash": "43d8d59", "date": "2026-09-23", "subject": "Capture Module 1 prompt log and 4.2 investigation findings", "lines": 72, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)", "What I found digging into code + data (23 Sept 2026)"]}, {"hash": "262c8eb", "date": "2026-09-23", "subject": "Split prompt log by module and add console feedback synthesis", "lines": 73, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)", "What I found digging into code + data (23 Sept 2026)"]}, {"hash": "259eae7", "date": "2026-09-28", "subject": "Complete Module 2 prompt log and add ticket deep-dive findings", "lines": 80, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)", "What I found digging into code + data (23 Sept 2026)", "Ticket deep-dive (28 Sept 2026) — the \"gone quiet\" story splits in two"]}, {"hash": "510c5d3", "date": "2026-09-30", "subject": "Log Module 3 prompts and add root-cause deep-dive to CLAUDE.md", "lines": 88, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)", "What I found digging into code + data (23 Sept 2026)", "Ticket deep-dive (28 Sept 2026) — the \"gone quiet\" story splits in two", "Root-cause deep dive (30 Sept 2026) — the theory got corrected, and the scope may have grown"]}, {"hash": "4961136", "date": "2026-10-05", "subject": "Log Module 4 prompts, add code walkthrough and 4.2 spec check", "lines": 99, "headings": ["Session scope — Product School lab", "Working context", "Company", "The two products", "Vocabulary", "People", "Where things stand (early September 2026)", "What I found digging into code + data (23 Sept 2026)", "Ticket deep-dive (28 Sept 2026) — the \"gone quiet\" story splits in two", "Root-cause deep dive (30 Sept 2026) — the theory got corrected, and the scope may have grown", "Code walkthrough and hypotheses (5 Oct 2026)"]}, {"hash": "4be2023", "date": "2026-10-06", "subject": "Rewrite Rook working context and add 4.2 problem statements vs. callout data", "lines": 121, "headings": ["Session scope — Product School lab", "Working context", "Company", "Products", "Vocabulary (the distinctions that matter)", "People", "Where things stand (as of the 2 Sept Slack export)", "What I found digging into code + data (23 Sept 2026)", "Ticket deep-dive (28 Sept 2026) — the \"gone quiet\" story splits in two", "Root-cause deep dive (30 Sept 2026) — the theory got corrected, and the scope may have grown", "Code walkthrough and hypotheses (5 Oct 2026)", "4.2 problem statements vs. callout data (6 Oct 2026)"]}, {"hash": "ada740d", "date": "2026-10-15", "subject": "Correct the \"unprompted\" claim about the handler interviews in CLAUDE.md", "lines": 121, "headings": ["Session scope — Product School lab", "Working context", "Company", "Products", "Vocabulary (the distinctions that matter)", "People", "Where things stand (as of the 2 Sept Slack export)", "What I found digging into code + data (23 Sept 2026)", "Ticket deep-dive (28 Sept 2026) — the \"gone quiet\" story splits in two", "Root-cause deep dive (30 Sept 2026) — the theory got corrected, and the scope may have grown", "Code walkthrough and hypotheses (5 Oct 2026)", "4.2 problem statements vs. callout data (6 Oct 2026)"]}, {"hash": "829c25b", "date": "2026-10-22", "subject": "Module 5 wrap-up: prototype v3, change log, session log", "lines": 110, "headings": ["Session scope — Product School lab", "Working context", "Company", "Products", "Vocabulary (the distinctions that matter)", "People", "Where things stand (as of the 2 Sept Slack export)", "Earlier findings, 23 to 30 Sept 2026 (full text moved to 05-super-speed/archive.md)", "Code walkthrough and hypotheses (5 Oct 2026)", "4.2 problem statements vs. callout data (6 Oct 2026)", "Brief and prototype for Helen (22 Oct 2026)"]}, {"hash": "5f398e7", "date": "2026-10-27", "subject": "Update brief to prototype v3, add On leave PRD, add interview-to-build skill", "lines": 110, "headings": ["Session scope — Product School lab", "Working context", "Company", "Products", "Vocabulary (the distinctions that matter)", "People", "Where things stand (as of the 2 Sept Slack export)", "Earlier findings, 23 to 30 Sept 2026 (full text moved to 05-super-speed/archive.md)", "Code walkthrough and hypotheses (5 Oct 2026)", "4.2 problem statements vs. callout data (6 Oct 2026)", "Brief and prototype for Helen (22 Oct 2026)"]}];
+const COMPLAINTS = {"handlers": ["Ambrose", "Aunt Dot", "Halloran", "Kip"], "rows": [{"name": "Callouts vanish before responders can answer", "by": ["Ambrose", "Aunt Dot", "Halloran"], "count": 3, "label": "Callouts vanish too fast", "quote": "He comes down the stairs two at a time, and by the time he's actually got a thumb on the screen — it's gone.", "who": "Aunt Dot"}, {"name": "Status text/badges too small to read at a glance", "by": ["Ambrose", "Aunt Dot"], "count": 2, "label": "Text too small", "quote": "At a glance I sometimes cannot tell engaged from available without leaning in.", "who": "Ambrose"}, {"name": "Notifications don't serve handlers (no handler-side alert; indistinguishable sounds)", "by": ["Aunt Dot", "Kip"], "count": 2, "label": "Notifications don't serve handlers", "quote": "I want the alert sound to be different for each of them... both just go 'bing.'", "who": "Kip"}, {"name": "No dark mode", "by": ["Kip"], "count": 1, "label": "No dark mode", "quote": "It's 11pm... the console is just this wall of white light in the middle of my face. I am begging.", "who": "Kip"}, {"name": "Filter persistence resets without warning", "by": ["Ambrose"], "count": 1, "label": "Filter persistence unreliable", "quote": "I'd rather it warned me the filter had reset than simply reset it.", "who": "Ambrose"}, {"name": "Capability tag legend hard to find", "by": ["Ambrose"], "count": 1, "label": "Capability tag legend hard to find", "quote": "There was one in the spring I had to look up twice before it stuck.", "who": "Ambrose"}, {"name": "Requisition approvals slow, no visibility into why", "by": ["Halloran"], "count": 1, "label": "Requisition approvals slow", "quote": "A real crack, not cosmetic — it sat waiting on a quartermaster signature for eleven days.", "who": "Halloran"}, {"name": "Field failure reports vanish with no feedback", "by": ["Halloran"], "count": 1, "label": "Field failure reports vanish", "quote": "I file a failure report and it goes into a void. I'd like to know it did something.", "who": "Halloran"}, {"name": "Equipment catalog search doesn't work", "by": ["Halloran"], "count": 1, "label": "Catalog search doesn't work", "quote": "Typed 'plate,' got forty results, half of them unrelated.", "who": "Halloran"}, {"name": "Two responders, wildly different weeks, no explanation on screen", "by": ["Kip"], "count": 1, "label": "Divergent responder patterns, unexplained", "quote": "I'm looking at two cards on the same screen that might as well be two different products.", "who": "Kip"}]};
+const BRIEFS = [{"file": "bulk-callout.txt", "title": "Bulk Callout — one-pager", "meta": "Product, Dispatch · 12 January 2026", "paras": ["Problem", "When something big happens — a building evacuation, a multi-block search, anything that needs more than one responder — a handler right now sends callouts the same way they'd send one: pick a responder, wait, pick the next. Halloran mentioned it too, on the Supply side, when a shift needs several people kitted out at once. For a handler managing more than one responder, or covering for another handler who's out, that's slow exactly when speed matters most.", "Proposal", "Let a handler select several responders from the console and send them all the same callout in a single action. Each responder still gets their own accept/decline, on their own phone, same as today — this isn't a group message, it's the existing callout flow sent to more than one person at once.", "Success measure", "Fewer support tickets mentioning a handler who \"just started calling people directly\" during a multi-responder incident. Time-to-full- coverage on a multi-responder callout should drop, though we don't have a clean baseline for it yet — worth getting one before this ships.", "Scope", "Only the existing callout flow, sent to more than one responder. No group chat between responders, no bulk requisitions, no change to how any individual responder's callout is scored or ranked. If a table needs to send different jobs to different people, that's still one callout at a time — this is only for \"the same job, several people.\"", "Open questions", "Flagging this for whoever picks it up next quarter. Console changes will need Sofia's input on the multi-select interaction, and engineering will need to scope the actual send logic — noting it here so it isn't lost, but nobody's picked it up yet."], "hl": [{"text": "nobody's picked it up yet", "kind": "miss", "label": "No owner: it flags the idea for whoever picks it up, but never names anyone"}], "flag": 0, "note": "No owner named. Ends on \"nobody's picked it up yet\" — flagging it for a future owner isn't the same as naming one."}, {"file": "routing-override-audit-log.txt", "title": "Routing Override Audit Log — one-pager", "meta": "Product, Dispatch · 5 March 2026", "paras": ["Problem", "When a handler manually overrides Dispatch's routing — picks someone other than the responder we recommended — there's no record of it anywhere. No who, no when, no why. Nadia's team has hit this more than once: a complaint comes in about a responder who was passed over, and there's no way to even confirm an override happened, let alone why.", "Proposal", "Log every manual override: who made it, when, which responder they picked instead of the recommended one, and a short reason if they typed one. Surface it in the console's existing activity view, next to the callout it belongs to.", "Owner", "Marcus's team builds it. Sofia has already mocked the activity-view addition — it's a small addition to a screen that exists.", "Scope", "Overrides only. Not a general audit log for every action in the console — just the one decision that currently leaves no trace.", "Next steps", "Marcus's team can pick this up once profile redesign wraps. Small, contained, ready to build."], "hl": [{"text": "Surface it in the console's existing activity view, next to the callout it belongs to.", "kind": "near", "label": "Says where it shows up, never how anyone would know it's working"}], "flag": 1, "note": "No success measure. Says what gets logged and where it shows up, never how anyone would know it's working."}, {"file": "requisition-approval-chains.txt", "title": "Requisition Approval Chains — one-pager", "meta": "Product, Supply · 14 July 2026", "paras": ["Problem", "Right now, any requisition over any dollar amount goes through one approval: a quartermaster signs off and it ships. For anything over $2,000 — a new pack of hazmat-rated suits, a batch of grapple lines — that's one person's judgment on a fairly large purchase, and Halloran's asked more than once for a second set of eyes on the big-ticket items.", "Proposal", "Add a second approval step for requisitions over $2,000: a quartermaster still approves first, then their manager signs off before anything ships. That's the whole ask.", "And while we're building the approval step, we should also let a quartermaster route around a slow approver if they haven't responded in 48 hours, and add a dashboard showing every pending approval across all three sites so nobody has to ask around for status, and let a handler see where their own requisition is stuck without going through Halloran directly, and honestly — if we're building all of that, this could eventually just replace the weekly gear-cage spreadsheet Halloran keeps by hand.", "Owner", "Halloran's team, Supply.", "Success measure", "Fewer requisitions over $2,000 that ship without a second sign-off. We'll know it's working when that number is zero.", "Open questions", "How much of the above ships together versus in phases — TBD."], "hl": [{"text": "That's the whole ask.", "kind": "near", "label": "The brief opens as one approval step"}, {"para": "And while we're building the approval step", "kind": "miss", "label": "Then it grows: routing around approvers, a dashboard, handler visibility, a spreadsheet replacement"}], "flag": 2, "note": "Scope grows mid-document. Opens as one approval step (\"that's the whole ask\"), by the next paragraph has picked up a routing-around rule, a cross-site dashboard, handler visibility, and a spreadsheet replacement."}, {"file": "handler-phone-app.txt", "title": "Handler Phone App — one-pager", "meta": "Product, Dispatch · 2 August 2026", "paras": ["Proposal", "We should build a phone app for handlers. Right now the console is desktop-only, which means a handler is tied to their desk to see anything about their responder. A phone app would give handlers push notifications the moment something changes, a live view of their responder's current status, and one-tap contact straight from the notification — call or message, no need to open the console first.", "What this solves", "Aunt Dot — a handler in the interview pile — described finding out her responder had declined a callout only when she happened to glance at the console later that evening. A phone app would put that same information in front of her the moment it happens, instead of whenever she next happens to look.", "Owner", "Sofia, exploring for Q4 alongside her console work. Not yet staffed for a build.", "Success measure", "Fewer handlers reporting they missed a status change because they weren't at the console. No baseline number yet — that's the metric to start tracking once this moves past exploration.", "Scope", "Just the three things above: notifications, status view, one-tap contact. Nothing from Supply, nothing from the console's activity log — a phone app that mirrors the console's other features is a second project, not this one."], "hl": [{"para": "We should build a phone app", "kind": "miss", "label": "It opens with the solution"}, {"text": "described finding out her responder had declined a callout only when she happened to glance at the console later that evening", "kind": "prob", "label": "The actual problem doesn't appear until the second section"}], "flag": 3, "note": "Solution before problem. Opens with the app and what it would do; the actual problem (Aunt Dot finding out late) doesn't appear until the second section."}];
+const SCHED_RAW = "review-checklist — scheduled run\nStarted: 2026-10-13 03:00 UTC\nFinished: 2026-10-13 03:01 UTC\nSource: 06-sidekicks/briefs/ (4 files)\n\nbulk-callout.txt\n  owner named ................. NO — flagged\n  success measure .............. yes\n  scope stays bounded .......... yes\n  problem stated before fix .... yes\n  -> 1 flag: no owner named. Ends on \"nobody's picked it up yet\" —\n     flagging it for a future owner isn't the same as naming one.\n\nrouting-override-audit-log.txt\n  owner named ................... yes (Marcus's team)\n  success measure .............. NO — flagged\n  scope stays bounded .......... yes\n  problem stated before fix .... yes\n  -> 1 flag: no success measure. Says what gets logged and where it\n     shows up, never how anyone would know it's working.\n\nrequisition-approval-chains.txt\n  owner named ................... yes (Halloran's team, Supply)\n  success measure ............... yes\n  scope stays bounded ........... NO — flagged\n  problem stated before fix .... yes\n  -> 1 flag: scope grows mid-document. Opens as one approval step\n     (\"that's the whole ask\"), by the next paragraph has picked up a\n     routing-around rule, a cross-site dashboard, handler visibility,\n     and a spreadsheet replacement.\n\nhandler-phone-app.txt\n  owner named ................... yes (Sofia)\n  success measure ............... yes\n  scope stays bounded ........... yes\n  problem stated before fix .... NO — flagged\n  -> 1 flag: solution before problem. Opens with the app and what it\n     would do; the actual problem (Aunt Dot finding out late) doesn't\n     appear until the second section.\n\n4 briefs checked, 4 flagged, 1 flag each.\n";
 const MITE = [{"at": "2026-08-12T19:04:32", "outcome": "turned down", "label": "12 Aug, 19:04"}, {"at": "2026-08-13T13:43:10", "outcome": "missed", "label": "13 Aug, 13:43"}, {"at": "2026-08-13T15:12:38", "outcome": "missed", "label": "13 Aug, 15:12"}, {"at": "2026-08-14T07:26:28", "outcome": "missed", "label": "14 Aug, 07:26"}, {"at": "2026-08-15T15:18:48", "outcome": "taken", "label": "15 Aug, 15:18"}, {"at": "2026-08-15T19:40:01", "outcome": "taken", "label": "15 Aug, 19:40"}, {"at": "2026-08-16T11:16:17", "outcome": "missed", "label": "16 Aug, 11:16"}, {"at": "2026-08-18T07:37:03", "outcome": "turned down", "label": "18 Aug, 07:37"}, {"at": "2026-08-19T17:30:34", "outcome": "taken", "label": "19 Aug, 17:30"}, {"at": "2026-08-20T16:41:50", "outcome": "missed", "label": "20 Aug, 16:41"}, {"at": "2026-08-22T20:53:13", "outcome": "missed", "label": "22 Aug, 20:53"}, {"at": "2026-08-27T20:03:12", "outcome": "turned down", "label": "27 Aug, 20:03"}, {"at": "2026-08-29T09:15:52", "outcome": "missed", "label": "29 Aug, 09:15"}, {"at": "2026-09-05T15:06:20", "outcome": "missed", "label": "5 Sep, 15:06"}];
-const SCHEDULED = [{"name": "bulk-callout.txt", "checks": [false, true, true, true]}, {"name": "routing-override-audit-log.txt", "checks": [true, false, true, true]}, {"name": "requisition-approval-chains.txt", "checks": [true, true, false, true]}, {"name": "handler-phone-app.txt", "checks": [true, true, true, false]}];
+const CODE = {"history": "\"\"\"Recent acceptance — a running score of how often somebody has been\ntaking the callouts we send them.\n\nOne of the three inputs to ranking. Sits between 0 and 1. Everyone\nstarts at NEUTRAL_SCORE when we take them on.\n\"\"\"\n\nfrom config import (\n    ACCEPTANCE_CREDIT,\n    DECLINE_PENALTY,\n    SCORE_FLOOR,\n    SCORE_CEILING,\n)\n\nNEUTRAL_SCORE = 0.5\n\n_scores = {}\n\n\ndef recent_acceptance(responder):\n    \"\"\"This responder's score right now. Read by routing.score().\"\"\"\n    return _scores.get(responder.id, NEUTRAL_SCORE)\n\n\ndef record_accepted(responder):\n    \"\"\"They took the callout. Score goes up.\"\"\"\n    _set(responder, recent_acceptance(responder) + ACCEPTANCE_CREDIT)\n\n\n# TODO(wen, 2019): should this ease back toward NEUTRAL_SCORE on its\n# own after a while? For: somebody who had a bad month shouldn't still\n# be carrying it in the spring. Against: if somebody has stopped taking\n# work, we probably want that to stick until they take work again.\n# Leaving it as-is for now.\ndef record_declined(responder):\n    \"\"\"They turned it down, or we ran out of time waiting. Score goes\n    down. Same either way — we asked and we didn't get a yes.\n    \"\"\"\n    _set(responder, recent_acceptance(responder) - DECLINE_PENALTY)\n\n\ndef _set(responder, value):\n    _scores[responder.id] = max(SCORE_FLOOR, min(SCORE_CEILING, value))\n", "config": "\"\"\"Tuning values for callout routing.\n\nEverything in here changes who gets asked to take a job, so don't\nchange anything in here without telling Marcus.\n\"\"\"\n\n# How long a callout offer stays on a responder's phone before we give\n# up on them and move to the next person on the list.\nOFFER_TIMEOUT_SECONDS = 60           # was 90 until 4.2\n\n# How much each input counts when we rank who to ask first. These are\n# relative to each other; they don't need to add up to anything.\nWEIGHT_PROXIMITY = 0.60              # was 0.45 until 4.2\nWEIGHT_RECENT_ACCEPTANCE = 0.25      # was 0.40 until 4.2\nWEIGHT_CAPABILITY_MATCH = 0.15       # unchanged since 4.0\n\n# Points on and off the recent-acceptance score.\nACCEPTANCE_CREDIT = 0.08\nDECLINE_PENALTY = 0.12\n\n# The score never goes outside these.\nSCORE_FLOOR = 0.0\nSCORE_CEILING = 1.0\n\n# Anyone further out than this scores zero on proximity.\nPROXIMITY_HORIZON_MINUTES = 45\n"};
 
-const NS = "http://www.w3.org/2000/svg";
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const el = (tag, attrs={}, html) => { const e=document.createElement(tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(html!==undefined) e.innerHTML=html; return e; };
-const fmtDate = iso => { const [y,m,d]=iso.split('-').map(Number); return d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]; };
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDate = iso => parseInt(iso.slice(8,10),10)+' '+MON[parseInt(iso.slice(5,7),10)-1];
+const C = {red:'#ff2a4d',redT:'#ff7a93',cyan:'#00e5ff',green:'#39ff14',greenT:'#7dff5c',pink:'#ff3df2',yellow:'#ffe600',ink:'#f4f4ff',dark:'#05031a'};
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ===== line chart ===== */
-function lineChart(opt){
-  const W=680,H=300,L=52,R=26,T=22,B=40, pw=W-L-R, ph=H-T-B;
-  const n=opt.labels.length;
-  const x=i=>L+(n===1?0:i*pw/(n-1));
-  const y=v=>T+ph-(v-opt.yMin)*ph/(opt.yMax-opt.yMin);
-  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opt.aria}">`;
-  opt.ticks.forEach(t=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${L-8}" y="${y(t)+4}" text-anchor="end">${opt.tickFmt?opt.tickFmt(t):t}</text>`; });
-  opt.labels.forEach((l,i)=>{ if(n<=10 || i%2===0) s+=`<text class="axis" x="${x(i)}" y="${H-14}" text-anchor="middle">${l}</text>`; });
-  if(opt.baselines) opt.baselines.forEach(b=>{ s+=`<line x1="${L}" x2="${W-R}" y1="${y(b.v)}" y2="${y(b.v)}" stroke="${b.color}" stroke-width="2" stroke-dasharray="6 5"/>`; });
-  if(opt.marker!==undefined){ const mx=x(opt.marker); s+=`<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T+ph}" stroke="#171310" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${mx+6}" y="${T+12}" fill="#b3261b">4.2 SHIPS</text>`; }
-  opt.series.forEach(se=>{
+/* ===== derived series from the CSV ===== */
+const NW = RESP.weeks.length, FOUR = RESP.four;
+const sum = (names, key) => RESP.weeks.map((_,i)=>RESP.responders.filter(r=>names(r.name)).reduce((a,r)=>a+r[key][i],0));
+const four = {sent:sum(n=>FOUR.includes(n),'sent'), taken:sum(n=>FOUR.includes(n),'taken')};
+const twelve = {sent:sum(n=>!FOUR.includes(n),'sent'), taken:sum(n=>!FOUR.includes(n),'taken')};
+const total = {sent:four.sent.map((v,i)=>v+twelve.sent[i]), taken:four.taken.map((v,i)=>v+twelve.taken[i])};
+const WLAB = RESP.weeks.map(fmtDate);
+
+/* ===== pixel sprites (8x8) ===== */
+const PAL={W:'#f4f4ff',C:'#00e5ff',Y:'#ffe600',R:'#ff2a4d',G:'#39ff14',B:'#3b6cff',P:'#ff3df2',K:'#05031a'};
+const SPR={
+ flag:["W.......","WRRRR...","WRRRRR..","WRRRR...","W.......","W.......","W.......","WWW....."],
+ doc:["WWWWWW..","WCCCCWW.","WWWWWWWW","W.....WW","W.CCC.WW","W.....WW","W.CCC.WW","WWWWWWWW"],
+ speech:[".WWWWWW.","WWWWWWWW","WW.WW.WW","WWWWWWWW","WWWWWWWW",".WWWWWW.","..WW....","...W...."],
+ chart:["........",".......R","...Y...R","...Y.G.R",".B.Y.G.R",".B.Y.G.R",".B.Y.G.R","WWWWWWWW"],
+ mag:["..WWW...",".W...W..","W.....W.","W.....W.","W.....W.",".W...W..","..WWWW..",".....WW."],
+ rocket:["...RR...","..RWWR..","..RWWR..","..WWWW..",".WWBBWW.",".W.BB.W.","..YYYY..","...YY..."],
+ shield:["WWWWWWWW","WBBBBBBW","WBBYYBBW","WBBYYBBW",".WBYYBW.","..WBBW..","...WW...","........"],
+ star:["...YY...","...YY...","YYYYYYYY",".YYYYYY.","..YYYY..",".YYYYYY.",".YY..YY.","........"]
+};
+function sprite(name,size){ let s=`<svg class="sprite" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true" style="width:${size||64}px;height:${size||64}px">`; SPR[name].forEach((row,y)=>[...row].forEach((c,x)=>{ if(PAL[c]) s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${PAL[c]}"/>`; })); return s+'</svg>'; }
+$$('[data-sprite]').forEach(h=>h.innerHTML=sprite(h.dataset.sprite,72));
+
+/* ===== sound (off by default) ===== */
+let soundOn=false, actx=null;
+function beep(f=660,ms=70){ if(!soundOn) return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(), g=actx.createGain(); o.type='square'; o.frequency.value=f; g.gain.value=.04; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+ms/1000); }catch(e){} }
+$('#hudSound').addEventListener('click',()=>{ soundOn=!soundOn; const b=$('#hudSound'); b.setAttribute('aria-pressed',String(soundOn)); b.textContent='SOUND '+(soundOn?'ON':'OFF'); beep(880,90); });
+document.addEventListener('click',e=>{ if(e.target.closest('.btn,.node,.path,.cell,.dots button')) beep(520,45); });
+
+/* ===== line chart (dark panels) ===== */
+function lineChart(o){
+  const W=680,H=300,L=52,R=26,T=22,B=40, pw=W-L-R, ph=H-T-B, n=o.labels.length;
+  const x=i=>L+(n===1?0:i*pw/(n-1)), y=v=>T+ph-(v-o.yMin)*ph/(o.yMax-o.yMin);
+  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">`;
+  o.ticks.forEach(t=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${L-8}" y="${y(t)+5}" text-anchor="end">${o.tickFmt?o.tickFmt(t):t}</text>`; });
+  o.labels.forEach((l,i)=>{ s+=`<text class="axis" x="${x(i)}" y="${H-14}" text-anchor="middle">${l}</text>`; });
+  (o.baselines||[]).forEach(b=>{ s+=`<line x1="${L}" x2="${W-R}" y1="${y(b.v)}" y2="${y(b.v)}" stroke="${b.color}" stroke-width="2" stroke-dasharray="6 5"/>`; });
+  if(o.marker!==undefined){ const mx=x(o.marker); s+=`<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T+ph}" stroke="${C.ink}" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${mx+6}" y="${T+14}" fill="${C.redT}">4.2 SHIPS</text>`; }
+  if(o.cursor!==undefined){ const cx=x(o.cursor); s+=`<rect x="${cx-9}" y="${T}" width="18" height="${ph}" fill="${C.yellow}" fill-opacity=".18"/><line x1="${cx}" x2="${cx}" y1="${T}" y2="${T+ph}" stroke="${C.yellow}" stroke-width="2"/>`; }
+  o.series.forEach(se=>{
     const d=se.values.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
-    s+=`<path d="${d}" fill="none" stroke="#171310" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${se.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
-    se.values.forEach((v,i)=>{ s+=`<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="${se.color}" stroke="#171310" stroke-width="2"><title>${se.name}, week of ${opt.labels[i]}: ${opt.valFmt?opt.valFmt(v):v}</title></circle>`; });
-    const li=se.values.length-1; s+=`<text class="lab" x="${x(li)-8}" y="${y(se.values[li])+(se.labelDy||-10)}" text-anchor="end" fill="${se.textColor||se.color}">${opt.valFmt?opt.valFmt(se.values[li]):se.values[li]}</text>`;
+    s+=`<path d="${d}" fill="none" stroke="${C.dark}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${se.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    se.values.forEach((v,i)=>{ s+=`<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="${se.color}" stroke="${C.ink}" stroke-width="1.5"><title>${se.name}, week of ${o.labels[i]}: ${o.valFmt?o.valFmt(v):v}</title></circle>`; });
+    const li=se.values.length-1; s+=`<text class="lab" x="${x(li)-8}" y="${y(se.values[li])+(se.labelDy||-10)}" text-anchor="end" fill="${se.textColor||se.color}">${o.valFmt?o.valFmt(se.values[li]):se.values[li]}</text>`;
   });
   return s+'</svg>';
 }
 
-/* ===== slide 2: the cliff ===== */
+/* ===== prompts, verbatim ===== */
+$$('[data-prompt]').forEach(p=>{ p.textContent='“'+PROMPTS[p.dataset.prompt].text+'”'; });
+$$('[data-plabel]').forEach(p=>{ const k=PROMPTS[p.dataset.plabel]; p.textContent='▶ PLAYER INPUT, THE EXACT PROMPT · '+k.module+' · prompts.md #'+k.n; });
+$('#hudPrompts').textContent=PROMPTS.totalPrompts;
 (function(){
-  const labels = DATA.weeks.map(fmtDate);
-  const rate = DATA.total.taken.map((t,i)=>t/DATA.total.sent[i]);
-  const preSent = DATA.total.sent.slice(0,6).reduce((a,b)=>a+b)/6, preTaken = DATA.total.taken.slice(0,6).reduce((a,b)=>a+b)/6;
-  const last = DATA.weeks.length-1;
-  const views = {
-    offers:{
-      html: lineChart({labels, aria:`Offers sent per week. The four affected responders fall from ${DATA.four.sent[0]} to ${DATA.four.sent[last]}. The other twelve rise from ${DATA.twelve.sent[0]} to ${DATA.twelve.sent[last]}.`,
-        yMin:0,yMax:180,ticks:[0,45,90,135,180],marker:6,
-        series:[{name:'The four',color:'#e63b2e',textColor:'#b3261b',values:DATA.four.sent,labelDy:-12},{name:'The other twelve',color:'#2c6ea6',values:DATA.twelve.sent}]}),
-      legend:`<span><i style="background:#e63b2e"></i>The four (Farlight, Meteor Mite, The Undertow, Vesper)</span><span><i style="background:#2c6ea6"></i>The other twelve</span>`,
-      caption:`The four fell from <b>${DATA.four.sent[0]}</b> offers a week to <b>${DATA.four.sent[last]}</b>. The other twelve went <b>up</b>, from ${DATA.twelve.sent[0]} to ${DATA.twelve.sent[last]}. Total offers barely moved, so the average hid who was losing out.`},
-    rate:{
-      html: lineChart({labels, aria:`Weekly yes-rate: ${(rate[0]*100).toFixed(1)} percent in late June, a low of ${(rate[6]*100).toFixed(1)} percent the week 4.2 shipped, ${(rate[last]*100).toFixed(1)} percent by 31 August.`,
-        yMin:0.4,yMax:0.9,ticks:[0.4,0.5,0.6,0.7,0.8,0.9],tickFmt:t=>Math.round(t*100)+'%',valFmt:v=>(v*100).toFixed(1)+'%',marker:6,
-        series:[{name:'Yes-rate',color:'#e63b2e',textColor:'#b3261b',values:rate}]}),
-      legend:`<span><i style="background:#e63b2e"></i>Share of offers taken, all 16 responders</span>`,
-      caption:`The yes-rate dips to <b>${(rate[6]*100).toFixed(1)}%</b> when 4.2 ships, then climbs back to <b>${(rate[last]*100).toFixed(1)}%</b>. It looks like recovery. It isn't: it climbs because the four stopped being asked.`},
-    raw:{
-      html: lineChart({labels, aria:`Raw counts. Offers sent are ${DATA.total.sent[last]} against a before-4.2 average of ${preSent.toFixed(1)}. Offers taken are ${DATA.total.taken[last]} against ${preTaken.toFixed(1)}.`,
-        yMin:80,yMax:190,ticks:[80,110,140,170,190],marker:6,
-        baselines:[{v:preSent,color:'#171310',label:'before 4.2: sent '+preSent.toFixed(1)},{v:preTaken,color:'#2c6b45',label:'before 4.2: taken '+preTaken.toFixed(1)}],
-        series:[{name:'Offers sent',color:'#7a4fae',values:DATA.total.sent},{name:'Offers taken',color:'#3f8f5f',textColor:'#2c6b45',values:DATA.total.taken}]}),
-      legend:`<span><i style="background:#7a4fae"></i>Offers sent</span><span><i style="background:#3f8f5f"></i>Offers taken</span><span>- - - dashed lines: the average before 4.2 (sent ${preSent.toFixed(1)}, taken ${preTaken.toFixed(1)})</span>`,
-      caption:`Look at the raw counts and there is no recovery. By 31 Aug, offers taken are <b>${DATA.total.taken[last]}</b> against <b>${preTaken.toFixed(1)}</b> before 4.2, and offers sent are <b>${DATA.total.sent[last]}</b> against <b>${preSent.toFixed(1)}</b>. Dispatch is still filling fewer callouts.`}
-  };
-  const host=$('#cliffChart'), leg=$('#cliffLegend'), cap=$('#cliffCaption');
-  function set(v){ host.innerHTML=views[v].html; leg.innerHTML=views[v].legend; cap.innerHTML=views[v].caption; $$('[data-view]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===v))); }
-  $$('[data-view]').forEach(b=>b.addEventListener('click',()=>set(b.dataset.view)));
-  set('offers');
+  const f0=four.sent[0], fN=four.sent[NW-1];
+  const stats=c=>c.map(x=>`<div class="stat ${x[2]}"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+  $('#coverStats').innerHTML=stats([['RESPONDERS LOCKED OUT','4 of 16','warn'],['THEIR OFFERS A WEEK',f0+' to '+fN,'warn'],['TICKET VOLUME','~3× normal','warn'],['PROMPTS SAVED',PROMPTS.totalPrompts+' in 6 modules','ok']]);
+  $('#endStats').innerHTML=stats([['PROMPTS YOU WROTE',String(PROMPTS.totalPrompts),'ok'],['MODULES','6','ok'],['SIMULATED TEST RUNS','17','ok'],['CHECKLIST RUNS ON RECORD',String(PROMPTS.runs),'ok']]);
 })();
 
-/* ===== cover + end stats ===== */
+/* ===== LEVEL 1: time machine ===== */
 (function(){
-  const four0=DATA.four.sent[0], fourN=DATA.four.sent[DATA.weeks.length-1];
-  const cover=[['Responders locked out','4 of 16','warn'],['Their offers a week',four0+' → '+fourN,'warn'],['Ticket volume','~3× normal','warn'],['Fix','Prototyped','ok'],['Prompts saved',String(PROMPTS.totalPrompts)+' in 6 modules','ok']];
-  $('#coverStats').innerHTML=cover.map(c=>`<div class="stat ${c[2]}"><b>${c[0]}</b><span>${c[1]}</span></div>`).join('');
-  const end=[['Prompts you wrote',String(PROMPTS.totalPrompts),'ok'],['Modules','6','ok'],['Simulated test runs','17','ok'],['Checklist runs on record',String(PROMPTS.runs),'ok']];
-  $('#endStats').innerHTML=end.map(c=>`<div class="stat ${c[2]}"><b>${c[0]}</b><span>${c[1]}</span></div>`).join('');
+  const r=$('#tmRange'); r.max=COMMITS.length-1; const max=130;
+  function draw(){
+    const i=+r.value, c=COMMITS[i], prev=COMMITS[i-1];
+    $('#tmOut').textContent=fmtDate(c.date)+' · '+(i+1)+'/'+COMMITS.length;
+    $('#tmLines').textContent=c.lines; $('#tmBar').style.width=Math.min(100,c.lines/max*100)+'%'; $('#tmBar').style.background=c.lines>115?C.red:(c.lines>90?C.yellow:C.green);
+    $('#tmSubject').textContent=c.subject; $('#tmMeta').textContent='commit '+c.hash+' · '+c.date;
+    $('#tmHeads').innerHTML=c.headings.map(h=>`<div class="hd ${(!prev||!prev.headings.includes(h))&&i>0?'new':''}">${esc(h)}</div>`).join('');
+  }
+  r.addEventListener('input',draw); draw();
+  $('#tmPeak').textContent=Math.max(...COMMITS.map(c=>c.lines)); $('#tmNow').textContent=COMMITS[COMMITS.length-1].lines;
+  $('#tmRows').innerHTML='<table class="data"><thead><tr><th>DATE</th><th>COMMIT</th><th>LINES</th><th>MESSAGE</th></tr></thead><tbody>'+COMMITS.map(c=>`<tr><td>${c.date}</td><td>${c.hash}</td><td>${c.lines}</td><td style="white-space:normal">${esc(c.subject)}</td></tr>`).join('')+'</tbody></table><p class="src">From <code>git log -- CLAUDE.md</code>; headings are the lines starting with ## or ###.</p>';
 })();
 
-/* ===== prompts, verbatim from each prompts.md ===== */
-$$('[data-prompt]').forEach(p=>{ const k=p.dataset.prompt; p.textContent='“'+PROMPTS[k].text+'”'; });
-$$('[data-plabel]').forEach(p=>{ const k=p.dataset.plabel; p.textContent='THE EXACT PROMPT · '+PROMPTS[k].module+' · prompts.md #'+PROMPTS[k].n; });
-
-/* ===== module 1: CLAUDE.md lines ===== */
+/* ===== LEVEL 2: signal matrix ===== */
 (function(){
-  const W=680,H=300,L=44,R=14,T=26,B=52,n=CLAUDE_LINES.length,pw=W-L-R,ph=H-T-B,max=130,bw=pw/n*0.7;
-  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart of CLAUDE.md line count: 23 lines at the start, 64 on day one, rising to 121 on 6 October, then 110 after trimming.">`;
-  [0,40,80,120].forEach(t=>{ const y=T+ph-t*ph/max; s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="axis" x="${L-6}" y="${y+4}" text-anchor="end">${t}</text>`; });
-  CLAUDE_LINES.forEach((c,i)=>{
-    const cx=L+(i+.5)*pw/n, h=c.lines*ph/max, y=T+ph-h, last=i===n-1, peak=c.lines===121;
-    s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${h}" rx="3" fill="${last?'#3f8f5f':(peak?'#e63b2e':'#f6c23e')}" stroke="#171310" stroke-width="2.5"><title>${fmtDate(c.date)}: ${c.lines} lines</title></rect>`;
-    s+=`<text class="lab" x="${cx}" y="${y-6}" text-anchor="middle" font-size="13">${c.lines}</text>`;
-    s+=`<text class="axis" x="${cx}" y="${H-24}" text-anchor="middle" font-size="11">${fmtDate(c.date)}</text>`;
+  const H=COMPLAINTS.handlers, rows=COMPLAINTS.rows, t=$('#matrix'); let picked=-1;
+  let h='<thead><tr><th>COMPLAINT</th>'+H.map(x=>`<th>${x.toUpperCase()}</th>`).join('')+'<th></th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    h+=`<tr data-row="${i}"><td class="rowname">${esc(r.name)}</td>`+H.map(name=>{
+      const on=r.by.includes(name), ask=(i===0&&name==='Halloran');
+      return `<td class="cellwrap"><button type="button" class="cell ${on?'on':''} ${ask?'ask':''}" data-r="${i}" data-h="${name}" aria-label="${esc(name)}: ${on?(ask?'raised it when asked':'raised it'):'did not raise it'}: ${esc(r.name)}">${on?(ask?'◐':'●'):'·'}</button></td>`;
+    }).join('')+`<td class="cnt">${r.count} of 4</td></tr>`;
   });
-  s+=`<text class="mark" x="${W-R}" y="${T-8}" text-anchor="end" fill="#2c6b45">now: ${CLAUDE_LINES[n-1].lines}</text></svg>`;
-  $('#m1Chart').innerHTML=s; $('#m1now').textContent=CLAUDE_LINES[n-1].lines;
+  t.innerHTML=h+'</tbody>';
+  function pick(i,name){
+    picked=i; $$('#matrix tr[data-row]').forEach(tr=>tr.classList.toggle('picked',+tr.dataset.row===i)); $$('.cell').forEach(c=>c.classList.toggle('sel',+c.dataset.r===i&&c.dataset.h===name));
+    const r=rows[i]; let extra='';
+    if(i===0) extra=' Ambrose and Aunt Dot volunteered it. Halloran mentioned it only when asked a closing catch-all question.';
+    $('#quoteBox').innerHTML=`<span class="label">${esc(r.label.toUpperCase())} · RAISED BY ${r.count} OF 4</span><p>“${esc(r.quote)}”</p><p class="src" style="margin-top:6px">${esc(r.who)}, the speaker of the line on file.${extra}</p>`;
+  }
+  t.addEventListener('click',e=>{ const c=e.target.closest('.cell'); if(c){ pick(+c.dataset.r,c.dataset.h); return; } const tr=e.target.closest('tr[data-row]'); if(tr) pick(+tr.dataset.row,''); });
+  pick(0,'');
+  $('#l2Rows').innerHTML='<table class="data"><thead><tr><th>COMPLAINT</th><th>RAISED BY</th><th>COUNT</th><th>QUOTE</th></tr></thead><tbody>'+rows.map(r=>`<tr><td style="white-space:normal">${esc(r.name)}</td><td style="white-space:normal">${esc(r.by.join(', '))}</td><td>${r.count} of 4</td><td style="white-space:normal">“${esc(r.quote)}” (${esc(r.who)})</td></tr>`).join('')+'</tbody></table>';
 })();
 
-/* ===== module 3: sparklines ===== */
+/* ===== LEVEL 3: roster race + average chart ===== */
 (function(){
-  const colors={'Farlight':'#e63b2e','Meteor Mite':'#2c6ea6','The Undertow':'#3f8f5f','Vesper':'#7a4fae'};
-  const host=$('#m3Sparks'); const w=240,h=46,max=16;
-  Object.keys(DATA.per).forEach(name=>{
-    const v=DATA.per[name], n=v.length;
-    const d=v.map((q,i)=>(i?'L':'M')+(6+i*(w-12)/(n-1)).toFixed(1)+','+(h-6-q*(h-12)/max).toFixed(1)).join(' ');
-    const row=el('div',{class:'spark-row'});
-    row.innerHTML=`<span>${name}</span><svg viewBox="0 0 ${w} ${h}" class="chart-svg" role="img" aria-label="${name}: ${v[0]} offers in the first week, ${v[n-1]} in the last"><path d="${d}" fill="none" stroke="#171310" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${colors[name]}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${6+(n-1)*(w-12)/(n-1)}" cy="${h-6-v[n-1]*(h-12)/max}" r="4.5" fill="${colors[name]}" stroke="#171310" stroke-width="2"/></svg><b>${v[0]} → ${v[n-1]}</b>`;
-    host.appendChild(row);
-  });
+  let metric='sent', timer=null; const r=$('#weekRange'), maxSent=Math.max(...RESP.responders.flatMap(x=>x.sent));
+  const pre=RESP.responders.map(x=>x.sent.slice(0,6).reduce((a,b)=>a+b)/6);
+  const order=[...RESP.responders.filter(x=>FOUR.includes(x.name)), ...RESP.responders.filter(x=>!FOUR.includes(x.name)).sort((a,b)=>a.name.localeCompare(b.name))];
+  function drawRace(){
+    const w=+r.value; $('#weekOut').textContent='WEEK OF '+WLAB[w].toUpperCase()+(w>=6?' · AFTER 4.2':' · BEFORE 4.2');
+    const preFour=four.sent.slice(0,6).reduce((a,b)=>a+b)/6, preTwelve=twelve.sent.slice(0,6).reduce((a,b)=>a+b)/6;
+    $('#raceTiles').innerHTML=`<div class="stat warn"><b>THE FOUR · OFFERS THIS WEEK</b><span>${four.sent[w]} <small style="font-size:10px;color:#a9b0ff">(avg before: ${preFour.toFixed(0)})</small></span></div><div class="stat ok"><b>THE OTHER TWELVE · OFFERS</b><span>${twelve.sent[w]} <small style="font-size:10px;color:#a9b0ff">(avg before: ${preTwelve.toFixed(0)})</small></span></div>`;
+    let h='<div class="grp">THE FOUR AFFECTED RESPONDERS</div>';
+    order.forEach((x,k)=>{
+      if(k===4) h+='<div class="grp">THE OTHER TWELVE</div>';
+      const idx=RESP.responders.indexOf(x), s=x.sent[w], t=x.taken[w];
+      let pct, val;
+      if(metric==='sent'){ pct=s/maxSent*100; val=String(s); } else { pct=s?t/s*100:0; val=s?Math.round(t/s*100)+'%':'–'; }
+      const tick=metric==='sent'?`<i class="tk" style="left:${pre[idx]/maxSent*100}%" title="average before 4.2: ${pre[idx].toFixed(1)}"></i>`:'';
+      h+=`<div class="rr ${FOUR.includes(x.name)?'four':''}"><span class="nm">${esc(x.name)}</span><div class="tr"><i class="fl" style="width:${pct}%"></i>${tick}</div><span class="vl">${val}</span></div>`;
+    });
+    $('#race').innerHTML=h;
+    // rows drawer: the exact CSV rows for this week
+    $('#l3Rows').innerHTML=`<p class="src" style="margin-top:0">All 16 rows of <code>callout-history.csv</code> where week_starting = ${RESP.weeks[w]}.</p><table class="data"><thead><tr><th>WEEK_STARTING</th><th>RESPONDER</th><th>HANDLER</th><th>PINGS_SENT</th><th>PINGS_TAKEN</th></tr></thead><tbody>`+order.map(x=>`<tr class="${FOUR.includes(x.name)?'hot':''}"><td>${RESP.weeks[w]}</td><td>${esc(x.name)}</td><td>${esc(x.handler)}</td><td>${x.sent[w]}</td><td>${x.taken[w]}</td></tr>`).join('')+'</tbody></table>';
+    drawAvg();
+  }
+  r.max=NW-1; r.addEventListener('input',drawRace);
+  $$('[data-metric]').forEach(b=>b.addEventListener('click',()=>{ metric=b.dataset.metric; $$('[data-metric]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); drawRace(); }));
+  const play=$('#racePlay');
+  function stop(){ clearInterval(timer); timer=null; play.innerHTML='&#9654; PLAY'; }
+  play.addEventListener('click',()=>{ if(timer){ stop(); return; } if(+r.value>=NW-1) r.value=0; play.innerHTML='&#9632; STOP'; drawRace(); timer=setInterval(()=>{ if(+r.value>=NW-1){ stop(); return; } r.value=+r.value+1; drawRace(); },REDUCE?1400:850); });
+  window.stopRace=stop;
+
+  /* the average lies */
+  let view='rate';
+  const rate=total.taken.map((t,i)=>t/total.sent[i]);
+  const preS=total.sent.slice(0,6).reduce((a,b)=>a+b)/6, preT=total.taken.slice(0,6).reduce((a,b)=>a+b)/6, last=NW-1;
+  function drawAvg(){
+    const cur=+r.value;
+    const v = view==='rate'
+      ? {html:lineChart({labels:WLAB,aria:`Weekly yes-rate: ${(rate[0]*100).toFixed(1)} percent in late June, a low of ${(rate[6]*100).toFixed(1)} percent the week 4.2 shipped, ${(rate[last]*100).toFixed(1)} percent by 31 August.`,yMin:0.4,yMax:0.9,ticks:[0.4,0.5,0.6,0.7,0.8,0.9],tickFmt:t=>Math.round(t*100)+'%',valFmt:v=>(v*100).toFixed(1)+'%',marker:6,cursor:cur,series:[{name:'Yes-rate',color:C.red,textColor:C.redT,values:rate}]}),
+         legend:`<span><i style="background:${C.red}"></i>Share of offers taken, all 16 responders</span>`,
+         caption:`The yes-rate dips to <b>${(rate[6]*100).toFixed(1)}%</b> when 4.2 ships, then climbs back to <b>${(rate[last]*100).toFixed(1)}%</b>. It looks like recovery. It isn't: it climbs because the four stopped being asked.`}
+      : {html:lineChart({labels:WLAB,aria:`Raw counts. Offers sent are ${total.sent[last]} against a before-4.2 average of ${preS.toFixed(1)}. Offers taken are ${total.taken[last]} against ${preT.toFixed(1)}.`,yMin:80,yMax:190,ticks:[80,110,140,170,190],marker:6,cursor:cur,baselines:[{v:preS,color:C.ink},{v:preT,color:C.greenT}],series:[{name:'Offers sent',color:C.pink,values:total.sent},{name:'Offers taken',color:C.green,textColor:C.greenT,values:total.taken}]}),
+         legend:`<span><i style="background:${C.pink}"></i>Offers sent</span><span><i style="background:${C.green}"></i>Offers taken</span><span>- - - dashed: the average before 4.2 (sent ${preS.toFixed(1)}, taken ${preT.toFixed(1)})</span>`,
+         caption:`Look at the raw counts and there is no recovery. By 31 Aug, offers taken are <b>${total.taken[last]}</b> against <b>${preT.toFixed(1)}</b> before 4.2, and offers sent are <b>${total.sent[last]}</b> against <b>${preS.toFixed(1)}</b>. Dispatch is still filling fewer callouts.`};
+    $('#cliffChart').innerHTML=v.html; $('#cliffLegend').innerHTML=v.legend; $('#cliffCaption').innerHTML=v.caption;
+  }
+  $$('[data-view]').forEach(b=>b.addEventListener('click',()=>{ view=b.dataset.view; $$('[data-view]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); drawAvg(); }));
+  drawRace();
 })();
 
-/* ===== module 4: score ladder ===== */
+/* ===== LEVEL 4: score ladder + real code ===== */
 (function(){
-  let score=0.5; const CREDIT=0.08, PEN=0.12;
-  const clamp=v=>Math.max(0,Math.min(1,v));
+  let score=0.5; const CREDIT=0.08, PEN=0.12; const clamp=v=>Math.max(0,Math.min(1,v));
   const bar=$('#ladderBar'), out=$('#ladderScore'), msg=$('#ladderMsg');
   function draw(note){
-    out.textContent=score.toFixed(2); bar.style.width=(score*100)+'%'; bar.style.background=score<0.25?'#e63b2e':(score<0.5?'#f6c23e':'#3f8f5f');
-    if(note) msg.textContent=note;
-    else if(score<=0.0001) msg.textContent='At the bottom of the list, an offer only reaches you if everyone above you declines. To earn points you need an offer. To get an offer you need points.';
-    else msg.textContent='';
+    out.textContent=score.toFixed(2); bar.style.width=(score*100)+'%'; bar.style.background=score<0.25?C.red:(score<0.5?C.yellow:C.green);
+    msg.textContent = note || (score<=0.0001 ? 'At the bottom of the list, an offer only reaches you if everyone above you declines. To earn points you need an offer. To get an offer you need points.' : '');
   }
-  function yes(){ score=clamp(score+CREDIT); draw(); }
-  function miss(){ score=clamp(score-PEN); draw(); }
-  $('#lYes').addEventListener('click',yes); $('#lMiss').addEventListener('click',miss);
+  $('#lYes').addEventListener('click',()=>{ score=clamp(score+CREDIT); draw(); });
+  $('#lMiss').addEventListener('click',()=>{ score=clamp(score-PEN); draw(); });
   $('#lReset').addEventListener('click',()=>{ score=0.5; draw('Back to neutral.'); });
-  $$('[data-run]').forEach(b=>b.addEventListener('click',()=>{
-    const k=+b.dataset.run; score=0.5;
-    for(let i=0;i<10;i++){ const y=Math.floor((i+1)*k/10)>Math.floor(i*k/10); score=clamp(score+(y?CREDIT:-PEN)); }
-    draw(`After 10 offers with ${k} yes: ${score.toFixed(2)}. ${k<6?'Below 6 yes in 10 the score sinks.':(k===6?'6 yes in 10 is break-even: it just holds still.':'Above 6 yes in 10 it climbs.')}`);
-  }));
+  $$('[data-run]').forEach(b=>b.addEventListener('click',()=>{ const k=+b.dataset.run; score=0.5; for(let i=0;i<10;i++){ const y=Math.floor((i+1)*k/10)>Math.floor(i*k/10); score=clamp(score+(y?CREDIT:-PEN)); } draw(`After 10 offers with ${k} yes: ${score.toFixed(2)}. ${k<6?'Below 6 yes in 10 the score sinks.':(k===6?'6 yes in 10 is break-even: it just holds still.':'Above 6 yes in 10 it climbs.')}`); }));
   draw();
+  $('#codeRows').textContent='# history.py\n'+CODE.history+'\n\n# config.py\n'+CODE.config;
 })();
 
-/* ===== module 6: scheduled-run grid ===== */
+/* ===== LEVEL 5: Meteor Mite timeline + rows ===== */
 (function(){
-  $('#m6Rows').innerHTML=SCHEDULED.map(r=>`<tr><td><code>${r.name}</code></td>`+r.checks.map(ok=>ok?`<td class="ok"><span aria-hidden="true">✔</span><span class="vh">pass</span></td>`:`<td class="bad"><b aria-hidden="true">✘ flagged</b><span class="vh">flagged</span></td>`).join('')+`</tr>`).join('');
-})();
-
-/* ===== Meteor Mite timeline ===== */
-(function(){
-  const W=680,H=210,L=88,R=18,T=18,B=42, pw=W-L-R;
-  const t0=Date.parse('2026-08-12T00:00:00'), t1=Date.parse('2026-09-07T00:00:00');
-  const x=t=>L+(t-t0)*pw/(t1-t0);
-  const lanes={'taken':[T+20,'#3f8f5f','taken'],'turned down':[T+62,'#f6c23e','turned down'],'missed':[T+104,'#e63b2e','no answer']};
+  const W=680,H=210,L=88,R=18,T=18; const pw=W-L-R;
+  const t0=Date.parse('2026-08-12T00:00:00'), t1=Date.parse('2026-09-07T00:00:00'); const x=t=>L+(t-t0)*pw/(t1-t0);
+  const lanes={'taken':[T+20,C.green,'taken'],'turned down':[T+62,C.yellow,'turned down'],'missed':[T+104,C.red,'no answer']};
   let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of Meteor Mite's offers from 12 August to 6 September. The last offer before the quiet was 22 August. No offer was taken after 19 August.">`;
-  Object.values(lanes).forEach(([y,c,lab])=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="axis" x="${L-8}" y="${y+4}" text-anchor="end">${lab}</text>`; });
-  for(let d=12; d<=36; d+=4){ const t=Date.parse('2026-08-'+String(Math.min(d,31)).padStart(2,'0')+'T00:00:00'); const tt=d<=31?t:Date.parse('2026-09-'+String(d-31).padStart(2,'0')+'T00:00:00'); const lab=d<=31?d+' Aug':(d-31)+' Sep'; s+=`<line class="gridline" x1="${x(tt)}" x2="${x(tt)}" y1="${T}" y2="${T+130}"/><text class="axis" x="${x(tt)}" y="${H-18}" text-anchor="middle">${lab}</text>`; }
+  Object.values(lanes).forEach(([y,c,lab])=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="axis" x="${L-8}" y="${y+5}" text-anchor="end">${lab}</text>`; });
+  for(let d=12;d<=36;d+=4){ const tt=d<=31?Date.parse('2026-08-'+String(d).padStart(2,'0')+'T00:00:00'):Date.parse('2026-09-'+String(d-31).padStart(2,'0')+'T00:00:00'); s+=`<line class="gridline" x1="${x(tt)}" x2="${x(tt)}" y1="${T}" y2="${T+130}"/><text class="axis" x="${x(tt)}" y="${H-18}" text-anchor="middle">${d<=31?d+' Aug':(d-31)+' Sep'}</text>`; }
   const gs=Date.parse('2026-08-22T20:53:13'), ge=Date.parse('2026-08-25T20:53:13');
-  s+=`<rect x="${x(gs)}" y="${T}" width="${x(ge)-x(gs)}" height="130" fill="#e63b2e" fill-opacity=".14"/><line x1="${x(ge)}" x2="${x(ge)}" y1="${T}" y2="${T+130}" stroke="#171310" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${x(ge)+6}" y="${T+11}" fill="#b3261b">CARD FIRES, 25 Aug evening</text><text class="mark" x="${(x(gs)+x(ge))/2}" y="${T+150}" text-anchor="middle" fill="#b3261b">3 days with no offers</text>`;
-  MITE.forEach(e=>{ const [y,c]=lanes[e.outcome]; const t=Date.parse(e.at); s+=`<circle cx="${x(t)}" cy="${y}" r="7" fill="${c}" stroke="#171310" stroke-width="2.5"><title>${e.label}: ${e.outcome}</title></circle>`; });
+  s+=`<rect x="${x(gs)}" y="${T}" width="${x(ge)-x(gs)}" height="130" fill="${C.red}" fill-opacity=".2"/><line x1="${x(ge)}" x2="${x(ge)}" y1="${T}" y2="${T+130}" stroke="${C.ink}" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${x(ge)+6}" y="${T+13}" fill="${C.redT}">CARD FIRES, 25 Aug evening</text><text class="mark" x="${(x(gs)+x(ge))/2}" y="${T+152}" text-anchor="middle" fill="${C.redT}">3 days, no offers</text>`;
+  MITE.forEach(e=>{ const [y,c]=lanes[e.outcome]; s+=`<circle cx="${x(Date.parse(e.at))}" cy="${y}" r="7" fill="${c}" stroke="${C.ink}" stroke-width="2"><title>${e.label}: ${e.outcome}</title></circle>`; });
   $('#miteChart').innerHTML=s+'</svg>';
+  $('#miteRows').innerHTML='<table class="data"><thead><tr><th>SENT_AT</th><th>OUTCOME</th></tr></thead><tbody>'+MITE.map(e=>`<tr class="${e.outcome==='taken'?'':''}"><td>${e.at.replace('T',' ')}</td><td>${e.outcome}</td></tr>`).join('')+'</tbody></table><p class="src">Meteor Mite took nothing after 19 Aug 17:30. The card fires 72 hours after the 22 Aug 20:53 offer.</p>';
 })();
 
-/* ===== deck navigation ===== */
+/* ===== LEVEL 6: replay the checklist ===== */
 (function(){
-  const slides=$$('.deck > .slide'); let cur=0;
-  const dots=$('#dots'), count=$('#count');
-  slides.forEach((s,i)=>{ const b=el('button',{type:'button','aria-label':'Go to slide '+(i+1)+': '+s.getAttribute('aria-label')}); b.addEventListener('click',()=>show(i)); dots.appendChild(b); });
-  function show(i,focus=true){
-    cur=Math.max(0,Math.min(slides.length-1,i));
-    slides.forEach((s,k)=>{ s.hidden=k!==cur; });
-    $$('#dots button').forEach((b,k)=>b.setAttribute('aria-current',String(k===cur)));
-    count.textContent=(cur+1)+' / '+slides.length;
-    $('#prev').disabled=cur===0; $('#next').disabled=cur===slides.length-1;
-    $('#prev').style.opacity=cur===0?.45:1; $('#next').style.opacity=cur===slides.length-1?.45:1;
-    try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
-    if(focus){ const h=slides[cur].querySelector('h1,h2'); if(h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); } }
-    window.scrollTo(0,0);
+  const LABELS=['OWNER NAMED?','SUCCESS MEASURE?','SCOPE BOUNDED?','PROBLEM FIRST?']; let bi=0, running=false, timers=[];
+  const tabs=$('#briefTabs');
+  BRIEFS.forEach((b,i)=>{ const btn=el('button',{type:'button',class:'btn small','aria-pressed':String(i===0)}, esc(b.file.replace('.txt',''))); btn.addEventListener('click',()=>{ bi=i; $$('#briefTabs .btn').forEach((x,k)=>x.setAttribute('aria-pressed',String(k===i))); reset(); }); tabs.appendChild(btn); });
+  function renderDoc(reveal){
+    const b=BRIEFS[bi]; let h=`<h3>${esc(b.title)}</h3><div class="meta">${esc(b.meta)}</div>`;
+    b.paras.forEach(p=>{
+      const heading=p.length<30 && !/[.,]/.test(p);
+      if(heading){ h+=`<h4>${esc(p)}</h4>`; return; }
+      let t=esc(p), whole=null;
+      b.hl.forEach(hl=>{
+        if(!reveal) return;
+        if(hl.para && p.startsWith(hl.para)) whole=hl;
+        else if(hl.text){ const e=esc(hl.text); if(t.includes(e)) t=t.replace(e,`<mark class="${hl.kind}" title="${esc(hl.label)}">${e}</mark>`); }
+      });
+      if(whole) t=`<mark class="${whole.kind}" title="${esc(whole.label)}">${t}</mark>`;
+      h+=`<p>${t}</p>`;
+    });
+    $('#doc').innerHTML=h;
   }
-  $('#prev').addEventListener('click',()=>show(cur-1)); $('#next').addEventListener('click',()=>show(cur+1));
-  $$('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go==='first'?0:cur+1)));
-  document.addEventListener('keydown',e=>{
-    if(e.altKey||e.ctrlKey||e.metaKey) return;
-    const t=e.target; if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='IFRAME')) return;
-    if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); show(cur+1); }
-    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(cur-1); }
-    else if(e.key==='Home'){ show(0); } else if(e.key==='End'){ show(slides.length-1); }
+  function tiles(states){ $('#tiles').innerHTML=LABELS.map((l,i)=>{ const s=states[i]; return `<div class="tile ${s}"><div class="tl">${l}</div><div class="ts">${s==='pass'?'✔ PASS':(s==='flag'?'✘ FLAG':(s==='run'?'CHECKING…':'WAITING'))}</div></div>`; }).join(''); }
+  function reset(){ timers.forEach(clearTimeout); timers=[]; running=false; $('#runBtn').disabled=false; renderDoc(false); tiles(['','','','']); $('#verdict').innerHTML='<span class="label">VERDICT</span><p>Press REPLAY. This replays the real run of 13 Oct 2026 and highlights where the flag came from.</p>'; }
+  $('#runBtn').addEventListener('click',()=>{
+    if(running) return; running=true; $('#runBtn').disabled=true; const b=BRIEFS[bi]; const st=['','','',''];
+    const step=(i)=>{
+      if(i>3){ running=false; $('#runBtn').disabled=false; renderDoc(true); $('#verdict').innerHTML=`<span class="label">VERDICT · 1 FLAG · ${LABELS[b.flag]}</span><p>${esc(b.note)}</p><p class="src" style="margin-top:6px">Highlights: red = where it goes wrong, yellow = the nearest thing to what was missing, cyan = where the problem finally appears.</p>`; announce('Run complete: one flag, '+LABELS[b.flag]); return; }
+      st[i]='run'; tiles(st);
+      timers.push(setTimeout(()=>{ st[i]=(i===b.flag?'flag':'pass'); tiles(st); beep(i===b.flag?220:880,90); step(i+1); },REDUCE?0:650));
+    };
+    step(0);
   });
-  const start=parseInt((location.hash||'').slice(1),10);
-  show(Number.isFinite(start)?start-1:0,false);
+  $('#schedRaw').textContent=SCHED_RAW;
+  reset();
+})();
+
+/* ===== navigation, paths, map, deep links ===== */
+const STAGES={
+  tutorial:{n:'START',name:'TUTORIAL',sprite:'flag',teaser:'What happened with 4.2, in plain words'},
+  l1:{n:'LEVEL 1',name:'ORIGIN STORY',sprite:'doc',teaser:'Scrub through how the context file grew'},
+  l2:{n:'LEVEL 2',name:'SUPER HEARING',sprite:'speech',teaser:'The signal board: who said what'},
+  l3:{n:'LEVEL 3',name:'REWIND',sprite:'chart',teaser:'Race 16 responders through the weeks'},
+  l4:{n:'LEVEL 4',name:'X-RAY VISION',sprite:'mag',teaser:'Play the score and see it never recover'},
+  l5:{n:'LEVEL 5',name:'SUPER SPEED',sprite:'rocket',teaser:'Play the fix: the real prototype'},
+  l6:{n:'LEVEL 6',name:'SIDEKICKS',sprite:'shield',teaser:'Replay the checklist on four real briefs'},
+  quests:{n:'BONUS',name:'SIDE QUESTS',sprite:'star',teaser:'What is still open, and who can answer'}
+};
+const PATHS={
+  gist:{name:'THE GIST',time:'about 2 minutes',blurb:'What happened, the number that matters, and the fix.',stages:['tutorial','l3','l5']},
+  helen:{name:'FOR HELEN',time:'about 4 minutes',blurb:'The number, the fix you can click, and the decisions still open.',stages:['tutorial','l3','l5','quests']},
+  eng:{name:'FOR MARCUS & WEN',time:'about 5 minutes',blurb:'The code, the data behind it, and what still needs confirming.',stages:['tutorial','l4','l3','quests']},
+  full:{name:'THE FULL TOUR',time:'about 12 minutes',blurb:'All six levels, in the order the work happened.',stages:['tutorial','l1','l2','l3','l4','l5','l6','quests']}
+};
+let path='full', cur='title'; const visited=new Set();
+const order=()=>['title','map',...PATHS[path].stages];
+const screens=$$('.screen');
+function announce(t){ $('#announce').textContent=t; }
+function toast(t){ const e=$('#toast'); e.textContent=t; e.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>{ e.hidden=true; },3200); }
+
+function renderPaths(){ $('#paths').innerHTML=''; Object.entries(PATHS).forEach(([k,p])=>{ const b=el('button',{type:'button',class:'path','data-path':k},`<span class="pt">&#9654; ${p.name}</span>${esc(p.blurb)}<span class="pm">${p.stages.length} STAGES · ${p.time.toUpperCase()}</span>`); b.addEventListener('click',()=>{ path=k; go('map'); }); $('#paths').appendChild(b); }); }
+function renderMap(){
+  const stages=PATHS[path].stages;
+  $('#briefing').innerHTML=`<span class="label">MISSION BRIEFING · PATH: ${PATHS[path].name}</span><p class="small"><b>What shipped:</b> on 12 Aug, Release 4.2 shifted routing toward closeness and cut each offer's wait from 90 to 60 seconds.</p><p class="small" style="margin-top:6px"><b>Who it hurt:</b> 4 of 16 responders lost almost all their offers (${four.sent[0]} a week to ${four.sent[NW-1]}) while the other twelve got more (${twelve.sent[0]} to ${twelve.sent[NW-1]}).</p><p class="small" style="margin-top:6px"><b>The fix:</b> tell the handler, tell the responder. Play it in Level 5.</p><div class="row" style="margin-top:12px"><button class="btn" type="button" id="goFirst">&#9654; START YOUR PATH</button><button class="btn ghost small" type="button" id="goPaths">CHANGE PATH</button></div>`;
+  $('#goFirst').addEventListener('click',()=>go(stages[0])); $('#goPaths').addEventListener('click',()=>go('title'));
+  const g=$('#mapgrid'); g.innerHTML='';
+  Object.entries(STAGES).forEach(([id,s])=>{
+    const idx=stages.indexOf(id); const b=el('button',{type:'button',class:'node'+(idx<0?' off':''),'data-stage':id},`${idx>=0?`<span class="badge">STEP ${idx+1}</span>`:'<span class="badge opt">OPTIONAL</span>'}${sprite(s.sprite,56)}<span class="nn">${s.n}</span><span class="nt">${s.name}</span><span>${esc(s.teaser)}</span>${visited.has(id)?'<span class="done">✔ VISITED</span>':''}`);
+    b.addEventListener('click',()=>go(id)); g.appendChild(b);
+  });
+}
+function renderDots(){
+  const d=$('#dots'); d.innerHTML=''; const o=order();
+  o.forEach(id=>{ const name=id==='title'?'Title':id==='map'?'Map':STAGES[id].name; const b=el('button',{type:'button','aria-label':'Go to '+name,title:name}); b.dataset.id=id; b.addEventListener('click',()=>go(id)); d.appendChild(b); });
+}
+function updateChrome(){
+  const o=order(), i=o.indexOf(cur);
+  $$('#dots button').forEach(b=>{ b.setAttribute('aria-current',String(b.dataset.id===cur)); b.classList.toggle('off',false); });
+  $('#count').textContent=i>=0?`${Math.max(i,0)+1} / ${o.length}`:'OFF PATH';
+  $('#prev').disabled=cur==='title'; $('#next').disabled=cur==='quests'&&i===o.length-1;
+  const done=PATHS[path].stages.filter(s=>visited.has(s)).length; $('#hudXp').style.width=(done/PATHS[path].stages.length*100)+'%';
+  const scr=$('#scr-'+cur); $('#hudWhere').textContent=scr?scr.dataset.title:'';
+  $('#hudXpWrap').setAttribute('aria-label',`Progress along your path: ${done} of ${PATHS[path].stages.length} stages`);
+}
+function go(id,opts={}){
+  if(!$('#scr-'+id)) id='title';
+  if(window.stopRace && id!=='l3') window.stopRace();
+  cur=id; if(STAGES[id]) visited.add(id);
+  screens.forEach(s=>{ s.hidden=s.id!=='scr-'+id; });
+  if(id==='map') renderMap();
+  renderDots(); updateChrome();
+  try{ history.replaceState(null,'','#'+path+'/'+id); }catch(e){}
+  const scr=$('#scr-'+id), h=scr.querySelector('h1,h2'); if(h && !opts.quiet){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); }
+  announce((scr.dataset.title||'')+' opened');
+  window.scrollTo(0,0);
+}
+function move(dir){ const o=order(), i=o.indexOf(cur); if(i<0){ go('map'); return; } go(o[Math.max(0,Math.min(o.length-1,i+dir))]); }
+$('#prev').addEventListener('click',()=>move(-1)); $('#next').addEventListener('click',()=>move(1)); $('#hudMap').addEventListener('click',()=>go('map'));
+
+/* every stage gets the same footer: back to map, copy link, next stop on your path */
+$$('.screen').forEach(s=>{
+  const id=s.id.replace('scr-',''); if(!STAGES[id] || s.querySelector('.stage-foot')) return;
+  const f=el('div',{class:'stage-foot'},`<button class="btn ghost" type="button" data-act="map">&#9664; BACK TO MAP</button><button class="btn blue" type="button" data-act="share">COPY LINK TO THIS STAGE</button><button class="btn red" type="button" data-act="next">NEXT STOP &#9654;</button>`); s.appendChild(f);
+});
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  if(a.dataset.act==='map') go('map'); else if(a.dataset.act==='next') move(1); else if(a.dataset.act==='print') window.print();
+  else if(a.dataset.act==='share'){
+    const url=location.href.split('#')[0]+'#'+path+'/'+cur;
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('LINK COPIED: '+url),()=>toast('COPY THIS LINK: '+url));
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey) return; const t=e.target;
+  if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='IFRAME'||t.tagName==='SUMMARY')) return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); move(1); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); move(-1); }
+  else if(e.key==='m'||e.key==='M'){ go('map'); }
+});
+renderPaths();
+(function start(){
+  const parts=(location.hash||'').slice(1).split('/').filter(Boolean);
+  if(parts.length===2 && PATHS[parts[0]] && $('#scr-'+parts[1])){ path=parts[0]; go(parts[1],{quiet:true}); }
+  else if(parts.length===1 && PATHS[parts[0]]){ path=parts[0]; go('map',{quiet:true}); }
+  else if(parts.length===1 && STAGES[parts[0]]){ go(parts[0],{quiet:true}); }
+  else go('title',{quiet:true});
 })();
 </script>
 </body>
