@@ -1,392 +1,1045 @@
-<title>Release 4.2 Debrief</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release 4.2 Debrief: Final Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Plan: 70s comic book, newsprint-light, one committed look (no dark mode).
-   Cream paper ground, heavy black ink, Ben-Day halftone dots, primary-color
-   bursts (red/yellow/blue). Bangers for shouty titles, Comic Neue for body
-   and captions -- it's licensed for exactly this job and stays legible. */
+/* Plan: a slide deck in the 70s comic-book look this report already had: cream newsprint, heavy ink,
+   halftone dots, primary-colour bursts. One committed light look. Every number on a slide is built at
+   load time from the real files (CSV, prompts.md, git line counts), so nothing here is typed by hand
+   except the words. */
 :root{
-  --paper:#f3e6c8; --paper2:#ead9ad; --ink:#171310;
-  --red:#e63b2e; --yellow:#f6c23e; --blue:#2c6ea6; --green:#3f8f5f; --purple:#7a4fae;
-  --muted:#5a4e38;
-  --display:"Bangers", "Arial Black", sans-serif; --body:"Comic Neue", "Comic Sans MS", sans-serif;
-  color-scheme: light;
+  --paper:#f3e6c8; --paper2:#ead9ad; --ink:#171310; --muted:#5a4e38;
+  --red:#e63b2e; --redText:#b3261b; --yellow:#f6c23e; --blue:#2c6ea6; --green:#3f8f5f; --greenText:#2c6b45; --purple:#7a4fae;
+  --display:"Bangers","Arial Black",sans-serif; --body:"Comic Neue","Comic Sans MS",sans-serif;
+  color-scheme:light;
 }
-*{box-sizing:border-box;}
-html,body{margin:0;}
+*{box-sizing:border-box}
+html,body{margin:0}
 body{
-  background:
-    radial-gradient(circle, rgba(23,19,16,0.09) 1px, transparent 1.3px) 0 0/14px 14px,
-    var(--paper);
+  background:radial-gradient(circle,rgba(23,19,16,.09) 1px,transparent 1.3px) 0 0/14px 14px,var(--paper);
   color:var(--ink); font-family:var(--body); font-weight:700; font-size:19px; line-height:1.45;
-  padding-inline:16px; padding-block:24px 60px;
+  padding:20px 16px 110px;
 }
-h1,h2,h3{font-family:var(--display); font-weight:400; letter-spacing:0.02em; line-height:1.15; margin:0; text-wrap:balance;}
-p{margin:0;}
-a{color:var(--blue);}
-.wrap{max-width:980px; margin:0 auto;}
+h1,h2,h3{font-family:var(--display); font-weight:400; letter-spacing:.02em; line-height:1.12; margin:0; text-wrap:balance}
+p{margin:0}
+a{color:var(--blue)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em; background:rgba(23,19,16,.08); padding:1px 5px; border-radius:3px}
+:focus-visible{outline:4px solid var(--ink); outline-offset:3px; box-shadow:0 0 0 3px var(--yellow)}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* ink-outline utility */
-.panel-border{
-  border:4px solid var(--ink); border-radius:6px; background:var(--paper2);
-  box-shadow:7px 7px 0 var(--ink);
+.deck{max-width:1060px;margin:0 auto}
+.slide{animation:pop .25s ease-out}
+.slide[hidden]{display:none}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slide{animation:none}}
+
+.box{background:#fff8e6;border:4px solid var(--ink);border-radius:6px;box-shadow:6px 6px 0 var(--ink);padding:18px 20px}
+.box.tight{padding:14px 16px}
+.tag{display:inline-block;font-family:var(--display);font-size:14px;letter-spacing:.04em;background:var(--ink);color:var(--yellow);padding:4px 10px;border-radius:3px;transform:rotate(-1.5deg);margin-bottom:10px}
+.tag.blue{background:var(--blue);color:#fff8e6;border:3px solid var(--ink)}
+.slide-title{font-size:clamp(28px,5vw,46px);color:var(--purple);-webkit-text-stroke:1.5px var(--ink);margin:6px 0 14px}
+.lede{font-size:clamp(19px,2.6vw,24px);max-width:62ch}
+.lede + .lede{margin-top:10px}
+.src{font-size:14px;color:var(--muted);font-weight:700;margin-top:8px}
+.small{font-size:16px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.grid>*{min-width:0}
+
+/* cover */
+.cover{position:relative;overflow:hidden}
+.cover .eyebrow{font-family:var(--display);font-size:18px;letter-spacing:.08em;background:var(--red);color:#fff8e6;padding:3px 10px;border:3px solid var(--ink);display:inline-block;transform:rotate(-2deg)}
+.cover h1{font-size:clamp(40px,9vw,92px);color:var(--yellow);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:6px 6px 0 var(--red);margin:12px 0 6px}
+.cover .by{font-size:20px;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.stat{background:var(--yellow);border:3px solid var(--ink);border-radius:5px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;box-shadow:4px 4px 0 var(--ink);min-width:150px}
+.stat b{font-family:var(--display);font-size:13px;letter-spacing:.04em;color:var(--ink);text-transform:uppercase;font-weight:400}
+.stat span{font-family:var(--display);font-size:26px;line-height:1.1}
+.stat.warn span{color:var(--redText)}
+.stat.ok span{color:var(--greenText)}
+.cta{margin-top:22px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--display);font-size:20px;letter-spacing:.03em;color:#fff8e6;background:var(--red);border:4px solid var(--ink);border-radius:6px;padding:10px 20px;box-shadow:4px 4px 0 var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.btn.blue{background:var(--blue)}
+.btn.ghost{background:#fff8e6;color:var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
+.btn.small{font-size:15px;padding:6px 12px;box-shadow:3px 3px 0 var(--ink)}
+.hint{color:var(--muted);font-size:16px}
+
+/* panels */
+.frames .box h3{font-size:24px;margin-bottom:8px;color:var(--ink)}
+.frames .box ul{margin:8px 0 0;padding-left:20px}
+.frames .box li{margin:4px 0;font-size:18px}
+.frames .box:nth-child(1){transform:rotate(-.4deg)} .frames .box:nth-child(2){transform:rotate(.4deg)} .frames .box:nth-child(3){transform:rotate(-.3deg)}
+.num{font-family:var(--display);color:var(--redText)}
+.frames .big{font-family:var(--display);font-size:44px;line-height:1;color:var(--redText)}
+.caption{margin-top:12px;background:var(--yellow);border:3px solid var(--ink);border-radius:3px;padding:10px 14px;box-shadow:3px 3px 0 var(--ink)}
+.caption p{font-size:18px}
+.caption .label{font-family:var(--display);font-size:13px;letter-spacing:.05em;display:block;margin-bottom:4px;font-weight:400}
+
+/* charts */
+.chart-wrap{padding:16px 18px 10px}
+.chart-svg{width:100%;height:auto;display:block;font-family:var(--body)}
+.chart-svg .gridline{stroke:var(--muted);stroke-opacity:.25;stroke-width:1}
+.chart-svg .axis{fill:var(--muted);font-size:12px;font-weight:700}
+.chart-svg .mark{font-size:12px;font-weight:700}
+.chart-svg .lab{font-size:14px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0 2px;font-size:16px}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid var(--ink);margin-right:6px;vertical-align:-1px}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+
+/* issue slides */
+.issue-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px}
+.issue-head .tag{margin-bottom:0}
+.finding{font-size:clamp(19px,2.4vw,23px)}
+.finding b{background:var(--yellow);padding:0 4px}
+.bubble{position:relative;margin-top:16px;background:#fff;border:4px solid var(--ink);border-radius:18px;padding:14px 18px;box-shadow:5px 5px 0 var(--ink)}
+.bubble::after{content:"";position:absolute;left:34px;bottom:-22px;border:12px solid transparent;border-top:12px solid var(--ink)}
+.bubble .label{font-family:var(--display);font-size:13px;letter-spacing:.05em;display:block;margin-bottom:4px;color:var(--redText);font-weight:400}
+.bubble p{font-size:18px;font-style:italic;white-space:pre-wrap}
+.bubble + .bubble{margin-top:26px}
+.handler{padding:12px 14px}
+.handler h3{font-size:22px;margin-bottom:2px}
+.handler .badge{display:inline-block;font-family:var(--display);font-size:12px;letter-spacing:.04em;padding:2px 8px;border:2px solid var(--ink);border-radius:3px;margin-bottom:6px;font-weight:400}
+.badge.yes{background:var(--green);color:#fff8e6}.badge.ask{background:var(--yellow)}.badge.diff{background:var(--blue);color:#fff8e6}
+.handler q{display:block;font-size:16px;font-style:italic;font-weight:700}
+.note{margin-top:10px;border-left:8px solid var(--blue);background:#fff8e6;padding:8px 12px;font-size:16px}
+
+.bignum{font-family:var(--display);font-size:clamp(64px,14vw,130px);line-height:.95;color:var(--redText);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--yellow)}
+.spark-row{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;margin:6px 0}
+.spark-row span{font-size:16px}
+.spark-row b{font-family:var(--display);font-weight:400;font-size:20px;text-align:right}
+
+/* code + ladder */
+pre.code{white-space:pre-wrap;word-break:break-word;margin:0;background:#1f1a14;color:#f3e6c8;border:4px solid var(--ink);border-radius:6px;padding:14px 16px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14.5px;line-height:1.5;font-weight:400;box-shadow:5px 5px 0 var(--ink)}
+pre.code .hl-off{background:rgba(230,59,46,.45);display:block;margin:0 -16px;padding:0 16px}
+pre.code .hl-on{background:rgba(63,143,95,.5);display:block;margin:0 -16px;padding:0 16px}
+pre.code .c{color:#b9a98a}
+.ladder{margin-top:6px}
+.bar{height:30px;border:3px solid var(--ink);border-radius:4px;background:#fff;overflow:hidden}
+.bar > i{display:block;height:100%;background:var(--green);width:50%;transition:width .25s,background .25s}
+@media (prefers-reduced-motion:reduce){.bar > i{transition:none}}
+.ladder .readout{font-family:var(--display);font-size:30px;margin:6px 0}
+.ladder .msg{min-height:3.2em;font-size:17px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+
+/* module 6 grid */
+table.checks{width:100%;border-collapse:collapse;font-size:17px}
+table.checks th,table.checks td{border:3px solid var(--ink);padding:8px 10px;text-align:center;background:#fff8e6}
+table.checks th{background:var(--yellow);font-family:var(--display);font-weight:400;letter-spacing:.03em;font-size:15px}
+table.checks td:first-child,table.checks th:first-child{text-align:left}
+table.checks td.ok{color:var(--greenText)} table.checks td.bad{background:#f7c9c3;color:var(--redText)}
+td .sr{position:absolute;left:-9999px}
+
+/* timeline + proto */
+.proto-wrap{margin-top:14px}
+iframe.proto{width:100%;height:880px;border:4px solid var(--ink);border-radius:6px;background:#fff;box-shadow:6px 6px 0 var(--ink)}
+@media (max-width:700px){iframe.proto{height:1100px}}
+
+/* map table */
+table.map{width:100%;border-collapse:separate;border-spacing:0 10px;font-size:17px}
+table.map td{background:#fff8e6;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);padding:10px 12px;vertical-align:top}
+table.map td:first-child{border-left:3px solid var(--ink);border-radius:6px 0 0 6px;font-family:var(--display);font-size:20px;white-space:nowrap}
+table.map td:last-child{border-right:3px solid var(--ink);border-radius:0 6px 6px 0}
+@media (max-width:760px){table.map,table.map tbody,table.map tr,table.map td{display:block}table.map td{border:3px solid var(--ink);border-bottom:0}table.map td:last-child{border-bottom:3px solid var(--ink)}table.map tr{margin-bottom:12px}}
+
+/* controls */
+.controls{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 12px;z-index:5;flex-wrap:wrap}
+.controls .btn{font-size:16px;padding:6px 14px;box-shadow:none;border-color:var(--paper)}
+.dots{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.dots button{width:16px;height:16px;border-radius:50%;border:2px solid var(--paper);background:transparent;padding:0;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--yellow);border-color:var(--yellow)}
+.count{font-family:var(--display);letter-spacing:.05em;font-size:16px;min-width:64px;text-align:center}
+.end{text-align:center;margin-top:10px}
+.end .ender{font-family:var(--display);font-size:clamp(30px,6vw,56px);color:var(--purple);-webkit-text-stroke:1.5px var(--ink)}
+
+@media print{
+  .slide[hidden]{display:block !important}.slide{break-after:page}.controls{display:none}
+  body{padding-bottom:20px} iframe.proto{height:700px}
 }
-
-/* Masthead */
-.masthead{
-  padding:18px 20px; margin-bottom:26px; transform:rotate(-0.4deg);
-  background:var(--red); color:#fff8e6; position:relative; overflow:hidden;
-}
-.masthead::after{
-  content:""; position:absolute; inset:0;
-  background:repeating-radial-gradient(circle, rgba(255,255,255,0.14) 0 2px, transparent 2px 7px);
-  pointer-events:none;
-}
-.masthead-top{display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap; position:relative;}
-.eyebrow{font-family:var(--display); font-size:13px; letter-spacing:0.08em; opacity:0.9;}
-.title{font-size:clamp(26px,6vw,46px); -webkit-text-stroke:2px var(--ink); text-shadow:3px 3px 0 var(--ink);}
-.issue-badge{
-  font-family:var(--display); font-size:13px; background:var(--yellow); color:var(--ink);
-  border:3px solid var(--ink); border-radius:50%; width:62px; height:62px; flex:0 0 auto;
-  display:flex; align-items:center; justify-content:center; text-align:center; transform:rotate(8deg);
-  box-shadow:3px 3px 0 var(--ink);
-}
-
-.stat-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:16px; position:relative;}
-.stat{
-  background:#fff8e6; border:3px solid var(--ink); border-radius:5px; padding:8px 10px;
-  display:flex; flex-direction:column; gap:2px; box-shadow:3px 3px 0 var(--ink);
-}
-.stat b{font-family:var(--display); font-size:10px; letter-spacing:0.03em; color:var(--muted); text-transform:uppercase;}
-.stat span{font-family:var(--display); font-size:17px; color:var(--ink);}
-.stat.warn span{color:var(--red);}
-.stat.ok span{color:var(--green);}
-
-/* Stage headers */
-.stage{margin:36px 0 16px; display:flex; align-items:center; gap:12px;}
-.stage h2{font-size:clamp(20px,4vw,30px); color:var(--purple); -webkit-text-stroke:1px var(--ink);}
-.stage .rule{flex:1; height:4px; background:var(--ink); border-radius:2px;}
-
-/* Splash panel: what happened */
-.splash{padding:20px 22px; transform:rotate(0.3deg);}
-.splash .kicker{
-  display:inline-block; font-family:var(--display); font-size:13px; background:var(--ink);
-  color:var(--yellow); padding:4px 10px; border-radius:3px; margin-bottom:10px; transform:rotate(-1.5deg);
-}
-.splash p{font-size:23px; max-width:68ch;}
-.splash p + p{margin-top:10px;}
-
-/* Issues (levels) */
-.issues{display:grid; grid-template-columns:1fr; gap:22px;}
-.issue{padding:18px 20px; position:relative;}
-.issue:nth-child(odd){transform:rotate(-0.35deg);}
-.issue:nth-child(even){transform:rotate(0.35deg);}
-.issue-tag{
-  display:inline-block; font-family:var(--display); font-size:13px; background:var(--blue); color:#fff8e6;
-  border:3px solid var(--ink); border-radius:4px; padding:3px 10px; margin-bottom:10px;
-  box-shadow:3px 3px 0 var(--ink);
-}
-.issue h3{color:var(--ink); font-size:clamp(20px,3.4vw,26px); margin-bottom:8px;}
-.issue .finding{font-size:20px;}
-.issue .finding b{background:var(--yellow); padding:0 4px; box-decoration-break:clone; -webkit-box-decoration-break:clone;}
-
-.caption{
-  margin-top:12px; background:var(--yellow); border:3px solid var(--ink); border-radius:3px;
-  padding:10px 14px; position:relative; box-shadow:3px 3px 0 var(--ink);
-}
-.caption .label{font-family:var(--display); font-size:11px; letter-spacing:0.04em; color:var(--ink); display:block; margin-bottom:4px;}
-.caption p{font-size:18px; font-style:italic;}
-
-/* Buttons */
-.pow-btn{
-  display:inline-block; font-family:var(--display); font-size:15px; letter-spacing:0.02em; text-decoration:none;
-  color:#fff8e6; background:var(--red); padding:12px 18px; border:3px solid var(--ink); border-radius:5px;
-  box-shadow:4px 4px 0 var(--ink); transform:rotate(-1deg);
-}
-.pow-btn.alt{background:var(--blue); transform:rotate(1deg);}
-.cart-row{display:flex; flex-wrap:wrap; gap:16px; margin-top:14px;}
-
-.panel{padding:18px 20px;}
-.panel p{font-size:20px;}
-.panel p + p{margin-top:10px;}
-
-/* Charts */
-.evidence{display:grid; grid-template-columns:1fr; gap:22px;}
-.chart-card{padding:16px 18px 10px;}
-.chart-card:nth-child(1){transform:rotate(0.3deg);}
-.chart-card:nth-child(2){transform:rotate(-0.3deg);}
-.chart-card:nth-child(3){transform:rotate(0.3deg);}
-.chart-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
-.chart-head h3{font-size:clamp(17px,2.6vw,21px); color:var(--ink);}
-.chart-note{font-size:14px; color:var(--muted); font-style:italic;}
-.chart-svg{width:100%; height:auto; display:block; font-family:var(--body);}
-.chart-svg .grid{stroke:var(--muted); stroke-opacity:0.25; stroke-width:1;}
-.chart-svg .axis-label{fill:var(--muted); font-size:12px; font-weight:700;}
-.chart-svg .mark{fill:var(--ink); font-size:12px; font-weight:700;}
-.chart-svg .big-label{fill:var(--ink); font-size:14px; font-weight:700;}
-.legend{display:flex; flex-wrap:wrap; gap:14px; margin:8px 0 2px; font-size:15px;}
-.legend-item{display:flex; align-items:center; gap:6px;}
-.legend-dot{width:13px; height:13px; border-radius:50%; border:2px solid var(--ink); flex:0 0 auto;}
-.src{font-size:13px; color:var(--muted); margin-top:4px;}
-.dot-hover{cursor:default;}
-.dot-hover:hover{r:7;}
-
-/* Footer */
-.credits{margin-top:44px; text-align:center; color:var(--muted); font-size:16px;}
-.credits .ender{font-family:var(--display); font-size:26px; color:var(--purple); -webkit-text-stroke:1px var(--ink); margin-bottom:10px;}
-
-@media (max-width:620px){
-  .issue:nth-child(odd), .issue:nth-child(even){transform:none;}
-  .masthead{transform:none;} .splash{transform:none;}
-}
+@media (max-width:620px){.frames .box{transform:none !important}}
 </style>
+</head>
+<body>
 
-<div class="wrap">
+<div class="deck" id="deck">
 
-  <div class="masthead panel-border">
-    <div class="masthead-top">
-      <div>
-        <span class="eyebrow">ROOK DISPATCH PRESENTS</span>
-        <h1 class="title">THE RELEASE 4.2 INCIDENT</h1>
-      </div>
-      <span class="issue-badge">6&nbsp;ISSUE<br>SAGA</span>
-    </div>
-    <div class="stat-row">
-      <div class="stat warn"><b>Responders Locked Out</b><span>4 of 16</span></div>
-      <div class="stat warn"><b>Ticket Volume</b><span>~3x normal</span></div>
-      <div class="stat ok"><b>Root Cause</b><span>CONFIRMED</span></div>
-      <div class="stat ok"><b>Fix</b><span>PROTOTYPED</span></div>
-      <div class="stat ok"><b>Issues Cleared</b><span>6 / 6</span></div>
+<!-- 0 COVER -->
+<section class="slide" aria-label="Cover">
+  <div class="box cover">
+    <span class="eyebrow">ROOK DISPATCH PRESENTS</span>
+    <h1>THE RELEASE 4.2 INCIDENT</h1>
+    <p class="by">A debrief in six issues, by Faran, Dispatch PM · 27 Oct 2026 · fictional coursework</p>
+    <div class="stats" id="coverStats"></div>
+    <div class="cta">
+      <button class="btn" type="button" data-go="next">START THE STORY &rarr;</button>
+      <span class="hint">Use the arrow keys, or the buttons at the bottom.</span>
     </div>
   </div>
+</section>
 
-  <div class="splash panel-border">
-    <span class="kicker">THE SETUP</span>
-    <p>Release 4.2 quietly locked a handful of responders out of the job rotation almost entirely, while making everyone else's offers vanish faster than they could react — one routing change, two symptoms.</p>
-    <p>Four responders went from ~12 offers a week to 0&ndash;1 and never recovered, because the scoring code has no way for a low score to climb back up on its own. Nobody shipped a bug. They shipped a trap with no exit.</p>
-  </div>
-
-  <div class="stage"><h2>The Evidence Locker</h2><div class="rule"></div></div>
-
-  <div class="evidence">
-
-    <div class="chart-card panel-border">
-      <div class="chart-head">
-        <h3>The cliff, week by week</h3>
-        <span class="chart-note">Dispatch-wide acceptance rate, 10 weeks</span>
-      </div>
-      <svg class="chart-svg" viewBox="0 0 680 300" role="img" aria-label="Line chart of weekly acceptance rate from 76.7% in late June down to a low of 54.2% the week of August 10, recovering only to 72.7% by August 31">
-        <line class="grid" x1="40" y1="260" x2="660" y2="260"/>
-        <line class="grid" x1="40" y1="212" x2="660" y2="212"/>
-        <line class="grid" x1="40" y1="164" x2="660" y2="164"/>
-        <line class="grid" x1="40" y1="116" x2="660" y2="116"/>
-        <line class="grid" x1="40" y1="68" x2="660" y2="68"/>
-        <line class="grid" x1="40" y1="20" x2="660" y2="20"/>
-        <text class="axis-label" x="32" y="264" text-anchor="end">40%</text>
-        <text class="axis-label" x="32" y="216" text-anchor="end">50%</text>
-        <text class="axis-label" x="32" y="168" text-anchor="end">60%</text>
-        <text class="axis-label" x="32" y="120" text-anchor="end">70%</text>
-        <text class="axis-label" x="32" y="72" text-anchor="end">80%</text>
-        <text class="axis-label" x="32" y="24" text-anchor="end">90%</text>
-
-        <line x1="453.3" y1="20" x2="453.3" y2="260" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5,5"/>
-        <text class="mark" x="459" y="34" fill="var(--red)">4.2 SHIPS</text>
-
-        <path d="M40,83.8 L108.9,81.9 L177.8,85.3 L246.7,92.0 L315.6,79.5 L384.4,78.1 L453.3,191.8 L522.2,136.2 L591.1,131.8 L660,103.0"
-              fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M40,83.8 L108.9,81.9 L177.8,85.3 L246.7,92.0 L315.6,79.5 L384.4,78.1 L453.3,191.8 L522.2,136.2 L591.1,131.8 L660,103.0"
-              fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-
-        <g fill="var(--red)" stroke="var(--ink)" stroke-width="2">
-          <circle class="dot-hover" cx="40" cy="83.8" r="5"><title>Week of Jun 29: 76.7%</title></circle>
-          <circle class="dot-hover" cx="108.9" cy="81.9" r="5"><title>Week of Jul 6: 77.1%</title></circle>
-          <circle class="dot-hover" cx="177.8" cy="85.3" r="5"><title>Week of Jul 13: 76.4%</title></circle>
-          <circle class="dot-hover" cx="246.7" cy="92.0" r="5"><title>Week of Jul 20: 75.0%</title></circle>
-          <circle class="dot-hover" cx="315.6" cy="79.5" r="5"><title>Week of Jul 27: 77.6%</title></circle>
-          <circle class="dot-hover" cx="384.4" cy="78.1" r="5"><title>Week of Aug 3: 77.9%</title></circle>
-          <circle class="dot-hover" cx="453.3" cy="191.8" r="6"><title>Week of Aug 10 — 4.2 ships: 54.2%</title></circle>
-          <circle class="dot-hover" cx="522.2" cy="136.2" r="5"><title>Week of Aug 17: 65.8%</title></circle>
-          <circle class="dot-hover" cx="591.1" cy="131.8" r="5"><title>Week of Aug 24: 66.7%</title></circle>
-          <circle class="dot-hover" cx="660" cy="103.0" r="5"><title>Week of Aug 31: 72.7%</title></circle>
-        </g>
-        <text class="big-label" x="403" y="206" text-anchor="end">54.2%</text>
-      </svg>
-      <p class="src">Source: 00-rook/data/callout-history.csv, summed across all 16 responders per week. Hover any point for the exact number.</p>
+<!-- 1 WHAT HAPPENED -->
+<section class="slide" hidden aria-label="What happened">
+  <span class="tag">THE SETUP</span>
+  <h2 class="slide-title">What happened with Release 4.2, plainly</h2>
+  <div class="grid g3 frames">
+    <div class="box">
+      <h3>1 · What shipped, 12 Aug</h3>
+      <ul>
+        <li><b>Closeness counts more</b> in who gets asked first (0.45 &rarr; 0.60). How often they said yes lately counts less (0.40 &rarr; 0.25).</li>
+        <li><b>Each offer waits 60 seconds</b>, not 90.</li>
+        <li>The console remembers filters, plus three defect fixes.</li>
+      </ul>
+      <p class="src">Source: <code>config.py</code>, release notes</p>
     </div>
-
-    <div class="chart-card panel-border">
-      <div class="chart-head">
-        <h3>Four heroes, one trap with no exit</h3>
-        <span class="chart-note">Offers sent per week, same 10 weeks</span>
-      </div>
-      <svg class="chart-svg" viewBox="0 0 680 300" role="img" aria-label="Line chart of weekly offers sent to four responders, each falling from roughly 11 to 15 offers per week before August 10 to 0 or 1 offer per week by August 31">
-        <line class="grid" x1="40" y1="260" x2="580" y2="260"/>
-        <line class="grid" x1="40" y1="200" x2="580" y2="200"/>
-        <line class="grid" x1="40" y1="140" x2="580" y2="140"/>
-        <line class="grid" x1="40" y1="80" x2="580" y2="80"/>
-        <line class="grid" x1="40" y1="20" x2="580" y2="20"/>
-        <text class="axis-label" x="32" y="264" text-anchor="end">0</text>
-        <text class="axis-label" x="32" y="204" text-anchor="end">4</text>
-        <text class="axis-label" x="32" y="144" text-anchor="end">8</text>
-        <text class="axis-label" x="32" y="84" text-anchor="end">12</text>
-        <text class="axis-label" x="32" y="24" text-anchor="end">16</text>
-        <line x1="400" y1="20" x2="400" y2="260" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5,5"/>
-        <text class="mark" x="406" y="34" fill="var(--red)">4.2 SHIPS</text>
-
-        <path d="M40,80 L100,80 L160,95 L220,80 L280,65 L340,80 L400,110 L460,215 L520,245 L580,260" fill="none" stroke="var(--ink)" stroke-width="5"/>
-        <path d="M40,95 L100,80 L160,110 L220,95 L280,80 L340,95 L400,110 L460,200 L520,230 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
-        <path d="M40,80 L100,95 L160,80 L220,65 L280,80 L340,80 L400,95 L460,200 L520,245 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
-        <path d="M40,50 L100,65 L160,35 L220,50 L280,65 L340,50 L400,80 L460,185 L520,230 L580,245" fill="none" stroke="var(--ink)" stroke-width="5"/>
-
-        <path d="M40,80 L100,80 L160,95 L220,80 L280,65 L340,80 L400,110 L460,215 L520,245 L580,260" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M40,95 L100,80 L160,110 L220,95 L280,80 L340,95 L400,110 L460,200 L520,230 L580,245" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M40,80 L100,95 L160,80 L220,65 L280,80 L340,80 L400,95 L460,200 L520,245 L580,245" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M40,50 L100,65 L160,35 L220,50 L280,65 L340,50 L400,80 L460,185 L520,230 L580,245" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linecap="round"/>
-
-        <g stroke="var(--ink)" stroke-width="1.5">
-          <circle class="dot-hover" fill="var(--red)" cx="460" cy="215" r="5"><title>Farlight, week of Aug 17: 3 offers</title></circle>
-          <circle class="dot-hover" fill="var(--red)" cx="580" cy="260" r="5"><title>Farlight, week of Aug 31: 0 offers</title></circle>
-          <circle class="dot-hover" fill="var(--blue)" cx="460" cy="200" r="5"><title>Meteor Mite, week of Aug 17: 4 offers</title></circle>
-          <circle class="dot-hover" fill="var(--blue)" cx="580" cy="245" r="5"><title>Meteor Mite, week of Aug 31: 1 offer</title></circle>
-          <circle class="dot-hover" fill="var(--green)" cx="460" cy="200" r="5"><title>The Undertow, week of Aug 17: 4 offers</title></circle>
-          <circle class="dot-hover" fill="var(--green)" cx="580" cy="245" r="5"><title>The Undertow, week of Aug 31: 1 offer</title></circle>
-          <circle class="dot-hover" fill="var(--purple)" cx="460" cy="185" r="5"><title>Vesper, week of Aug 17: 5 offers</title></circle>
-          <circle class="dot-hover" fill="var(--purple)" cx="580" cy="245" r="5"><title>Vesper, week of Aug 31: 1 offer</title></circle>
-        </g>
-      </svg>
-      <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Farlight</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Meteor Mite</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>The Undertow</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Vesper</span>
-      </div>
-      <p class="src">Source: same file, filtered to the four confirmed responders. Hover the end points for exact counts.</p>
+    <div class="box">
+      <h3>2 · Two things went wrong at once</h3>
+      <p class="small"><span class="num">A.</span> Four responders went from about 12 offers a week to 0&ndash;1 and never came back.</p>
+      <p class="small" style="margin-top:8px"><span class="num">B.</span> Everyone else's offers vanish faster than they can answer. Tickets ran about 3&times; normal.</p>
+      <p class="src">Source: callout-history.csv, tickets, Slack export</p>
     </div>
-
-    <div class="chart-card panel-border">
-      <div class="chart-head">
-        <h3>25 tickets, two different stories</h3>
-        <span class="chart-note">How each complaint actually read</span>
-      </div>
-      <svg class="chart-svg" viewBox="0 0 400 290" role="img" aria-label="Bar chart: 16 of 25 tickets reported going quiet with no offers, 4 reported an offer vanishing too fast, and 5 reported both happening back to back">
-        <line class="grid" x1="30" y1="240" x2="380" y2="240"/>
-        <line class="grid" x1="30" y1="142" x2="380" y2="142"/>
-        <line class="grid" x1="30" y1="44" x2="380" y2="44"/>
-        <text class="axis-label" x="24" y="244" text-anchor="end">0</text>
-        <text class="axis-label" x="24" y="146" text-anchor="end">8</text>
-        <text class="axis-label" x="24" y="48" text-anchor="end">16</text>
-
-        <rect x="62" y="44.4" width="70" height="195.6" rx="4" fill="var(--red)" stroke="var(--ink)" stroke-width="2.5"><title>Gone quiet: 16 tickets</title></rect>
-        <rect x="175" y="191.1" width="70" height="48.9" rx="4" fill="var(--blue)" stroke="var(--ink)" stroke-width="2.5"><title>Vanished too fast: 4 tickets</title></rect>
-        <rect x="288" y="178.9" width="70" height="61.1" rx="4" fill="var(--green)" stroke="var(--ink)" stroke-width="2.5"><title>Both, back to back: 5 tickets</title></rect>
-
-        <text class="big-label" x="97" y="38" text-anchor="middle">16</text>
-        <text class="big-label" x="210" y="185" text-anchor="middle">4</text>
-        <text class="big-label" x="323" y="173" text-anchor="middle">5</text>
-
-        <text class="axis-label" x="97" y="258" text-anchor="middle">Gone quiet</text>
-        <text class="axis-label" x="210" y="258" text-anchor="middle">Vanished</text>
-        <text class="axis-label" x="210" y="272" text-anchor="middle">too fast</text>
-        <text class="axis-label" x="323" y="258" text-anchor="middle">Both</text>
-      </svg>
-      <p class="src">Of the 16 "gone quiet" tickets, only 4 matched a confirmed collapse — the other 12 are still an open mystery.</p>
-      <svg class="chart-svg" viewBox="0 0 400 54" role="img" aria-label="Stacked bar: of 21 gone-quiet-flavored tickets, 4 match confirmed data and 17 do not" style="margin-top:4px;">
-        <rect x="0" y="14" width="68" height="26" rx="3" fill="var(--red)" stroke="var(--ink)" stroke-width="2"><title>Matches confirmed collapse: 4 tickets</title></rect>
-        <rect x="72" y="14" width="328" height="26" rx="3" fill="var(--muted)" stroke="var(--ink)" stroke-width="2"><title>Contradicts the responder's own data: 17 tickets</title></rect>
-        <text x="34" y="31" text-anchor="middle" font-size="13" font-weight="700" fill="#fff8e6">4</text>
-        <text x="236" y="31" text-anchor="middle" font-size="13" font-weight="700" fill="#fff8e6">17 still unexplained</text>
-      </svg>
-    </div>
-
-  </div>
-
-  <div class="stage"><h2>The Story, Issue By Issue</h2><div class="rule"></div></div>
-
-  <div class="issues">
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #1 — ORIGIN STORY</span>
-      <h3>Meeting Rook, building the map</h3>
-      <p class="finding">Built the working-context file from the full new-hire packet, team directory, and handoff doc — and confirmed it covered the job without drowning the next reader in it.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"is there too much information in the claude.md currently? do we need to consolidate at all at this point?"</p>
-      </div>
-    </div>
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #2 — SUPER HEARING</span>
-      <h3>Two piles of evidence, one disagreement</h3>
-      <p class="finding">Four interviews and 25 tickets, read in full and cross-checked against each other — <b>3 of 4 handlers volunteered the vanishing-callout complaint unprompted</b>, in a call that was never about routing.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"Read everything in 00-rook/feedback/interviews/. These are four conversations with the people who run the console for our responders. Tell me what they're unhappy about, group it, tell me how many of the four raised each thing, and quote one line for each so I can hear how they actually said it."</p>
-      </div>
-    </div>
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #3 — REWIND</span>
-      <h3>Five agents, one corrected theory</h3>
-      <p class="finding">A parallel 5-agent investigation into the raw ping data confirmed the collapse was real and structural — then <b>falsified my own working theory</b>: Meteor Mite had the worst acceptance rate on the whole roster, not a great one, so "strong history offsets distance" wasn't the real pattern.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"i want you to administer 5 agents, one to explore each area here. i want these agents to debate each other on their findings, and then align on where they feel is the root-cause to all of this. if they cannot align on that, at least help me understand what information they need to better understand how we solve this?"</p>
-      </div>
-    </div>
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #4 — X-RAY VISION</span>
-      <h3>The exact line of code</h3>
-      <p class="finding">Found the one place points come off (a decline <i>or</i> a timeout, same penalty) and the one place they go back on (a yes, and nothing else) — with a 2019 TODO admitting the score never recovers on its own. Sent the confirmed answer to Marcus's unanswered Slack question straight to the team channel.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"Find me the part of this code that takes points off somebody when they miss a ping or turn one down. Show it to me and explain it in plain English. Then find me every single thing in this code that puts points back on."</p>
-      </div>
-    </div>
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #5 — SUPER SPEED</span>
-      <h3>Building the fix, testing it on heroes</h3>
-      <p class="finding">Built the Near-Miss Grace Window prototype and put it in front of simulated responders for honest, unbiased feedback — twice — adding a missed-offer reason check-in, a security-gated distance line, and a mission-board view from what they said.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"lets start with near-miss grace window. i want you play the role of these super heroes are having friction with responding to alerts. show them the prototype, ask them unbiased questions that will otherwise help us understand how effective this capability will be. once you're done, come back to me, give me their feedback, and lets determine what improvements we should make?"</p>
-      </div>
-    </div>
-
-    <div class="issue panel-border">
-      <span class="issue-tag">ISSUE #6 — SIDEKICKS</span>
-      <h3>A sidekick that keeps this from happening quietly again</h3>
-      <p class="finding">Built the <b>review-checklist</b> skill — it checks any brief for a named owner, checkable success criteria, consistent scope, and problem-before-fix ordering — then scheduled it to run every Monday against the latest brief, automatically, with the results committed back into the repo.</p>
-      <div class="caption">
-        <span class="label">THE EXACT PROMPT:</span>
-        <p>"Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix."</p>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="stage"><h2>Our Hero Strikes Back: The Fix</h2><div class="rule"></div></div>
-  <div class="panel panel-border">
-    <p>The Near-Miss Grace Window: a missed offer inside a short grace period gets logged as a near miss instead of a flat no, with an honest reason check-in and a visible promise that scoring doesn't silently change underneath it. Reskinned once into a bold, full-color hero version of the same mechanic.</p>
-    <div class="cart-row">
-      <a class="pow-btn" href="https://claude.ai/artifact/MFnsWy8iPKkNeDb5mhEPUp" target="_blank" rel="noopener">SEE IT: GRACE WINDOW</a>
-      <a class="pow-btn alt" href="https://claude.ai/artifact/JAJxy91rgn9uTW42vhamKk" target="_blank" rel="noopener">SEE IT: HERO SCREEN</a>
+    <div class="box">
+      <h3>3 · Why the four never came back</h3>
+      <p class="small">Every offer that doesn't end in a yes costs <b>0.12 points</b>. A no and a missed offer cost the same. Only a yes gives back <b>0.08</b>.</p>
+      <p class="small" style="margin-top:8px">So a responder needs about <b>6 yes in 10</b> just to hold still, and the only way up is to be offered a job.</p>
+      <p class="src">Source: <code>history.py</code>, <code>config.py</code></p>
     </div>
   </div>
+  <div class="note"><b>Still not known:</b> whether that scoring was meant to work that way (Wen hasn't answered), whether missed offers are slowness or offers that never reach the phone, and whether scores survive a restart. The code shows the mechanism. It doesn't show the intent. <span class="src" style="display:inline">(Open questions in the Helen brief, section 7.)</span></div>
+</section>
 
-  <div class="stage"><h2>Next Issue: How This Doesn't Happen Again</h2><div class="rule"></div></div>
-  <div class="panel panel-border">
-    <p>Two sidekicks are on permanent duty now, both living in <code>.claude/skills/</code> in this repo, not just in one conversation:</p>
-    <p><b style="color:var(--green)">root-cause-to-prototype</b> — the investigation framework itself, turned into a skill: gather every source completely, cross-reference on purpose, write falsifiable hypotheses, simulate before building, and never call a theory confirmed without naming what's still unverified.</p>
-    <p><b style="color:var(--green)">review-checklist</b> — a fast gate on any brief before it ships, now running on autopilot: <b style="color:var(--red)">every Monday at 9am</b>, it checks whatever brief is current for a named owner, a real success metric, consistent scope, and problem-before-fix order, and writes the result straight into this repo's history — win or lose, every week, automatically.</p>
+<!-- 2 THE CLIFF -->
+<section class="slide" hidden aria-label="The cliff in the data">
+  <span class="tag">THE EVIDENCE LOCKER</span>
+  <h2 class="slide-title">The number that looked fine was hiding the damage</h2>
+  <div class="box chart-wrap">
+    <div class="tabs" role="group" aria-label="Choose a chart">
+      <button class="btn small" type="button" data-view="offers" aria-pressed="true">Offers per week</button>
+      <button class="btn small" type="button" data-view="rate" aria-pressed="false">Yes-rate</button>
+      <button class="btn small" type="button" data-view="raw" aria-pressed="false">Raw counts</button>
+    </div>
+    <div id="cliffChart"></div>
+    <div class="legend" id="cliffLegend"></div>
+    <div class="caption"><span class="label">WHAT THIS SHOWS</span><p id="cliffCaption"></p></div>
+    <p class="src">Source: <code>00-rook/data/callout-history.csv</code>, 16 responders, 10 weeks from 29 Jun. Hover a point for the exact number.</p>
   </div>
+</section>
 
-  <div class="credits">
+<!-- 3 MODULE 1 -->
+<section class="slide" hidden aria-label="Issue 1">
+  <div class="issue-head"><span class="tag blue">ISSUE #1 · ORIGIN STORY · MODULE 1</span></div>
+  <h2 class="slide-title">A context file every later session started from</h2>
+  <div class="grid g2">
+    <div class="box">
+      <p class="finding">The Rook working-context file, <code>CLAUDE.md</code>, went from a <b>23-line template</b> to <b>64 lines</b> on day one, then grew with every finding to <b>121 lines</b> by 6 Oct. It was trimmed to <b id="m1now">110</b> on 22 Oct, with older sections moved to an archive.</p>
+      <div class="bubble"><span class="label" data-plabel="m1"></span><p data-prompt="m1"></p></div>
+      <p class="src" style="margin-top:30px">Honest note: the first 64-line fill-in isn't one of your saved prompts, since it came with the module's starter step. The prompt above is the check you ran on it.</p>
+    </div>
+    <div class="box chart-wrap">
+      <h3 style="font-size:22px">Lines in <code>CLAUDE.md</code>, commit by commit</h3>
+      <div id="m1Chart"></div>
+      <p class="src">Source: <code>git log -- CLAUDE.md</code>, line count at each commit. Hover a bar for the date.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 MODULE 2 -->
+<section class="slide" hidden aria-label="Issue 2">
+  <div class="issue-head"><span class="tag blue">ISSUE #2 · SUPER HEARING · MODULE 2</span></div>
+  <h2 class="slide-title">The handlers said it first, in calls that weren't about routing</h2>
+  <p class="finding"><b>3 of 4 handlers</b> raised "the callout vanished before they could answer". Two volunteered it. One mentioned it only when asked a closing catch-all question, and called it "not really a complaint".</p>
+  <div class="grid g4" style="margin-top:14px">
+    <div class="box handler"><span class="badge yes">VOLUNTEERED</span><h3>Mr. Ambrose</h3><q>halfway into the suit — coat on, one boot on — when it went to somebody else.</q></div>
+    <div class="box handler"><span class="badge yes">VOLUNTEERED</span><h3>Aunt Dot</h3><q>by the time he's actually got a thumb on the screen — it's gone.</q></div>
+    <div class="box handler"><span class="badge ask">WHEN ASKED</span><h3>Halloran</h3><q>Bulwark mentioned a callout went to someone else before he'd even got his boots on.</q></div>
+    <div class="box handler"><span class="badge diff">DIFFERENT SYMPTOM</span><h3>Kip</h3><q>Meteor Mite's been texting me all week asking if something's broken because it's so quiet.</q></div>
+  </div>
+  <div class="bubble"><span class="label" data-plabel="m2"></span><p data-prompt="m2"></p></div>
+  <p class="note" style="margin-top:30px"><b>A correction we made:</b> an earlier version of this report said all three raised it "unprompted". Halloran only did when asked, and that was corrected on 15 Oct. Kip describes the other symptom: a responder starved of offers, not an offer lost too fast. Same routing change, two symptoms.</p>
+  <p class="src">Source: the four interviews in <code>00-rook/feedback/interviews/</code>; <code>02-super-hearing/console-feedback-synthesis.md</code></p>
+</section>
+
+<!-- 5 MODULE 3 -->
+<section class="slide" hidden aria-label="Issue 3">
+  <div class="issue-head"><span class="tag blue">ISSUE #3 · REWIND · MODULE 3</span></div>
+  <h2 class="slide-title">Four of sixteen: the number to put in front of Helen</h2>
+  <div class="grid g2">
+    <div class="box">
+      <div class="bignum" id="m3big">4 of 16</div>
+      <p class="finding" style="margin-top:8px"><b>25% of responders</b> were cut from about 12 offers a week to 0 or 1, three weeks after the release, with no sign of recovery.</p>
+      <div class="bubble"><span class="label" data-plabel="m3"></span><p data-prompt="m3"></p></div>
+    </div>
+    <div class="box">
+      <h3 style="font-size:22px;margin-bottom:6px">Offers per week, the four</h3>
+      <div id="m3Sparks"></div>
+      <p class="src">Weekly offers sent, first week (29 Jun) &rarr; last week (31 Aug). Every week for all four only goes down or holds flat.</p>
+      <p class="note">Why the rate looked like it was recovering: those four stopped being asked, so they stopped dragging the average down. Raw counts say otherwise (see the chart slide).</p>
+    </div>
+  </div>
+  <p class="src">Source: <code>callout-history.csv</code>; <code>02-super-hearing/console-feedback-synthesis.md</code> ("The one number for Helen")</p>
+</section>
+
+<!-- 6 MODULE 4 -->
+<section class="slide" hidden aria-label="Issue 4">
+  <div class="issue-head"><span class="tag blue">ISSUE #4 · X-RAY VISION · MODULE 4</span></div>
+  <h2 class="slide-title">Two functions in the code, and no way back up</h2>
+  <p class="finding">Exactly <b>one place</b> takes points off (a decline <i>or</i> a timeout, same price) and exactly <b>one place</b> gives them back (a yes). A 2019 comment asked whether scores should recover on their own, and was left as-is.</p>
+  <div class="grid g2" style="margin-top:14px">
+    <div>
+      <pre class="code" aria-label="Code from history.py"><span class="hl-on">def record_accepted(responder):</span><span class="hl-on">    """They took the callout. Score goes up."""</span><span class="hl-on">    _set(responder, recent_acceptance(responder) + ACCEPTANCE_CREDIT)   <span class="c"># +0.08</span></span>
+<span class="c"># TODO(wen, 2019): should this ease back toward NEUTRAL_SCORE on its
+# own after a while? ... Leaving it as-is for now.</span>
+<span class="hl-off">def record_declined(responder):</span><span class="hl-off">    """They turned it down, or we ran out of time waiting. Score goes
+    down. Same either way — we asked and we didn't get a yes.
+    """</span><span class="hl-off">    _set(responder, recent_acceptance(responder) - DECLINE_PENALTY)    <span class="c"># -0.12</span></span></pre>
+      <p class="src">Source: <code>00-rook/code/dispatch-routing/history.py</code> and <code>config.py</code></p>
+      <div class="bubble"><span class="label" data-plabel="m4"></span><p data-prompt="m4"></p></div>
+    </div>
+    <div class="box ladder" id="ladder">
+      <h3 style="font-size:22px">Try it: one responder's score</h3>
+      <p class="small">Starts at 0.50 (neutral). Floor 0, ceiling 1.</p>
+      <div class="readout" aria-live="polite"><span id="ladderScore">0.50</span></div>
+      <div class="bar" role="img" aria-label="Score bar"><i id="ladderBar"></i></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn blue small" type="button" id="lYes">They say yes +0.08</button>
+        <button class="btn small" type="button" id="lMiss">Miss or decline &minus;0.12</button>
+        <button class="btn ghost small" type="button" id="lReset">Reset</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost small" type="button" data-run="5">10 offers, 5 yes</button>
+        <button class="btn ghost small" type="button" data-run="6">6 yes</button>
+        <button class="btn ghost small" type="button" data-run="7">7 yes</button>
+      </div>
+      <p class="msg" id="ladderMsg" style="margin-top:10px"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 MODULE 5 -->
+<section class="slide" hidden aria-label="Issue 5">
+  <div class="issue-head"><span class="tag blue">ISSUE #5 · SUPER SPEED · MODULE 5</span></div>
+  <h2 class="slide-title">A prototype scoped by nine questions</h2>
+  <div class="grid g2">
+    <div class="box">
+      <p class="finding">Before any building, Claude asked clarifying questions one at a time, and the answers fixed the scope: <b>two promises, a scripted walkthrough, one page showing two devices</b>. The result is the clickable prototype on the next slide.</p>
+      <div class="bubble"><span class="label" data-plabel="m5"></span><p data-prompt="m5"></p></div>
+    </div>
+    <div class="box">
+      <h3 style="font-size:22px">What got built</h3>
+      <ul class="small" style="margin:8px 0 0;padding-left:20px">
+        <li><b>Promise 1:</b> a card on the handler's console when a responder gets no offers for 3 days.</li>
+        <li><b>Promise 2:</b> a message on the responder's phone, so nobody quietly disappears.</li>
+        <li><b>Held:</b> promise 3, a way back. It waits for Wen's answers.</li>
+      </ul>
+      <p class="note">Two rounds of simulated user tests (8, then 9 testers) changed it twice. Round one made "Dismiss" into "Hide for now". Round two found the check-in blamed the responder's phone, so it was rewritten for v3.</p>
+      <p class="src">Source: <code>05-super-speed/quiet-responder-prototype-changelog.md</code></p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 MODULE 6 -->
+<section class="slide" hidden aria-label="Issue 6">
+  <div class="issue-head"><span class="tag blue">ISSUE #6 · SIDEKICKS · MODULE 6</span></div>
+  <h2 class="slide-title">A sidekick that reads every brief before it ships</h2>
+  <p class="finding">The first scheduled run read four briefs and flagged <b>exactly one miss in each</b>, and a different miss every time.</p>
+  <div class="box" style="margin-top:12px;overflow-x:auto">
+    <table class="checks" aria-label="Results of the scheduled review-checklist run">
+      <thead><tr><th>Brief</th><th>Owner named</th><th>Success measure</th><th>Scope bounded</th><th>Problem first</th></tr></thead>
+      <tbody id="m6Rows"></tbody>
+    </table>
+    <p class="src">Source: <code>06-sidekicks/scheduled-run-output.txt</code>, run of 13 Oct 2026</p>
+  </div>
+  <div class="bubble"><span class="label" data-plabel="m6a"></span><p data-prompt="m6a"></p></div>
+  <div class="bubble"><span class="label" data-plabel="m6b"></span><p data-prompt="m6b"></p></div>
+</section>
+
+<!-- 9 THE FIX -->
+<section class="slide" hidden aria-label="The fix">
+  <span class="tag">OUR HERO STRIKES BACK</span>
+  <h2 class="slide-title">The fix: tell the handler, tell the responder</h2>
+  <p class="lede">This is the real prototype (v3), running inside this slide. Click through it: the handler's card on the left, Meteor Mite's phone on the right.</p>
+  <div class="proto-wrap">
+    <iframe class="proto" title="Interactive prototype: The Quiet Responder, version 3" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;title&gt;The Quiet Responder&lt;/title&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Bangers&amp;family=Barlow:wght@400;600;700&amp;family=Barlow+Condensed:wght@600;800&amp;display=swap&quot;&gt;
+&lt;style&gt;
+  /* Layout concept: a comic-book case file with two devices on one stage. Laguna Seca blue ground, white screens, navy ink, yellow and orange accents. */
+  :root{
+    --paper:#1c6ec4; --panel:#ffffff; --ink:#0a1f44; --muted:#42557a; --edge:#071a3a;
+    --onbg:#ffffff; --onbgMuted:#dcebff; --soft:#eef4fd; --line:#cfdcf0;
+    --red:#e0212b; --yellow:#ffd21f; --orange:#ff7a1a; --green:#0b7a43; --onGreen:#ffffff; --blue:#1c6ec4;
+    --ring:#0a1f44; --ringAlt:#ffffff;
+    --dots:rgba(255,255,255,.15);
+    --display:&quot;Bangers&quot;,&quot;Impact&quot;,&quot;Arial Narrow&quot;,system-ui,sans-serif;
+    --cond:&quot;Barlow Condensed&quot;,&quot;Arial Narrow&quot;,system-ui,sans-serif;
+    --body:&quot;Barlow&quot;,system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme=&quot;light&quot;]){
+      --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+      --onbg:#f3f8ff; --onbgMuted:#bcd3f2; --soft:#0c3469; --line:#2b5a9c;
+      --red:#ff5a5f; --yellow:#ffd21f; --orange:#ff9340; --green:#43e08a; --onGreen:#03112b; --blue:#6fb0ff;
+      --ring:#ffffff; --ringAlt:#03112b;
+      --dots:rgba(255,255,255,.07); color-scheme:dark;
+    }
+  }
+  :root[data-theme=&quot;dark&quot;]{
+    --paper:#0a2e5c; --panel:#103f7a; --ink:#f3f8ff; --muted:#bcd3f2; --edge:#03112b;
+    --onbg:#f3f8ff; --onbgMuted:#bcd3f2; --soft:#0c3469; --line:#2b5a9c;
+    --red:#ff5a5f; --yellow:#ffd21f; --orange:#ff9340; --green:#43e08a; --onGreen:#03112b; --blue:#6fb0ff;
+    --ring:#ffffff; --ringAlt:#03112b;
+    --dots:rgba(255,255,255,.07); color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--onbg);font:16px/1.5 var(--body);
+       background-image:radial-gradient(var(--dots) 1.4px,transparent 1.6px);background-size:14px 14px}
+  .wrap{max-width:1160px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+  h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.03em;margin:0;text-wrap:balance}
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .badge{display:inline-block;background:var(--red);color:#fff;font:800 .95rem var(--cond);letter-spacing:.12em;padding:2px 10px;border:3px solid var(--edge);transform:rotate(-2deg);margin-bottom:10px}
+  .title{font-size:clamp(2.2rem,7vw,4.2rem);line-height:1;color:var(--yellow);-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:5px 5px 0 var(--red)}
+  .sub{font:600 1.15rem var(--cond);margin:10px 0 0;max-width:64ch;color:var(--onbg)}
+  .scope{display:inline-block;margin:10px 0 0;background:var(--panel);color:var(--ink);border:3px solid var(--edge);padding:4px 12px;font:700 1rem var(--cond)}
+  .story{margin-top:20px;background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:14px 16px;display:grid;gap:10px}
+  .stepline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .stepno{font:800 .95rem var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .dots{display:flex;gap:6px}
+  .dots i{width:14px;height:14px;border:3px solid var(--edge);border-radius:50%;background:var(--soft)}
+  .dots i.on{background:var(--yellow)}
+  .dots i.now{background:var(--orange)}
+  .caption{font:700 1.2rem/1.35 var(--cond);margin:0;min-height:2.7em}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  button{font:inherit;color:inherit;cursor:pointer}
+  /* Double ring (dark inside, light outside) so focus shows on every ground, including the orange alert strip. */
+  :focus-visible{outline:3px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px var(--ringAlt)}
+  .btn{background:var(--yellow);color:#0a1f44;border:3px solid var(--edge);padding:6px 14px;font:800 1rem var(--cond);letter-spacing:.04em;box-shadow:3px 3px 0 var(--edge)}
+  .btn.alt{background:var(--panel);color:var(--ink)}
+  .btn.hot{background:var(--orange);color:#0a1f44}
+  .btn.small{padding:2px 10px;font-size:.9rem;box-shadow:2px 2px 0 var(--edge)}
+  /* Unavailable buttons stay focusable (aria-disabled) so keyboard focus is never lost; a dashed border means it is not a colour-only cue. */
+  .btn[aria-disabled=&quot;true&quot;]{opacity:.7;border-style:dashed;cursor:not-allowed;box-shadow:none}
+  .stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}
+  @media (max-width:880px){.stage{grid-template-columns:1fr}}
+  .stage&gt;*{min-width:0}
+  .label{font:800 .9rem var(--cond);letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px;color:var(--onbg)}
+  /* console */
+  .console{background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge)}
+  .bar{display:flex;align-items:center;gap:8px;background:var(--edge);color:#fff;padding:8px 12px;font:700 .9rem var(--cond);letter-spacing:.06em}
+  .bar i{width:11px;height:11px;border-radius:50%;background:var(--yellow);display:inline-block}
+  .bar i:nth-child(2){background:var(--orange)}.bar i:nth-child(3){background:#fff}
+  .bar span{margin-left:8px}
+  .chead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:3px solid var(--edge)}
+  .chead h2{font-size:1.4rem}
+  .pill{display:inline-block;font:800 .8rem var(--cond);letter-spacing:.08em;text-transform:uppercase;padding:1px 9px;border:2px solid var(--edge);background:var(--soft)}
+  .pill.ok{background:var(--green);color:var(--onGreen)}
+  .pill.date{background:var(--yellow);color:#0a1f44}
+  .chip{display:inline-block;font:800 .9rem var(--cond);letter-spacing:.06em;padding:2px 10px;border:3px solid var(--edge);background:var(--orange);color:#0a1f44}
+  .chip.closed{background:var(--green);color:var(--onGreen)}
+  button.chip{font-size:1.1rem;padding:4px 14px;box-shadow:3px 3px 0 var(--edge)}
+  .cards{display:grid;gap:14px;padding:14px}
+  .rcard{border:3px solid var(--edge);background:var(--panel)}
+  .rtop{display:flex;gap:12px;align-items:center;padding:10px 12px}
+  .av{width:42px;height:42px;border:3px solid var(--edge);border-radius:50%;background:var(--yellow);color:#0a1f44;display:grid;place-items:center;font:400 1.2rem var(--display)}
+  .rname{font:400 1.35rem var(--display);letter-spacing:.03em;line-height:1.1}
+  .rmeta{font-size:.9rem;color:var(--muted)}
+  /* Quiet pattern line on every card: no alert, just the numbers, so a slow decline or a heavy week is visible. */
+  .pattern{margin:0;padding:6px 12px 10px;border-top:2px solid var(--line);font:700 .95rem var(--cond);letter-spacing:.03em}
+  .alert{margin:0;padding:12px;background:var(--orange);color:#0a1f44;border-top:3px solid var(--edge);display:grid;gap:10px}
+  .alert p{margin:0;font-weight:700}
+  .alert .help{font-weight:600;font-size:.9rem}
+  .compose{padding:12px;border-top:3px solid var(--edge);background:var(--soft);display:grid;gap:8px}
+  .compose textarea{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:2px dashed var(--ink);padding:8px 10px;resize:vertical;min-height:5.4em}
+  .note{padding:10px 12px;border-top:3px solid var(--edge);background:var(--soft);font-weight:600}
+  .note.good{background:#d7f3e3;color:#08532d}
+  .note.reply{background:var(--panel);border-left:8px solid var(--blue)}
+  @media (prefers-color-scheme: dark){:root:not([data-theme=&quot;light&quot;]) .note.good{background:#0f5a3a;color:#d7f3e3}}
+  :root[data-theme=&quot;dark&quot;] .note.good{background:#0f5a3a;color:#d7f3e3}
+  [hidden]{display:none !important}
+  /* phone */
+  .phonewrap{display:flex;justify-content:center}
+  .phone{width:100%;max-width:330px;background:#0a1f44;border:3px solid var(--edge);border-radius:34px;padding:12px 10px 14px;box-shadow:6px 6px 0 var(--edge)}
+  .screen{background:var(--panel);color:var(--ink);border-radius:24px;min-height:600px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .status{display:flex;justify-content:space-between;padding:10px 18px 4px;font:700 .8rem var(--cond);color:var(--muted)}
+  .phead{display:flex;justify-content:space-between;align-items:center;padding:6px 16px 10px;border-bottom:2px solid var(--line)}
+  .phead h2{font-size:1.5rem}
+  .pbody{padding:12px 14px;display:grid;gap:12px;align-content:start}
+  .toast{position:absolute;top:8px;left:8px;right:8px;background:var(--edge);color:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 6px 0 rgba(0,0,0,.25);z-index:2;animation:drop .35s ease-out}
+  .toast b{display:block;font:800 .8rem var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+  @keyframes drop{from{transform:translateY(-120%)}to{transform:none}}
+  @media (prefers-reduced-motion: reduce){.toast{animation:none}}
+  /* Neutral information style, not a warning. Can be tucked away with &quot;Got it&quot;. */
+  .banner{background:var(--soft);color:var(--ink);border:2px solid var(--blue);border-left-width:8px;border-radius:10px;padding:10px 12px;display:grid;gap:8px}
+  .banner p{margin:0}
+  .bannerslim{background:var(--soft);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 10px;text-align:left;font-weight:600;font-size:.9rem;width:100%}
+  .bubble{background:var(--soft);border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+  .bubble small{display:block;font:800 .75rem var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .replies{display:grid;gap:8px;margin-top:10px}
+  .ask{border:3px solid var(--edge);padding:10px 12px;margin-top:10px;display:grid;gap:8px;background:var(--panel)}
+  .ask p{margin:0;font-weight:700}
+  .sentreply{border:2px solid var(--line);border-radius:14px;padding:8px 12px;margin-top:10px;font-weight:600}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;border:2px dashed var(--line);border-radius:14px}
+  .offer{border:3px solid var(--edge);padding:12px;background:#fff7d6;color:#0a1f44}
+  .offer b{font:400 1.25rem var(--display)}
+  .how{margin-top:26px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+  .panel{background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:6px 6px 0 var(--edge);padding:12px 16px}
+  .panel h3{font-size:1.25rem;margin-bottom:4px}
+  .panel ul{margin:6px 0 0;padding-left:20px}
+  .src{font-size:.9rem;color:var(--onbg);margin-top:18px}
+&lt;/style&gt;
+
+&lt;div class=&quot;wrap&quot;&gt;
+  &lt;header&gt;
+    &lt;span class=&quot;badge&quot;&gt;PROTOTYPE v3 · PROMISES 1 AND 2&lt;/span&gt;
+    &lt;h1 class=&quot;title&quot;&gt;The Quiet Responder&lt;/h1&gt;
+    &lt;p class=&quot;sub&quot;&gt;What Kip and Meteor Mite would see when a responder stops getting offers. One example, from 25 Aug. Click the buttons on the screens, or use Next.&lt;/p&gt;
+    &lt;p class=&quot;scope&quot;&gt;Not covered here: offers that vanish too fast. That is the 60-second timer decision, which comes later.&lt;/p&gt;
+  &lt;/header&gt;
+
+  &lt;section class=&quot;story&quot; aria-label=&quot;Story controls&quot;&gt;
+    &lt;div class=&quot;stepline&quot;&gt;
+      &lt;span class=&quot;stepno&quot; id=&quot;stepno&quot;&gt;Step 1 of 6&lt;/span&gt;
+      &lt;span class=&quot;dots&quot; id=&quot;dots&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;p class=&quot;caption&quot; id=&quot;caption&quot; aria-live=&quot;polite&quot;&gt;&lt;/p&gt;
+    &lt;div class=&quot;row&quot;&gt;
+      &lt;button class=&quot;btn alt&quot; id=&quot;back&quot; type=&quot;button&quot;&gt;&amp;larr; Back&lt;/button&gt;
+      &lt;button class=&quot;btn&quot; id=&quot;next&quot; type=&quot;button&quot;&gt;Next &amp;rarr;&lt;/button&gt;
+      &lt;button class=&quot;btn alt&quot; id=&quot;replay&quot; type=&quot;button&quot;&gt;Replay&lt;/button&gt;
+      &lt;span class=&quot;row&quot; id=&quot;pick&quot; hidden&gt;
+        &lt;button class=&quot;btn hot&quot; id=&quot;pickOk&quot; type=&quot;button&quot;&gt;Mite: &quot;Nothing has changed on my end&quot;&lt;/button&gt;
+        &lt;button class=&quot;btn hot&quot; id=&quot;pickOff&quot; type=&quot;button&quot;&gt;Mite: &quot;Something looks off&quot;&lt;/button&gt;
+      &lt;/span&gt;
+      &lt;span class=&quot;row&quot; id=&quot;pick2&quot; hidden&gt;
+        &lt;button class=&quot;btn hot&quot; id=&quot;pickTaken&quot; type=&quot;button&quot;&gt;Mite takes the offer&lt;/button&gt;
+        &lt;button class=&quot;btn hot&quot; id=&quot;pickMissed&quot; type=&quot;button&quot;&gt;The offer goes unanswered&lt;/button&gt;
+      &lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;div class=&quot;stage&quot;&gt;
+    &lt;div&gt;
+      &lt;p class=&quot;label&quot;&gt;Kip&#x27;s console (handler)&lt;/p&gt;
+      &lt;section class=&quot;console&quot; aria-label=&quot;Handler console&quot;&gt;
+        &lt;div class=&quot;bar&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;span&gt;Rook Dispatch · Responders&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;chead&quot;&gt;
+          &lt;h2&gt;Kip&#x27;s responders&lt;/h2&gt;
+          &lt;span class=&quot;row&quot;&gt;&lt;button class=&quot;chip&quot; id=&quot;openChip&quot; type=&quot;button&quot; aria-expanded=&quot;false&quot; aria-controls=&quot;alert&quot; hidden&gt;Watching 1 responder&lt;/button&gt;&lt;span class=&quot;chip closed&quot; id=&quot;closedChip&quot; hidden&gt;Done: offer taken 27 Aug&lt;/span&gt;&lt;span class=&quot;pill date&quot; id=&quot;datepill&quot;&gt;Tue 25 Aug&lt;/span&gt;&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;cards&quot;&gt;
+          &lt;article class=&quot;rcard&quot; id=&quot;cardMite&quot; aria-label=&quot;Meteor Mite&quot;&gt;
+            &lt;div class=&quot;rtop&quot;&gt;
+              &lt;div class=&quot;av&quot; aria-hidden=&quot;true&quot;&gt;MM&lt;/div&gt;
+              &lt;div&gt;&lt;h3 class=&quot;rname&quot;&gt;Meteor Mite&lt;/h3&gt;&lt;div class=&quot;rmeta&quot;&gt;Eastgate · Last offer: 22 Aug, not taken&lt;/div&gt;&lt;/div&gt;
+              &lt;span class=&quot;pill ok&quot; id=&quot;miteStatus&quot; style=&quot;margin-left:auto&quot;&gt;Available&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;p class=&quot;pattern&quot;&gt;Last 7 days: 3 offers · usual 11 · down 73%&lt;/p&gt;
+            &lt;div class=&quot;alert&quot; id=&quot;alert&quot;&gt;
+              &lt;p&gt;Meteor Mite: no offers in 3 days (usually 11 a week). Last offer: 22 Aug, not taken.&lt;/p&gt;
+              &lt;div class=&quot;row&quot;&gt;
+                &lt;button class=&quot;btn hot&quot; id=&quot;btnMessage&quot; type=&quot;button&quot; aria-label=&quot;Message responder Meteor Mite&quot;&gt;Message responder&lt;/button&gt;
+                &lt;button class=&quot;btn alt&quot; id=&quot;btnDismiss&quot; type=&quot;button&quot; aria-label=&quot;Hide for now: Meteor Mite card&quot;&gt;Hide for now&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;p class=&quot;help&quot;&gt;Hide only puts this card away. Kip keeps watching, and the &quot;Watching&quot; chip stays in the header.&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;compose&quot; id=&quot;compose&quot; hidden&gt;
+              &lt;span class=&quot;pill&quot; id=&quot;composePill&quot;&gt;Pre-written · edit before sending&lt;/span&gt;
+              &lt;label for=&quot;composeText&quot; class=&quot;rmeta&quot;&gt;Message to Meteor Mite&lt;/label&gt;
+              &lt;textarea id=&quot;composeText&quot; rows=&quot;4&quot; aria-describedby=&quot;composePill&quot;&gt;&lt;/textarea&gt;
+              &lt;div class=&quot;row&quot;&gt;&lt;button class=&quot;btn&quot; id=&quot;btnSend&quot; type=&quot;button&quot; aria-label=&quot;Send check-in to Meteor Mite&quot;&gt;Send&lt;/button&gt;&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;note good&quot; id=&quot;sentNote&quot; tabindex=&quot;-1&quot; hidden&gt;Check-in sent to Meteor Mite. Waiting for a reply.&lt;/div&gt;
+            &lt;div class=&quot;note reply&quot; id=&quot;replyNote&quot; tabindex=&quot;-1&quot; hidden&gt;&lt;/div&gt;
+            &lt;div class=&quot;note&quot; id=&quot;resultNote&quot; tabindex=&quot;-1&quot; hidden&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;rcard&quot; id=&quot;cardGale&quot; aria-label=&quot;The Gale&quot;&gt;
+            &lt;div class=&quot;rtop&quot;&gt;
+              &lt;div class=&quot;av&quot; aria-hidden=&quot;true&quot;&gt;TG&lt;/div&gt;
+              &lt;div&gt;&lt;h3 class=&quot;rname&quot;&gt;The Gale&lt;/h3&gt;&lt;div class=&quot;rmeta&quot;&gt;Eastgate · Last offer: 25 Aug&lt;/div&gt;&lt;/div&gt;
+              &lt;span class=&quot;pill ok&quot; style=&quot;margin-left:auto&quot;&gt;Available&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;p class=&quot;pattern&quot;&gt;Last 7 days: 15 offers · usual 13 · up 15%&lt;/p&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+
+    &lt;div&gt;
+      &lt;p class=&quot;label&quot;&gt;Meteor Mite&#x27;s phone (responder)&lt;/p&gt;
+      &lt;div class=&quot;phonewrap&quot;&gt;
+        &lt;section class=&quot;phone&quot; aria-label=&quot;Responder phone&quot;&gt;
+          &lt;div class=&quot;screen&quot;&gt;
+            &lt;div class=&quot;status&quot;&gt;&lt;span id=&quot;clock&quot;&gt;Tue 25 Aug · 21:00&lt;/span&gt;&lt;span&gt;Rook&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;toast&quot; id=&quot;toast&quot; hidden&gt;
+              &lt;b&gt;Rook Dispatch&lt;/b&gt;
+              &lt;span&gt;You haven&#x27;t had an offer since 22 Aug. We&#x27;ve told your handler, and we&#x27;re looking into why.&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;phead&quot;&gt;&lt;h2&gt;Offers&lt;/h2&gt;&lt;span class=&quot;pill ok&quot; id=&quot;phoneStatus&quot;&gt;Available&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;pbody&quot;&gt;
+              &lt;div class=&quot;banner&quot; id=&quot;banner&quot; hidden&gt;
+                &lt;p&gt;You haven&#x27;t had an offer since 22 Aug. We&#x27;ve told your handler, and we&#x27;re looking into why.&lt;/p&gt;
+                &lt;div class=&quot;row&quot;&gt;&lt;button class=&quot;btn alt small&quot; id=&quot;btnGotIt&quot; type=&quot;button&quot;&gt;Got it&lt;/button&gt;&lt;/div&gt;
+              &lt;/div&gt;
+              &lt;button class=&quot;bannerslim&quot; id=&quot;bannerSlim&quot; type=&quot;button&quot; aria-expanded=&quot;false&quot; hidden&gt;No offers since 22 Aug · Show message&lt;/button&gt;
+              &lt;div class=&quot;thread&quot; id=&quot;thread&quot; hidden&gt;
+                &lt;div class=&quot;bubble&quot;&gt;&lt;small&gt;From Kip, your handler&lt;/small&gt;&lt;span id=&quot;bubbleText&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+                &lt;div class=&quot;replies&quot; id=&quot;replies&quot;&gt;
+                  &lt;button class=&quot;btn&quot; id=&quot;btnOk&quot; type=&quot;button&quot; aria-describedby=&quot;replyHint&quot;&gt;Nothing has changed on my end&lt;/button&gt;
+                  &lt;button class=&quot;btn alt&quot; id=&quot;btnWrong&quot; type=&quot;button&quot; aria-describedby=&quot;replyHint&quot;&gt;Something looks off&lt;/button&gt;
+                  &lt;small id=&quot;replyHint&quot; style=&quot;color:var(--muted)&quot;&gt;Replies unlock at step 5, after Kip has hidden the card.&lt;/small&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;ask&quot; id=&quot;ask&quot; role=&quot;group&quot; aria-labelledby=&quot;askTitle&quot; hidden&gt;
+                  &lt;p id=&quot;askTitle&quot;&gt;What are you seeing?&lt;/p&gt;
+                  &lt;button class=&quot;btn&quot; id=&quot;kind1&quot; type=&quot;button&quot; data-kind=&quot;Offers arrive late&quot;&gt;Offers arrive late&lt;/button&gt;
+                  &lt;button class=&quot;btn&quot; id=&quot;kind2&quot; type=&quot;button&quot; data-kind=&quot;Offers arrive twice&quot;&gt;Offers arrive twice&lt;/button&gt;
+                  &lt;button class=&quot;btn&quot; id=&quot;kind3&quot; type=&quot;button&quot; data-kind=&quot;Offers disappear before I can answer&quot;&gt;Offers disappear before I can answer&lt;/button&gt;
+                  &lt;button class=&quot;btn&quot; id=&quot;kind4&quot; type=&quot;button&quot; data-kind=&quot;I get nothing at all&quot;&gt;I get nothing at all&lt;/button&gt;
+                  &lt;button class=&quot;btn alt&quot; id=&quot;btnCancelAsk&quot; type=&quot;button&quot;&gt;Cancel&lt;/button&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;sentreply&quot; id=&quot;sentReply&quot; tabindex=&quot;-1&quot; hidden&gt;&lt;/div&gt;
+              &lt;div class=&quot;offer&quot; id=&quot;offer&quot; hidden&gt;
+                &lt;small id=&quot;offerDate&quot;&gt;Thu 27 Aug&lt;/small&gt;&lt;br&gt;&lt;b&gt;New offer · Eastgate&lt;/b&gt;&lt;br&gt;&lt;span id=&quot;offerText&quot;&gt;Answer within 60 seconds.&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;empty&quot; id=&quot;empty&quot;&gt;No offers right now&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;vh&quot; id=&quot;liveConsole&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;vh&quot; id=&quot;livePhone&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+  &lt;section class=&quot;how&quot; aria-label=&quot;How the card decides&quot;&gt;
+    &lt;div class=&quot;panel&quot;&gt;
+      &lt;h3&gt;How the card decides&lt;/h3&gt;
+      &lt;ul&gt;
+        &lt;li&gt;It shows after 3 days with no offers, or when a responder has under a quarter of their usual offers in 7 days. At most once a week.&lt;/li&gt;
+        &lt;li&gt;It uses only offer history and availability. No location.&lt;/li&gt;
+        &lt;li&gt;Hiding the card does not end the watch. The chip stays in the header. Click the chip to bring the card back.&lt;/li&gt;
+        &lt;li&gt;The watch ends only when the responder takes an offer. An offer that goes unanswered does not end it.&lt;/li&gt;
+        &lt;li&gt;Every card shows its last 7 days against the usual, with no alert, so a slow decline or a heavy week is visible.&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;panel&quot;&gt;
+      &lt;h3&gt;What this shows, and what it doesn&#x27;t&lt;/h3&gt;
+      &lt;ul&gt;
+        &lt;li&gt;Shows promises 1 and 2: the handler card and the responder message. Both go out together.&lt;/li&gt;
+        &lt;li&gt;The check-in wording and the replies are proposals. &quot;Your availability and tags look right from here&quot; must be something Rook can really check.&lt;/li&gt;
+        &lt;li&gt;Still open before this ships: &quot;we&#x27;re looking into why&quot; needs a named owner and a date, or it should go. So do the &quot;[time to be agreed]&quot; update windows.&lt;/li&gt;
+        &lt;li&gt;Still open: a flat 3-day rule fires on low-volume responders. It should scale to each responder&#x27;s own gaps. Ravi to test on the pre-4.2 data.&lt;/li&gt;
+        &lt;li&gt;Still open: whether Rook can show that an offer reached the phone. Nothing here does.&lt;/li&gt;
+        &lt;li&gt;A dated &quot;on leave&quot; status is a separate item, not part of this check-in.&lt;/li&gt;
+        &lt;li&gt;Does not show the way back (promise 3), the options for the four, or the stop rules. Those are still held.&lt;/li&gt;
+        &lt;li&gt;These are example screens. No real system changes.&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;p class=&quot;src&quot;&gt;Example data: Meteor Mite&#x27;s real offers from the Rook database. The last offer before this was 22 Aug at 20:53, so the 3-day mark falls on the evening of 25 Aug. In the last 7 days Mite had 3 offers against about 11 usually, and The Gale had 15 against 13. Fictional teaching scenario.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+const $=id=&gt;document.getElementById(id);
+const DEFAULT_CHECKIN=&quot;Checking in: you haven&#x27;t had an offer since 22 Aug. Your availability and tags look right from here. Has anything changed on your end?&quot;;
+const CAPTIONS=[
+  &quot;Tuesday 25 Aug, 9 pm. Meteor Mite has had no offers for 3 days. The card on Kip&#x27;s console and the message on Mite&#x27;s phone go out together.&quot;,
+  &quot;Kip taps Message responder. The check-in is pre-written, with facts Kip can edit. On Mite&#x27;s phone, the push becomes a banner.&quot;,
+  &quot;Kip sends it. Mite sees the check-in with two ways to reply. Kip&#x27;s console says it is waiting for a reply.&quot;,
+  &quot;Kip taps Hide for now. The card hides, but the chip &#x27;Watching 1 responder&#x27; stays in the header. Click it to bring the card back.&quot;,
+  &quot;Mite chooses how to reply. Pick one on the phone, or use the buttons above.&quot;
+];
+const TOTAL=6;
+let step=0, branch=null, kind=null, outcome=null, peek=false, asking=false, collapsed=false, sentText=DEFAULT_CHECKIN, focusId=null;
+let lastConsole=&quot;&quot;, lastPhone=&quot;&quot;;
+
+function setDis(id,v){ const e=$(id); if(v) e.setAttribute(&quot;aria-disabled&quot;,&quot;true&quot;); else e.removeAttribute(&quot;aria-disabled&quot;); }
+function say(id,text,last){ if(text &amp;&amp; text!==last) $(id).textContent=text; return text||last; }
+
+function go(n){
+  const to=Math.max(0,Math.min(TOTAL-1,n));
+  if(step===1 &amp;&amp; to&gt;1) sentText=$(&quot;composeText&quot;).value.trim()||DEFAULT_CHECKIN;
+  if(to===0) $(&quot;composeText&quot;).value=DEFAULT_CHECKIN;
+  step=to; peek=false; asking=false; collapsed=false;
+  if(step&lt;5){ branch=null; kind=null; outcome=null; }
+  focusId={0:&quot;btnMessage&quot;,1:&quot;composeText&quot;,2:&quot;sentNote&quot;,3:&quot;openChip&quot;,4:&quot;btnOk&quot;}[to]||null;
+  render();
+}
+function choose(b){
+  if(step!==4) return;
+  if(b===&quot;off&quot;){ asking=true; focusId=&quot;kind1&quot;; render(); return; }
+  branch=&quot;ok&quot;; kind=null; outcome=null; step=5; asking=false; peek=false; focusId=&quot;replyNote&quot;; render();
+}
+function chooseKind(k){
+  if(step!==4 || !asking) return;
+  branch=&quot;off&quot;; kind=k; step=5; asking=false; peek=false; focusId=&quot;replyNote&quot;; render();
+}
+function setOutcome(o){
+  if(step!==5 || branch!==&quot;ok&quot; || outcome) return;
+  outcome=o; focusId=&quot;resultNote&quot;; render();
+}
+function nextStep(){ if(step===4||step===5) return; go(step+1); }
+
+function render(){
+  const res=step===5, ok=res&amp;&amp;branch===&quot;ok&quot;, off=res&amp;&amp;branch===&quot;off&quot;, taken=ok&amp;&amp;outcome===&quot;taken&quot;;
+
+  // story bar
+  $(&quot;stepno&quot;).textContent=&quot;Step &quot;+(step+1)+&quot; of &quot;+TOTAL;
+  $(&quot;dots&quot;).innerHTML=Array.from({length:TOTAL},(_,i)=&gt;&#x27;&lt;i class=&quot;&#x27;+(i&lt;step?&#x27;on&#x27;:(i===step?&#x27;now&#x27;:&#x27;&#x27;))+&#x27;&quot;&gt;&lt;/i&gt;&#x27;).join(&quot;&quot;);
+  let cap;
+  if(!res) cap=CAPTIONS[step];
+  else if(off) cap=&quot;Mite says something looks off, and what kind. Kip sees the reply, and the watch stays on. Mite is told an update is coming.&quot;;
+  else if(!outcome) cap=&quot;Thursday 27 Aug. An offer arrives for Mite. The banner clears, but the watch stays on until Mite takes one. Choose what happens to this offer.&quot;;
+  else if(taken) cap=&quot;Mite takes the offer. Only now does the watch end on Kip&#x27;s console.&quot;;
+  else cap=&quot;The offer goes unanswered. Kip&#x27;s console still says Watching. An offer arriving is not enough to end it.&quot;;
+  $(&quot;caption&quot;).textContent=cap;
+  setDis(&quot;back&quot;,step===0);
+  setDis(&quot;next&quot;,step===4||step===5);
+  $(&quot;pick&quot;).hidden = step!==4;
+  $(&quot;pick2&quot;).hidden = !(ok &amp;&amp; !outcome);
+
+  // console
+  const chipOn = step===3 || step===4 || (res &amp;&amp; !taken);
+  $(&quot;alert&quot;).hidden = !(step&lt;3 || (peek &amp;&amp; chipOn));
+  $(&quot;compose&quot;).hidden = step!==1;
+  $(&quot;sentNote&quot;).hidden = !(step&gt;=2 &amp;&amp; step&lt;=4);
+  $(&quot;openChip&quot;).hidden = !chipOn;
+  $(&quot;openChip&quot;).setAttribute(&quot;aria-expanded&quot;,String(peek&amp;&amp;chipOn));
+  $(&quot;closedChip&quot;).hidden = !taken;
+  $(&quot;replyNote&quot;).hidden = !res;
+  let replyText=&quot;&quot;, resultText=&quot;&quot;;
+  if(res){
+    replyText = ok ? &#x27;Reply from Meteor Mite: &quot;Nothing has changed on my end&quot;&#x27; : &#x27;Reply from Meteor Mite: &quot;Something looks off: &#x27;+kind+&#x27;&quot;&#x27;;
+    resultText = off ? &quot;Still watching. Update to Mite due by [time to be agreed].&quot;
+      : !outcome ? &quot;Offer sent 27 Aug. Waiting to see if it is taken.&quot;
+      : taken ? &quot;Offer taken 27 Aug. No longer watching.&quot;
+      : &quot;Offer sent 27 Aug, not answered. Still watching.&quot;;
+    $(&quot;replyNote&quot;).textContent=replyText;
+    $(&quot;resultNote&quot;).textContent=resultText;
+  }
+  $(&quot;resultNote&quot;).hidden = !res;
+  $(&quot;datepill&quot;).textContent = ok ? &quot;Thu 27 Aug&quot; : &quot;Tue 25 Aug&quot;;
+  setDis(&quot;btnMessage&quot;,step!==0);
+  setDis(&quot;btnDismiss&quot;,!(step===2 || peek));
+  setDis(&quot;btnSend&quot;,step!==1);
+
+  // phone
+  $(&quot;toast&quot;).hidden = step!==0;
+  const showBanner = (step&gt;=1 &amp;&amp; step&lt;=4) || off;
+  $(&quot;banner&quot;).hidden = !(showBanner &amp;&amp; !collapsed);
+  $(&quot;bannerSlim&quot;).hidden = !(showBanner &amp;&amp; collapsed);
+  $(&quot;bannerSlim&quot;).setAttribute(&quot;aria-expanded&quot;,&quot;false&quot;);
+  $(&quot;bubbleText&quot;).textContent = sentText;
+  $(&quot;thread&quot;).hidden = !(step&gt;=2 &amp;&amp; step&lt;=4);
+  $(&quot;replies&quot;).hidden = asking;
+  $(&quot;ask&quot;).hidden = !asking;
+  setDis(&quot;btnOk&quot;,step!==4); setDis(&quot;btnWrong&quot;,step!==4);
+  $(&quot;replyHint&quot;).hidden = step===4;
+  const sentReplyText = off ? &#x27;You replied: &quot;Something looks off: &#x27;+kind+&#x27;&quot;. Kip has your answer. Next update by [time to be agreed].&#x27; : &quot;&quot;;
+  $(&quot;sentReply&quot;).hidden = !off;
+  $(&quot;sentReply&quot;).textContent = sentReplyText;
+  $(&quot;offer&quot;).hidden = !ok;
+  if(ok){
+    $(&quot;offerText&quot;).textContent = !outcome ? &quot;Answer within 60 seconds.&quot; : (taken ? &quot;You took this offer.&quot; : &quot;Offer expired. No answer in time.&quot;);
+  }
+  $(&quot;empty&quot;).hidden = ok;
+  $(&quot;clock&quot;).textContent = ok ? &quot;Thu 27 Aug · 20:03&quot; : &quot;Tue 25 Aug · 21:00&quot;;
+
+  // announcements for screen readers (the product UI changes, not just the story caption)
+  let cm=&quot;&quot;, pm=&quot;&quot;;
+  if(step===0) { cm=&quot;Alert card shown: Meteor Mite has had no offers in 3 days.&quot;; pm=&quot;Push: You haven&#x27;t had an offer since 22 Aug. We&#x27;ve told your handler, and we&#x27;re looking into why.&quot;; }
+  else if(step===1) { cm=&quot;Check-in box opened. You can edit the message before sending.&quot;; pm=&quot;Banner shown at the top of Offers.&quot;; }
+  else if(step===2) { cm=&quot;Check-in sent to Meteor Mite. Waiting for a reply.&quot;; pm=&quot;Message from Kip: &quot;+sentText+&quot; Two replies available.&quot;; }
+  else if(step===3) { cm=peek?&quot;Card shown again.&quot;:&quot;Card hidden. Watching 1 responder.&quot;; }
+  else if(step===4) { cm=peek?&quot;Card shown again.&quot;:&quot;Card hidden. Watching 1 responder.&quot;; pm=asking?&quot;What are you seeing? Four choices and Cancel.&quot;:&quot;&quot;; }
+  else { cm=replyText+&quot;. &quot;+resultText; pm= off ? sentReplyText : (!outcome?&quot;New offer. Answer within 60 seconds.&quot;:(taken?&quot;You took this offer.&quot;:&quot;Offer expired. No answer in time.&quot;)); }
+  if(collapsed &amp;&amp; showBanner) pm=&quot;Banner collapsed to one line.&quot;;
+  lastConsole=say(&quot;liveConsole&quot;,cm,lastConsole);
+  lastPhone=say(&quot;livePhone&quot;,pm,lastPhone);
+
+  if(focusId){ const f=$(focusId); focusId=null; if(f &amp;&amp; !f.hidden) f.focus(); }
+}
+
+// Unavailable buttons stay focusable; this guard stops them acting.
+document.addEventListener(&quot;click&quot;,e=&gt;{
+  const b=e.target.closest(&#x27;button[aria-disabled=&quot;true&quot;]&#x27;);
+  if(b){ e.stopImmediatePropagation(); e.preventDefault(); }
+},true);
+
+$(&quot;next&quot;).addEventListener(&quot;click&quot;,nextStep);
+$(&quot;back&quot;).addEventListener(&quot;click&quot;,()=&gt;go(step-1));
+$(&quot;replay&quot;).addEventListener(&quot;click&quot;,()=&gt;go(0));
+$(&quot;btnMessage&quot;).addEventListener(&quot;click&quot;,()=&gt;{ if(step===0) go(1); });
+$(&quot;btnSend&quot;).addEventListener(&quot;click&quot;,()=&gt;{ if(step===1) go(2); });
+$(&quot;btnDismiss&quot;).addEventListener(&quot;click&quot;,()=&gt;{ if(step===2) go(3); else if(peek){ peek=false; focusId=&quot;openChip&quot;; render(); } });
+$(&quot;openChip&quot;).addEventListener(&quot;click&quot;,()=&gt;{ peek=!peek; render(); });
+$(&quot;btnOk&quot;).addEventListener(&quot;click&quot;,()=&gt;choose(&quot;ok&quot;));
+$(&quot;btnWrong&quot;).addEventListener(&quot;click&quot;,()=&gt;choose(&quot;off&quot;));
+$(&quot;pickOk&quot;).addEventListener(&quot;click&quot;,()=&gt;choose(&quot;ok&quot;));
+$(&quot;pickOff&quot;).addEventListener(&quot;click&quot;,()=&gt;choose(&quot;off&quot;));
+$(&quot;pickTaken&quot;).addEventListener(&quot;click&quot;,()=&gt;setOutcome(&quot;taken&quot;));
+$(&quot;pickMissed&quot;).addEventListener(&quot;click&quot;,()=&gt;setOutcome(&quot;missed&quot;));
+[&quot;kind1&quot;,&quot;kind2&quot;,&quot;kind3&quot;,&quot;kind4&quot;].forEach(id=&gt;$(id).addEventListener(&quot;click&quot;,e=&gt;chooseKind(e.currentTarget.dataset.kind)));
+$(&quot;btnCancelAsk&quot;).addEventListener(&quot;click&quot;,()=&gt;{ asking=false; focusId=&quot;btnWrong&quot;; render(); });
+$(&quot;btnGotIt&quot;).addEventListener(&quot;click&quot;,()=&gt;{ collapsed=true; focusId=&quot;bannerSlim&quot;; render(); });
+$(&quot;bannerSlim&quot;).addEventListener(&quot;click&quot;,()=&gt;{ collapsed=false; focusId=&quot;btnGotIt&quot;; render(); });
+$(&quot;composeText&quot;).value=DEFAULT_CHECKIN;
+render();
+&lt;/script&gt;
+"></iframe>
+    <p class="src"><a href="https://claude.ai/artifact/PPRL62aqpZuG7UXrTus91w" target="_blank" rel="noopener">Open the prototype in its own tab</a> · source: <code>05-super-speed/quiet-responder-prototype.html</code></p>
+  </div>
+  <div class="box chart-wrap" style="margin-top:18px">
+    <h3 style="font-size:22px">The real Meteor Mite, 12 Aug to 6 Sep: why the card fires on the evening of 25 Aug</h3>
+    <div id="miteChart"></div>
+    <div class="legend"><span><i style="background:var(--green)"></i>taken</span><span><i style="background:var(--yellow)"></i>turned down</span><span><i style="background:var(--red)"></i>no answer in time</span></div>
+    <p class="src">Source: the <code>pings</code> table in the Rook database. After 19 Aug, no offer was taken. Under the old rule, "case closes when an offer arrives", the 27 Aug offer would have closed it, even though it was declined.</p>
+  </div>
+  <p class="note"><b>Limits:</b> the user tests were simulated (handlers and responders played from real interviews and tickets), so they are hypotheses, not users. The most common reaction, <b>13 of 16</b>, was that "we're looking into why" is a promise nobody owns yet. That needs an owner and a date from Helen.</p>
+</section>
+
+<!-- 10 THE SKILL -->
+<section class="slide" hidden aria-label="How it does not happen again">
+  <span class="tag">NEXT ISSUE</span>
+  <h2 class="slide-title">How my skill keeps this from happening quietly again</h2>
+  <p class="lede">The <b>review-checklist</b> skill runs four checks on any brief. Here is what 4.2 looked like through each one.</p>
+  <table class="map" style="margin-top:6px">
+    <tbody>
+      <tr><td>1 · Owner</td><td><b>What 4.2 looked like:</b> Marcus asked on 14 Aug whether the new weights applied to responders who'd been declining. No answer is on record. Nobody has confirmed with Helen which Q3 items are still committed.</td><td><b>The skill asks for:</b> a named person, not a team, who decides.</td></tr>
+      <tr><td>2 · Success</td><td><b>What 4.2 looked like:</b> what success looked like for the routing change is still an open question to Helen and Marcus.</td><td><b>The skill asks for:</b> a measure, a target and a time, so a change can fail.</td></tr>
+      <tr><td>3 · Scope</td><td><b>What 4.2 looked like:</b> the weights and the timeout shipped together on one day, so the data can't separate their effects.</td><td><b>The skill asks for:</b> one scope start to finish, with adjacent changes named and set aside.</td></tr>
+      <tr><td>4 · Problem first</td><td><b>What 4.2 looked like:</b> the reason for the 60-second timer isn't documented, and the previous PM says she "made calls faster than I checked them".</td><td><b>The skill asks for:</b> what's broken, for whom and at what cost, before the fix.</td></tr>
+    </tbody>
+  </table>
+  <div class="grid g3" style="margin-top:6px">
+    <div class="box tight"><h3 style="font-size:20px">It runs weekly</h3><p class="small">Scheduled for Monday mornings. Its first run flagged 4 of 4 briefs. Later runs are logged in <code>05-super-speed/review-checklist-log.md</code>.</p></div>
+    <div class="box tight"><h3 style="font-size:20px">It improves the briefs</h3><p class="small">On the Helen brief, the 12 Oct run failed scope and the 26 Oct run passed all four. The brief was rewritten as v4 in between.</p></div>
+    <div class="box tight"><h3 style="font-size:20px">It has a front door</h3><p class="small">A second skill, <b>interview-to-build</b>, asks until Claude is 95% sure what you want before it builds. It produced the On leave PRD in 9 questions.</p></div>
+  </div>
+  <p class="note"><b>What it can't do:</b> the skill is a gate on briefs. It would not have found the scoring trap on its own. It makes the missing owner, measure, scope and problem visible before something ships.</p>
+</section>
+
+<!-- 11 OPEN + END -->
+<section class="slide" hidden aria-label="What is still open">
+  <span class="tag">WHAT'S LEFT</span>
+  <h2 class="slide-title">Still open, and who can answer</h2>
+  <div class="grid g2">
+    <div class="box">
+      <ul class="small" style="margin:0;padding-left:20px">
+        <li><b>Wen:</b> are missed offers slowness, or offers that never reach the phone? Do scores survive a restart? Was a miss meant to count like a no?</li>
+        <li><b>Helen:</b> who is "we" in "we're looking into why", and by when? What was the 60-second timer meant to fix? Who is the Supply PM?</li>
+        <li><b>Marcus:</b> a release slot, a size, and an off switch for the way back.</li>
+        <li><b>Ravi:</b> refresh the numbers, and test a card rule that scales to each responder's own gaps.</li>
+      </ul>
+      <p class="src">Source: <code>05-super-speed/helen-brief-v4.md</code>, section 7</p>
+    </div>
+    <div class="box">
+      <h3 style="font-size:22px">By the numbers</h3>
+      <div class="stats" id="endStats"></div>
+    </div>
+  </div>
+  <div class="end">
     <div class="ender">THE END... OR IS IT?</div>
-    <p>Fictional coursework for Product School's "Claude Code for PMs" certification, cohort ccpm-2026.1. Rook Industries is not a real company.</p>
+    <p class="hint">Fictional coursework for Product School's "Claude Code for PMs" certification, cohort ccpm-2026.1. Rook Industries is not a real company.</p>
+    <p class="cta" style="justify-content:center"><button class="btn ghost" type="button" data-go="first">&larr; BACK TO THE COVER</button></p>
   </div>
+</section>
 
 </div>
+
+<nav class="controls" aria-label="Slide controls">
+  <button class="btn" type="button" id="prev" aria-label="Previous slide">&larr; PREV</button>
+  <div class="dots" id="dots" role="group" aria-label="Jump to slide"></div>
+  <span class="count" id="count" aria-live="polite"></span>
+  <button class="btn" type="button" id="next" aria-label="Next slide">NEXT &rarr;</button>
+</nav>
+
+<script>
+/* ===== real data, filled in at build time from the repo files ===== */
+const DATA = {"weeks": ["2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24", "2026-08-31"], "total": {"sent": [172, 170, 174, 176, 170, 172, 177, 158, 162, 165], "taken": [132, 131, 133, 132, 132, 134, 96, 104, 108, 120]}, "four": {"sent": [49, 48, 48, 50, 50, 49, 43, 16, 6, 3], "taken": [36, 37, 36, 37, 40, 37, 18, 3, 0, 0]}, "twelve": {"sent": [123, 122, 126, 126, 120, 123, 134, 142, 156, 162], "taken": [96, 94, 97, 95, 92, 97, 78, 101, 108, 120]}, "per": {"Farlight": [12, 12, 11, 12, 13, 12, 10, 3, 1, 0], "Meteor Mite": [11, 12, 10, 11, 12, 11, 10, 4, 2, 1], "The Undertow": [12, 11, 12, 13, 12, 12, 11, 4, 1, 1], "Vesper": [14, 13, 15, 14, 13, 14, 12, 5, 2, 1]}};
+const PROMPTS = {"totalPrompts": 144, "runs": 4, "m1": {"module": "01 Origin Story", "n": 4, "text": "is there too much information in the claude.md currently? do we need to consolidate at all at this point?"}, "m2": {"module": "02 Super Hearing", "n": 7, "text": "Read everything in 00-rook/feedback/interviews/. These are four conversations with the people who run the console for our responders. Tell me what they're unhappy about, group it, tell me how many of the four raised each thing, and quote one line for each so I can hear how they actually said it."}, "m3": {"module": "03 Rewind", "n": 6, "text": "If the Director of Product asked tomorrow what release 4.2 actually did to responders, what's the one number you'd put in front of her? Post it, and one line on where it came from."}, "m4": {"module": "04 X-Ray Vision", "n": 20, "text": "Find me the part of this code that takes points off somebody when they miss a ping or turn one down. Show it to me and explain it in plain English. Then find me every single thing in this code that puts points back on."}, "m5": {"module": "05 Super Speed", "n": 50, "text": "this brief is going to serve as the input for our working prototype with the fixes. before we build anything, read the brief and ask me clarifying questions on what we to build until you are 95% confident."}, "m6a": {"module": "06 Sidekicks", "n": 8, "text": "Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix."}, "m6b": {"module": "06 Sidekicks", "n": 12, "text": "Schedule review-checklist to run every Monday morning, and let me know what it finds. Nothing needs to be ready for it to fire today. I'm setting the habit, not waiting on the result."}};
+const CLAUDE_LINES = [{"date": "2026-09-23", "lines": 23}, {"date": "2026-09-23", "lines": 64}, {"date": "2026-09-23", "lines": 72}, {"date": "2026-09-23", "lines": 73}, {"date": "2026-09-28", "lines": 80}, {"date": "2026-09-30", "lines": 88}, {"date": "2026-10-05", "lines": 99}, {"date": "2026-10-06", "lines": 121}, {"date": "2026-10-22", "lines": 110}];
+const MITE = [{"at": "2026-08-12T19:04:32", "outcome": "turned down", "label": "12 Aug, 19:04"}, {"at": "2026-08-13T13:43:10", "outcome": "missed", "label": "13 Aug, 13:43"}, {"at": "2026-08-13T15:12:38", "outcome": "missed", "label": "13 Aug, 15:12"}, {"at": "2026-08-14T07:26:28", "outcome": "missed", "label": "14 Aug, 07:26"}, {"at": "2026-08-15T15:18:48", "outcome": "taken", "label": "15 Aug, 15:18"}, {"at": "2026-08-15T19:40:01", "outcome": "taken", "label": "15 Aug, 19:40"}, {"at": "2026-08-16T11:16:17", "outcome": "missed", "label": "16 Aug, 11:16"}, {"at": "2026-08-18T07:37:03", "outcome": "turned down", "label": "18 Aug, 07:37"}, {"at": "2026-08-19T17:30:34", "outcome": "taken", "label": "19 Aug, 17:30"}, {"at": "2026-08-20T16:41:50", "outcome": "missed", "label": "20 Aug, 16:41"}, {"at": "2026-08-22T20:53:13", "outcome": "missed", "label": "22 Aug, 20:53"}, {"at": "2026-08-27T20:03:12", "outcome": "turned down", "label": "27 Aug, 20:03"}, {"at": "2026-08-29T09:15:52", "outcome": "missed", "label": "29 Aug, 09:15"}, {"at": "2026-09-05T15:06:20", "outcome": "missed", "label": "5 Sep, 15:06"}];
+const SCHEDULED = [{"name": "bulk-callout.txt", "checks": [false, true, true, true]}, {"name": "routing-override-audit-log.txt", "checks": [true, false, true, true]}, {"name": "requisition-approval-chains.txt", "checks": [true, true, false, true]}, {"name": "handler-phone-app.txt", "checks": [true, true, true, false]}];
+
+const NS = "http://www.w3.org/2000/svg";
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const el = (tag, attrs={}, html) => { const e=document.createElement(tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(html!==undefined) e.innerHTML=html; return e; };
+const fmtDate = iso => { const [y,m,d]=iso.split('-').map(Number); return d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]; };
+
+/* ===== line chart ===== */
+function lineChart(opt){
+  const W=680,H=300,L=52,R=26,T=22,B=40, pw=W-L-R, ph=H-T-B;
+  const n=opt.labels.length;
+  const x=i=>L+(n===1?0:i*pw/(n-1));
+  const y=v=>T+ph-(v-opt.yMin)*ph/(opt.yMax-opt.yMin);
+  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opt.aria}">`;
+  opt.ticks.forEach(t=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${L-8}" y="${y(t)+4}" text-anchor="end">${opt.tickFmt?opt.tickFmt(t):t}</text>`; });
+  opt.labels.forEach((l,i)=>{ if(n<=10 || i%2===0) s+=`<text class="axis" x="${x(i)}" y="${H-14}" text-anchor="middle">${l}</text>`; });
+  if(opt.baselines) opt.baselines.forEach(b=>{ s+=`<line x1="${L}" x2="${W-R}" y1="${y(b.v)}" y2="${y(b.v)}" stroke="${b.color}" stroke-width="2" stroke-dasharray="6 5"/>`; });
+  if(opt.marker!==undefined){ const mx=x(opt.marker); s+=`<line x1="${mx}" x2="${mx}" y1="${T}" y2="${T+ph}" stroke="#171310" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${mx+6}" y="${T+12}" fill="#b3261b">4.2 SHIPS</text>`; }
+  opt.series.forEach(se=>{
+    const d=se.values.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+    s+=`<path d="${d}" fill="none" stroke="#171310" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${se.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    se.values.forEach((v,i)=>{ s+=`<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="${se.color}" stroke="#171310" stroke-width="2"><title>${se.name}, week of ${opt.labels[i]}: ${opt.valFmt?opt.valFmt(v):v}</title></circle>`; });
+    const li=se.values.length-1; s+=`<text class="lab" x="${x(li)-8}" y="${y(se.values[li])+(se.labelDy||-10)}" text-anchor="end" fill="${se.textColor||se.color}">${opt.valFmt?opt.valFmt(se.values[li]):se.values[li]}</text>`;
+  });
+  return s+'</svg>';
+}
+
+/* ===== slide 2: the cliff ===== */
+(function(){
+  const labels = DATA.weeks.map(fmtDate);
+  const rate = DATA.total.taken.map((t,i)=>t/DATA.total.sent[i]);
+  const preSent = DATA.total.sent.slice(0,6).reduce((a,b)=>a+b)/6, preTaken = DATA.total.taken.slice(0,6).reduce((a,b)=>a+b)/6;
+  const last = DATA.weeks.length-1;
+  const views = {
+    offers:{
+      html: lineChart({labels, aria:`Offers sent per week. The four affected responders fall from ${DATA.four.sent[0]} to ${DATA.four.sent[last]}. The other twelve rise from ${DATA.twelve.sent[0]} to ${DATA.twelve.sent[last]}.`,
+        yMin:0,yMax:180,ticks:[0,45,90,135,180],marker:6,
+        series:[{name:'The four',color:'#e63b2e',textColor:'#b3261b',values:DATA.four.sent,labelDy:-12},{name:'The other twelve',color:'#2c6ea6',values:DATA.twelve.sent}]}),
+      legend:`<span><i style="background:#e63b2e"></i>The four (Farlight, Meteor Mite, The Undertow, Vesper)</span><span><i style="background:#2c6ea6"></i>The other twelve</span>`,
+      caption:`The four fell from <b>${DATA.four.sent[0]}</b> offers a week to <b>${DATA.four.sent[last]}</b>. The other twelve went <b>up</b>, from ${DATA.twelve.sent[0]} to ${DATA.twelve.sent[last]}. Total offers barely moved, so the average hid who was losing out.`},
+    rate:{
+      html: lineChart({labels, aria:`Weekly yes-rate: ${(rate[0]*100).toFixed(1)} percent in late June, a low of ${(rate[6]*100).toFixed(1)} percent the week 4.2 shipped, ${(rate[last]*100).toFixed(1)} percent by 31 August.`,
+        yMin:0.4,yMax:0.9,ticks:[0.4,0.5,0.6,0.7,0.8,0.9],tickFmt:t=>Math.round(t*100)+'%',valFmt:v=>(v*100).toFixed(1)+'%',marker:6,
+        series:[{name:'Yes-rate',color:'#e63b2e',textColor:'#b3261b',values:rate}]}),
+      legend:`<span><i style="background:#e63b2e"></i>Share of offers taken, all 16 responders</span>`,
+      caption:`The yes-rate dips to <b>${(rate[6]*100).toFixed(1)}%</b> when 4.2 ships, then climbs back to <b>${(rate[last]*100).toFixed(1)}%</b>. It looks like recovery. It isn't: it climbs because the four stopped being asked.`},
+    raw:{
+      html: lineChart({labels, aria:`Raw counts. Offers sent are ${DATA.total.sent[last]} against a before-4.2 average of ${preSent.toFixed(1)}. Offers taken are ${DATA.total.taken[last]} against ${preTaken.toFixed(1)}.`,
+        yMin:80,yMax:190,ticks:[80,110,140,170,190],marker:6,
+        baselines:[{v:preSent,color:'#171310',label:'before 4.2: sent '+preSent.toFixed(1)},{v:preTaken,color:'#2c6b45',label:'before 4.2: taken '+preTaken.toFixed(1)}],
+        series:[{name:'Offers sent',color:'#7a4fae',values:DATA.total.sent},{name:'Offers taken',color:'#3f8f5f',textColor:'#2c6b45',values:DATA.total.taken}]}),
+      legend:`<span><i style="background:#7a4fae"></i>Offers sent</span><span><i style="background:#3f8f5f"></i>Offers taken</span><span>- - - dashed lines: the average before 4.2 (sent ${preSent.toFixed(1)}, taken ${preTaken.toFixed(1)})</span>`,
+      caption:`Look at the raw counts and there is no recovery. By 31 Aug, offers taken are <b>${DATA.total.taken[last]}</b> against <b>${preTaken.toFixed(1)}</b> before 4.2, and offers sent are <b>${DATA.total.sent[last]}</b> against <b>${preSent.toFixed(1)}</b>. Dispatch is still filling fewer callouts.`}
+  };
+  const host=$('#cliffChart'), leg=$('#cliffLegend'), cap=$('#cliffCaption');
+  function set(v){ host.innerHTML=views[v].html; leg.innerHTML=views[v].legend; cap.innerHTML=views[v].caption; $$('[data-view]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===v))); }
+  $$('[data-view]').forEach(b=>b.addEventListener('click',()=>set(b.dataset.view)));
+  set('offers');
+})();
+
+/* ===== cover + end stats ===== */
+(function(){
+  const four0=DATA.four.sent[0], fourN=DATA.four.sent[DATA.weeks.length-1];
+  const cover=[['Responders locked out','4 of 16','warn'],['Their offers a week',four0+' → '+fourN,'warn'],['Ticket volume','~3× normal','warn'],['Fix','Prototyped','ok'],['Prompts saved',String(PROMPTS.totalPrompts)+' in 6 modules','ok']];
+  $('#coverStats').innerHTML=cover.map(c=>`<div class="stat ${c[2]}"><b>${c[0]}</b><span>${c[1]}</span></div>`).join('');
+  const end=[['Prompts you wrote',String(PROMPTS.totalPrompts),'ok'],['Modules','6','ok'],['Simulated test runs','17','ok'],['Checklist runs on record',String(PROMPTS.runs),'ok']];
+  $('#endStats').innerHTML=end.map(c=>`<div class="stat ${c[2]}"><b>${c[0]}</b><span>${c[1]}</span></div>`).join('');
+})();
+
+/* ===== prompts, verbatim from each prompts.md ===== */
+$$('[data-prompt]').forEach(p=>{ const k=p.dataset.prompt; p.textContent='“'+PROMPTS[k].text+'”'; });
+$$('[data-plabel]').forEach(p=>{ const k=p.dataset.plabel; p.textContent='THE EXACT PROMPT · '+PROMPTS[k].module+' · prompts.md #'+PROMPTS[k].n; });
+
+/* ===== module 1: CLAUDE.md lines ===== */
+(function(){
+  const W=680,H=300,L=44,R=14,T=26,B=52,n=CLAUDE_LINES.length,pw=W-L-R,ph=H-T-B,max=130,bw=pw/n*0.7;
+  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart of CLAUDE.md line count: 23 lines at the start, 64 on day one, rising to 121 on 6 October, then 110 after trimming.">`;
+  [0,40,80,120].forEach(t=>{ const y=T+ph-t*ph/max; s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="axis" x="${L-6}" y="${y+4}" text-anchor="end">${t}</text>`; });
+  CLAUDE_LINES.forEach((c,i)=>{
+    const cx=L+(i+.5)*pw/n, h=c.lines*ph/max, y=T+ph-h, last=i===n-1, peak=c.lines===121;
+    s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${h}" rx="3" fill="${last?'#3f8f5f':(peak?'#e63b2e':'#f6c23e')}" stroke="#171310" stroke-width="2.5"><title>${fmtDate(c.date)}: ${c.lines} lines</title></rect>`;
+    s+=`<text class="lab" x="${cx}" y="${y-6}" text-anchor="middle" font-size="13">${c.lines}</text>`;
+    s+=`<text class="axis" x="${cx}" y="${H-24}" text-anchor="middle" font-size="11">${fmtDate(c.date)}</text>`;
+  });
+  s+=`<text class="mark" x="${W-R}" y="${T-8}" text-anchor="end" fill="#2c6b45">now: ${CLAUDE_LINES[n-1].lines}</text></svg>`;
+  $('#m1Chart').innerHTML=s; $('#m1now').textContent=CLAUDE_LINES[n-1].lines;
+})();
+
+/* ===== module 3: sparklines ===== */
+(function(){
+  const colors={'Farlight':'#e63b2e','Meteor Mite':'#2c6ea6','The Undertow':'#3f8f5f','Vesper':'#7a4fae'};
+  const host=$('#m3Sparks'); const w=240,h=46,max=16;
+  Object.keys(DATA.per).forEach(name=>{
+    const v=DATA.per[name], n=v.length;
+    const d=v.map((q,i)=>(i?'L':'M')+(6+i*(w-12)/(n-1)).toFixed(1)+','+(h-6-q*(h-12)/max).toFixed(1)).join(' ');
+    const row=el('div',{class:'spark-row'});
+    row.innerHTML=`<span>${name}</span><svg viewBox="0 0 ${w} ${h}" class="chart-svg" role="img" aria-label="${name}: ${v[0]} offers in the first week, ${v[n-1]} in the last"><path d="${d}" fill="none" stroke="#171310" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${colors[name]}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${6+(n-1)*(w-12)/(n-1)}" cy="${h-6-v[n-1]*(h-12)/max}" r="4.5" fill="${colors[name]}" stroke="#171310" stroke-width="2"/></svg><b>${v[0]} → ${v[n-1]}</b>`;
+    host.appendChild(row);
+  });
+})();
+
+/* ===== module 4: score ladder ===== */
+(function(){
+  let score=0.5; const CREDIT=0.08, PEN=0.12;
+  const clamp=v=>Math.max(0,Math.min(1,v));
+  const bar=$('#ladderBar'), out=$('#ladderScore'), msg=$('#ladderMsg');
+  function draw(note){
+    out.textContent=score.toFixed(2); bar.style.width=(score*100)+'%'; bar.style.background=score<0.25?'#e63b2e':(score<0.5?'#f6c23e':'#3f8f5f');
+    if(note) msg.textContent=note;
+    else if(score<=0.0001) msg.textContent='At the bottom of the list, an offer only reaches you if everyone above you declines. To earn points you need an offer. To get an offer you need points.';
+    else msg.textContent='';
+  }
+  function yes(){ score=clamp(score+CREDIT); draw(); }
+  function miss(){ score=clamp(score-PEN); draw(); }
+  $('#lYes').addEventListener('click',yes); $('#lMiss').addEventListener('click',miss);
+  $('#lReset').addEventListener('click',()=>{ score=0.5; draw('Back to neutral.'); });
+  $$('[data-run]').forEach(b=>b.addEventListener('click',()=>{
+    const k=+b.dataset.run; score=0.5;
+    for(let i=0;i<10;i++){ const y=Math.floor((i+1)*k/10)>Math.floor(i*k/10); score=clamp(score+(y?CREDIT:-PEN)); }
+    draw(`After 10 offers with ${k} yes: ${score.toFixed(2)}. ${k<6?'Below 6 yes in 10 the score sinks.':(k===6?'6 yes in 10 is break-even: it just holds still.':'Above 6 yes in 10 it climbs.')}`);
+  }));
+  draw();
+})();
+
+/* ===== module 6: scheduled-run grid ===== */
+(function(){
+  $('#m6Rows').innerHTML=SCHEDULED.map(r=>`<tr><td><code>${r.name}</code></td>`+r.checks.map(ok=>ok?`<td class="ok"><span aria-hidden="true">✔</span><span class="vh">pass</span></td>`:`<td class="bad"><b aria-hidden="true">✘ flagged</b><span class="vh">flagged</span></td>`).join('')+`</tr>`).join('');
+})();
+
+/* ===== Meteor Mite timeline ===== */
+(function(){
+  const W=680,H=210,L=88,R=18,T=18,B=42, pw=W-L-R;
+  const t0=Date.parse('2026-08-12T00:00:00'), t1=Date.parse('2026-09-07T00:00:00');
+  const x=t=>L+(t-t0)*pw/(t1-t0);
+  const lanes={'taken':[T+20,'#3f8f5f','taken'],'turned down':[T+62,'#f6c23e','turned down'],'missed':[T+104,'#e63b2e','no answer']};
+  let s=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of Meteor Mite's offers from 12 August to 6 September. The last offer before the quiet was 22 August. No offer was taken after 19 August.">`;
+  Object.values(lanes).forEach(([y,c,lab])=>{ s+=`<line class="gridline" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="axis" x="${L-8}" y="${y+4}" text-anchor="end">${lab}</text>`; });
+  for(let d=12; d<=36; d+=4){ const t=Date.parse('2026-08-'+String(Math.min(d,31)).padStart(2,'0')+'T00:00:00'); const tt=d<=31?t:Date.parse('2026-09-'+String(d-31).padStart(2,'0')+'T00:00:00'); const lab=d<=31?d+' Aug':(d-31)+' Sep'; s+=`<line class="gridline" x1="${x(tt)}" x2="${x(tt)}" y1="${T}" y2="${T+130}"/><text class="axis" x="${x(tt)}" y="${H-18}" text-anchor="middle">${lab}</text>`; }
+  const gs=Date.parse('2026-08-22T20:53:13'), ge=Date.parse('2026-08-25T20:53:13');
+  s+=`<rect x="${x(gs)}" y="${T}" width="${x(ge)-x(gs)}" height="130" fill="#e63b2e" fill-opacity=".14"/><line x1="${x(ge)}" x2="${x(ge)}" y1="${T}" y2="${T+130}" stroke="#171310" stroke-width="2" stroke-dasharray="5 5"/><text class="mark" x="${x(ge)+6}" y="${T+11}" fill="#b3261b">CARD FIRES, 25 Aug evening</text><text class="mark" x="${(x(gs)+x(ge))/2}" y="${T+150}" text-anchor="middle" fill="#b3261b">3 days with no offers</text>`;
+  MITE.forEach(e=>{ const [y,c]=lanes[e.outcome]; const t=Date.parse(e.at); s+=`<circle cx="${x(t)}" cy="${y}" r="7" fill="${c}" stroke="#171310" stroke-width="2.5"><title>${e.label}: ${e.outcome}</title></circle>`; });
+  $('#miteChart').innerHTML=s+'</svg>';
+})();
+
+/* ===== deck navigation ===== */
+(function(){
+  const slides=$$('.deck > .slide'); let cur=0;
+  const dots=$('#dots'), count=$('#count');
+  slides.forEach((s,i)=>{ const b=el('button',{type:'button','aria-label':'Go to slide '+(i+1)+': '+s.getAttribute('aria-label')}); b.addEventListener('click',()=>show(i)); dots.appendChild(b); });
+  function show(i,focus=true){
+    cur=Math.max(0,Math.min(slides.length-1,i));
+    slides.forEach((s,k)=>{ s.hidden=k!==cur; });
+    $$('#dots button').forEach((b,k)=>b.setAttribute('aria-current',String(k===cur)));
+    count.textContent=(cur+1)+' / '+slides.length;
+    $('#prev').disabled=cur===0; $('#next').disabled=cur===slides.length-1;
+    $('#prev').style.opacity=cur===0?.45:1; $('#next').style.opacity=cur===slides.length-1?.45:1;
+    try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
+    if(focus){ const h=slides[cur].querySelector('h1,h2'); if(h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); } }
+    window.scrollTo(0,0);
+  }
+  $('#prev').addEventListener('click',()=>show(cur-1)); $('#next').addEventListener('click',()=>show(cur+1));
+  $$('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go==='first'?0:cur+1)));
+  document.addEventListener('keydown',e=>{
+    if(e.altKey||e.ctrlKey||e.metaKey) return;
+    const t=e.target; if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='IFRAME')) return;
+    if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); show(cur+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(cur-1); }
+    else if(e.key==='Home'){ show(0); } else if(e.key==='End'){ show(slides.length-1); }
+  });
+  const start=parseInt((location.hash||'').slice(1),10);
+  show(Number.isFinite(start)?start-1:0,false);
+})();
+</script>
+</body>
+</html>
