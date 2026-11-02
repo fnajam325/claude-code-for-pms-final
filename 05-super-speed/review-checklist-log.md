@@ -25,3 +25,25 @@ New since the last run: the v1 `helen-brief.md` was removed and v4 added on 2026
 **Problem before fix:** Pass — Section 1 states the problem ("four responders have lost about 70% of their job offers, and nobody told them why") before the decision. Section 4 gives the full problem, but it sits after the two decision/ask tables (sections 2 and 3), so a reader hits asks before the evidence.
 
 4 of 4 passed; fixes are small. Optional tidy-ups: say in the scope line that option A and a possible delivery fix are contingencies, and consider moving section 4 ahead of the asks tables. Separate from the checklist: line 76 uses "he"/"his" for Meteor Mite, which CLAUDE.md says to avoid because no source states a pronoun, and line 78 uses "her" for Wen, whose pronouns the sources also don't state. Reword both neutrally.
+
+## 2026-11-02 — reviewed `05-super-speed/on-leave-prd.md` and `05-super-speed/helen-brief-v4.md`
+
+Both changed since the last logged run (2026-10-26): commit 5f398e7 (2026-10-27) added the On leave PRD and its reference page and updated brief v4 to prototype v3. Reference pages (`*-reference.md`) were read for context, not reviewed separately.
+
+### `on-leave-prd.md` (new)
+
+**Owner:** Pass — "**Owner:** Faran (Dispatch PM)" (line 3); every open question in section 7 also has a named owner and a date.
+**Success criteria:** Pass — "**Zero new tickets in 8 weeks after release** that say leave looks like busy or ask for a leave status... Faran measures it, and Nadia tags the tickets" (section 5). Falsifiable. Caveat: the baseline is only 2 tickets in about 10 weeks, so zero in 8 weeks is a weak signal, and it depends on Nadia's tagging, which is still an open question (section 7, last row).
+**Consistent scope:** Pass — Scope line 4 limits it to a handler-set dated leave shown as its own state. Everything later stays inside that. Responder-set leave, Supply's record, and routing/card changes appear only under "Not in the first release" (section 3) or as flagged risks (section 6), which is correct bounding.
+**Problem before fix:** Pass — Section 1 states the problem ("looks the same as being busy") before the decision, and section 2 gives the evidence (tickets 3035 and 3143) before section 4 describes what to build.
+
+4 of 4 passed; no fixes needed beyond tightening the success target, since 2 tickets in 10 weeks makes "zero" an easy bar.
+
+### `helen-brief-v4.md` (updated 2026-10-27)
+
+**Owner:** Pass — "**Owner:** Faran (Dispatch PM)" (line 3); stop-line owners named in section 5 ("Faran calls it, Marcus undoes it") and each open question carries an owner.
+**Success criteria:** Pass — Promises 1 and 2: "zero responders with no offers 7 days after a card was shown"; promise 3: "at least 8 offers a week... with at least 9 in 10 answered in time, within 4 weeks of release", plus proposed stop lines (section 5, last paragraph).
+**Consistent scope:** Pass — The scope line (line 4) now names "an interim scoring fix for the four (section 5)", which closes the earlier gap about option A. Still unmentioned: line 57 ("We fix delivery and keep 1 and 2") adds a delivery fix the scope line never names, and option A changes scoring for all 16, wider than "the four" (flagged as a risk in the table).
+**Problem before fix:** Pass — Section 1 states the problem before the decision ("four responders have lost about 70% of their job offers, and nobody told them why"). The full problem is in section 4, after the two asks tables (sections 2 and 3), so a reader meets the asks before the evidence. Unchanged from last run.
+
+4 of 4 passed; fixes are small and optional: name the delivery fix in the scope line, and consider moving section 4 ahead of the asks tables. The pronoun issues noted last run (Meteor Mite, Wen) are fixed.
