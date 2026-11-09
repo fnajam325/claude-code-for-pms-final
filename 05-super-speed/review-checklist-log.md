@@ -47,3 +47,7 @@ Both changed since the last logged run (2026-10-26): commit 5f398e7 (2026-10-27)
 **Problem before fix:** Pass — Section 1 states the problem before the decision ("four responders have lost about 70% of their job offers, and nobody told them why"). The full problem is in section 4, after the two asks tables (sections 2 and 3), so a reader meets the asks before the evidence. Unchanged from last run.
 
 4 of 4 passed; fixes are small and optional: name the delivery fix in the scope line, and consider moving section 4 ahead of the asks tables. The pronoun issues noted last run (Meteor Mite, Wen) are fixed.
+
+## 2026-11-09 — nothing to review this week
+
+The brief-like documents, `05-super-speed/helen-brief-v4.md` and `05-super-speed/on-leave-prd.md`, have not changed since 2026-10-27 (5f398e7), before the last logged run on 2026-11-02, so they were not re-reviewed. No commits touched any file since then other than the log itself, and no other brief, PRD or one-pager exists in the repo.
