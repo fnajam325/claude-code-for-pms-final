@@ -51,3 +51,7 @@ Both changed since the last logged run (2026-10-26): commit 5f398e7 (2026-10-27)
 ## 2026-11-09 — nothing to review this week
 
 The brief-like documents, `05-super-speed/helen-brief-v4.md` and `05-super-speed/on-leave-prd.md`, have not changed since 2026-10-27 (5f398e7), before the last logged run on 2026-11-02, so they were not re-reviewed. No commits touched any file since then other than the log itself, and no other brief, PRD or one-pager exists in the repo.
+
+## 2026-11-16 — nothing to review this week
+
+The brief-like documents, `05-super-speed/helen-brief-v4.md` and `05-super-speed/on-leave-prd.md`, have not changed since 2026-10-27 (5f398e7), before the last reviewed run on 2026-11-02, so they were not re-reviewed. The only commit since the last logged run (2026-11-09, 7d60631) touched this log alone, and no other brief, PRD or one-pager exists in the repo.
